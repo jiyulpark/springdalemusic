@@ -1,0 +1,86 @@
+/* 전체 레이아웃 */
+.container {
+    width: 100%;
+    margin: 40px auto;
+    padding: 20px;
+    box-sizing: border-box; /* padding을 포함하여 계산 */
+  }
+  
+  /* 헤더 스타일 */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  
+  .header input {
+    padding: 10px;
+    font-size: 14px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+  }
+  
+  /* 인증 버튼 */
+  .authContainer {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  
+  /* 카테고리 필터 버튼 */
+  .categoryFilter {
+    margin-bottom: 20px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  
+  .categoryFilter button {
+    padding: 8px 12px;
+    border-radius: 5px;
+    border: 1px solid #0070f3;
+    background: #fff;
+    color: #0070f3;
+    transition: background-color 0.3s ease, color 0.3s ease; /* 배경색과 글자색 변화에 전환 효과 추가 */
+  }
+  
+  .categoryFilter button.selected {
+    background: #0070f3;
+    color: white;
+  }
+  
+  .categoryFilter button:hover {
+    background: #0070f3;  /* 마우스 오버 시 배경색을 파란색으로 변경 */
+    color: white; /* 마우스 오버 시 글자색을 흰색으로 변경 */
+  }
+  
+  .categoryFilter .clearFilter {
+    background: #dc3545;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 5px;
+    border: none;
+  }
+  
+  /* 게시글 카드 목록 */
+  .posts {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); /* 화면 크기에 맞춰 카드가 자동 배치 */
+    gap: 20px;
+    padding-top: 20px;
+  }
+  
+  /* 전역 스타일 적용: 버튼에 대한 전역 선택자 */
+  :global(button) {
+    padding: 10px;
+    background-color: #0070f3;
+    color: white;
+    border: none;
+    border-radius: 5px;
+  }
+  
+  :global(button:hover) {
+    background-color: #005bb5;
+  }
+  

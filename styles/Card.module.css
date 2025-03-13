@@ -1,0 +1,115 @@
+/* Card.module.css */
+
+/* 카드 기본 스타일 */
+.card {
+  background: #fff;
+  border-radius: 15px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.card:hover {
+  transform: scale(1.05); /* 마우스 오버 시 살짝 확대 */
+}
+
+/* 썸네일 이미지 스타일 */
+.card-img {
+  width: 100%;
+  border-radius: 8px;
+}
+
+/* 제목 스타일 */
+.card-title {
+  font-size: 1.5em; /* 더 큰 글자 크기 */
+  font-weight: 600; /* 굵은 글씨 */
+  color: #333; /* 제목 색상 */
+  cursor: pointer;
+  margin-top: 10px;
+  text-decoration: none;
+  transition: color 0.3s ease; /* 마우스 오버 시 색상 변화 */
+}
+
+.card-title:hover {
+  color: #0070f3; /* 마우스 오버 시 파란색으로 변환 */
+}
+
+/* 본문 내용 스타일 */
+.card-content {
+  margin-top: 10px;
+  color: #555;
+  font-size: 1em;
+}
+
+/* 카테고리 버튼 스타일 */
+.card-category-container {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.card-category {
+  background: #0070f3;
+  color: white;
+  padding: 5px 10px;
+  border-radius: 15px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.card-category:hover {
+  background: #005bb5;
+}
+
+/* 파일 다운로드 링크 스타일 */
+.card-file-link {
+  color: #0070f3;
+  text-decoration: none;
+}
+
+.card-file-link:hover {
+  text-decoration: underline;
+}
+
+/* 버튼 스타일 */
+.card-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+/* 작성자 정보 */
+.card-author {
+  display: flex;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.author-image {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  margin-right: 10px;
+}
+
+.author-placeholder {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background-color: #0070f3; /* 기본 색상 */
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: bold;
+  margin-right: 10px;
+}
+
+.card-author span {
+  font-size: 14px;
+  color: #333;
+}
