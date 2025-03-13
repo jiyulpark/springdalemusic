@@ -156,10 +156,11 @@ const Index = () => {
     return 0;
   });
 
-  const filteredPosts = sortedPosts.filter((post) => 
-    post.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
-    (selectedCategory.length === 0 || selectedCategory.some(category => post.category.includes(category)))
-  );
+  const filteredPosts = sortedPosts
+    .filter((post) => post.title.toLowerCase().includes(searchQuery.toLowerCase())) // 먼저 검색어 필터링
+    .filter((post) => 
+      selectedCategory.length === 0 || selectedCategory.some(category => post.category.includes(category))
+    ); // 카테고리 필터링
 
   return (
     <div className={styles.container}>
@@ -192,13 +193,13 @@ const Index = () => {
           <button 
             key={cat.id} 
             onClick={() => handleCategorySelect(cat.name)}
-            className={selectedCategory.includes(cat.name) ? 'selected' : ''}
+            className={selectedCategory.includes(cat.name) ? styles.selected : ''}
           >
             {cat.name}
           </button>
         ))}
         {selectedCategory.length > 0 && (
-          <button onClick={() => setSelectedCategory([])} className="clearFilter">
+          <button onClick={() => setSelectedCategory([])} className={styles.clearFilter}>
             필터 해제
           </button>
         )}

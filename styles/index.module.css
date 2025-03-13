@@ -83,4 +83,17 @@
   :global(button:hover) {
     background-color: #005bb5;
   }
+
+  /* 선택된 카테고리 버튼에 대한 스타일 */
+.selected {
+    background-color: blue;
+    color: white;
+    border: none;
+  }
   
+  /* 선택 해제 버튼에 대한 스타일 */
+  .clearFilter {
+    background-color: red;
+    color: white;
+    border: none;
+  }
