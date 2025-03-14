@@ -11,11 +11,9 @@ const NewPost = () => {
   const [thumbnail, setThumbnail] = useState(null);
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState(''); // ✅ 사용되지 않는 error 변수 문제 해결
-  const [showConfirm, setShowConfirm] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
   const router = useRouter();
 
-  // 허용할 파일 확장자
   const allowedExtensions = ['am2data', 'am2', 'am3data', 'zip'];
 
   useEffect(() => {
@@ -34,17 +32,16 @@ const NewPost = () => {
     const selectedFiles = [...e.target.files];
     const invalidFiles = selectedFiles.filter((file) => {
       const fileExtension = file.name.split('.').pop().toLowerCase();
-      return !allowedExtensions.includes(fileExtension); // 허용되지 않는 확장자일 경우
+      return !allowedExtensions.includes(fileExtension);
     });
 
-    // ✅ 허용되지 않는 파일이 있으면 에러 메시지 설정
     if (invalidFiles.length > 0) {
       setErrorMsg('AM2DATA, AM2, AM3DATA, ZIP 확장자만 첨부할 수 있습니다.');
     } else {
-      setErrorMsg(''); // 유효하면 에러 메시지 초기화
+      setErrorMsg('');
     }
 
-    setFiles(selectedFiles); // 파일 상태 업데이트
+    setFiles(selectedFiles);
   };
 
   const handleCategoryToggle = (category) => {
@@ -57,7 +54,6 @@ const NewPost = () => {
     setLoading(true);
     setErrorMsg('');
 
-    // ✅ 제목과 내용이 비었는지 체크
     if (!title || !content) {
       setErrorMsg('제목과 내용은 필수 입력 항목입니다.');
       setLoading(false);
@@ -112,20 +108,13 @@ const NewPost = () => {
   };
 
   const handleCancel = () => {
-    setShowConfirm(true);
-  };
-
-  const confirmCancel = (confirm) => {
-    if (confirm) {
-      router.push('/');
-    }
-    setShowConfirm(false);
+    router.push('/');
   };
 
   return (
     <div style={{ maxWidth: '600px', margin: '40px auto', padding: '20px', background: '#fff', borderRadius: '10px', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)' }}>
       <h1>새 게시글 작성</h1>
-      {errorMsg && <p style={{ color: 'red' }}>{errorMsg}</p>} {/* ✅ error → errorMsg로 변경 */}
+      {errorMsg && <p style={{ color: 'red' }}>{errorMsg}</p>}
       <input type="text" placeholder="제목" value={title} onChange={(e) => setTitle(e.target.value)} style={{ width: '100%', padding: '10px', marginBottom: '10px' }} />
       <label>이미지 첨부</label>
       <input type="file" onChange={handleThumbnailChange} style={{ marginBottom: '10px' }} />
@@ -140,7 +129,7 @@ const NewPost = () => {
       </div>
       <label>첨부파일</label>
       <input type="file" multiple onChange={handleFileChange} style={{ marginBottom: '10px' }} />
-      {errorMsg && <p style={{ color: 'red', marginTop: '10px' }}>{errorMsg}</p>} {/* ✅ 중복된 error 사용 해결 */}
+      {errorMsg && <p style={{ color: 'red', marginTop: '10px' }}>{errorMsg}</p>}
       <input type="text" placeholder="해시태그 (쉼표로 구분)" value={hashtags} onChange={(e) => setHashtags(e.target.value)} style={{ width: '100%', padding: '10px', marginBottom: '10px' }} />
       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '20px' }}>
         <button onClick={handleCreatePost} disabled={loading} style={{ padding: '10px', background: '#28a745', color: '#fff', borderRadius: '5px', border: 'none', cursor: 'pointer' }}>
