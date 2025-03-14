@@ -6,42 +6,24 @@ import styles from '../styles/index.module.css'; // CSS 모듈 import
 
 const Index = () => {
   const [posts, setPosts] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [session, setSession] = useState(null);
-  const [sortType, setSortType] = useState('latest');
   const [categories, setCategories] = useState([]); // 카테고리 리스트
   const [selectedCategory, setSelectedCategory] = useState([]); // 선택된 카테고리
   const router = useRouter();
+  const [session, setSession] = useState(null);
 
+  // 세션 정보를 가져오는 useEffect
   useEffect(() => {
     const fetchSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       setSession(session);
-
-      if (session) {
-        const { data, error } = await supabase
-          .from('users')
-          .select('profile_picture, nickname')
-          .eq('id', session.user.id)
-          .single();
-
-        if (data) {
-          const { user, error: updateError } = await supabase.auth.updateUser({
-            data: {
-              profile_picture: data.profile_picture,
-              nickname: data.nickname,
-            },
-          });
-        }
-      }
     };
     fetchSession();
   }, []);
 
+  // 게시글과 카테고리 데이터를 가져오는 useEffect
   useEffect(() => {
     const fetchPostsAndCategories = async () => {
-      setLoading(true);
       try {
         const { data: postsData, error: postsError } = await supabase.from('posts').select('*');
         if (postsError) throw postsError;
@@ -53,23 +35,21 @@ const Index = () => {
         setCategories(categoriesData);
       } catch (error) {
         console.error('게시글 및 카테고리 로드 실패:', error.message);
-      } finally {
-        setLoading(false);
       }
     };
     fetchPostsAndCategories();
   }, []);
 
   const handleCategorySelect = (category) => {
-    if (selectedCategory.includes(category)) {
-      setSelectedCategory(selectedCategory.filter((cat) => cat !== category));
-    } else {
-      setSelectedCategory([...selectedCategory, category]);
-    }
+    setSelectedCategory(prevSelected => 
+      prevSelected.includes(category)
+        ? prevSelected.filter(cat => cat !== category)
+        : [...prevSelected, category]
+    );
   };
 
   const handleLike = async (postId, currentLikes) => {
-    if (!session || !session.user) {
+    if (!session) {
       alert("로그인이 필요합니다!");
       return;
     }
@@ -96,8 +76,8 @@ const Index = () => {
 
       if (!unlikeError) {
         await supabase.from("posts").update({ likes: currentLikes - 1 }).eq("id", postId);
-        setPosts((prevPosts) =>
-          prevPosts.map((post) =>
+        setPosts(prevPosts =>
+          prevPosts.map(post =>
             post.id === postId ? { ...post, likes: currentLikes - 1 } : post
           )
         );
@@ -109,8 +89,8 @@ const Index = () => {
 
       if (!likeError) {
         await supabase.from("posts").update({ likes: currentLikes + 1 }).eq("id", postId);
-        setPosts((prevPosts) =>
-          prevPosts.map((post) =>
+        setPosts(prevPosts =>
+          prevPosts.map(post =>
             post.id === postId ? { ...post, likes: currentLikes + 1 } : post
           )
         );
@@ -125,8 +105,8 @@ const Index = () => {
       .eq("id", postId);
 
     if (!error) {
-      setPosts((prevPosts) =>
-        prevPosts.map((post) =>
+      setPosts(prevPosts =>
+        prevPosts.map(post =>
           post.id === postId ? { ...post, downloads: currentDownloads + 1 } : post
         )
       );
@@ -148,19 +128,16 @@ const Index = () => {
     }
   };
 
-  const sortedPosts = [...posts].sort((a, b) => {
-    if (sortType === 'latest') return new Date(b.created_at) - new Date(a.created_at);
-    if (sortType === 'popular') return (b.likes || 0) - (a.likes || 0);
-    if (sortType === 'comments') return (b.comments || 0) - (a.comments || 0);
-    if (sortType === 'downloads') return (b.downloads || 0) - (a.downloads || 0);
-    return 0;
+  // 게시글 정렬
+  const sortedPosts = posts.sort((a, b) => {
+    return new Date(b.created_at) - new Date(a.created_at);
   });
 
-  const filteredPosts = sortedPosts
-    .filter((post) => post.title.toLowerCase().includes(searchQuery.toLowerCase())) // 먼저 검색어 필터링
-    .filter((post) => 
-      selectedCategory.length === 0 || selectedCategory.some(category => post.category.includes(category))
-    ); // 카테고리 필터링
+  // 검색 및 카테고리 필터링
+  const filteredPosts = sortedPosts.filter((post) => 
+    post.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
+    (selectedCategory.length === 0 || selectedCategory.some(category => post.category.includes(category)))
+  );
 
   return (
     <div className={styles.container}>

@@ -153,7 +153,9 @@ const EditPost = () => {
       <label>카테고리</label>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginBottom: '10px' }}>
         {categories.map((cat) => (
-          <span key={cat.id} onClick={() => handleCategoryToggle(cat.name)} style={{ background: selectedCategories.includes(cat.name) ? '#0070f3' : '#ddd', color: selectedCategories.includes(cat.name) ? 'white' : 'black', padding: '8px 12px', borderRadius: '20px', cursor: 'pointer', fontSize: '14px' }}>{cat.name}</span>
+          <span key={cat.id} onClick={() => handleCategoryToggle(cat.name)} style={{ background: selectedCategories.includes(cat.name) ? '#0070f3' : '#ddd', color: selectedCategories.includes(cat.name) ? 'white' : 'black', padding: '8px 12px', borderRadius: '20px', cursor: 'pointer', fontSize: '14px' }}>
+            {cat.name}
+          </span>
         ))}
       </div>
 

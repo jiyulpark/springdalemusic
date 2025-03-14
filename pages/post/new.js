@@ -11,7 +11,7 @@ const NewPost = () => {
   const [thumbnail, setThumbnail] = useState(null);
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [errorMsg, setErrorMsg] = useState(''); // ✅ 사용되지 않는 error 변수 문제 해결
   const [showConfirm, setShowConfirm] = useState(false);
   const router = useRouter();
 
@@ -34,17 +34,17 @@ const NewPost = () => {
     const selectedFiles = [...e.target.files];
     const invalidFiles = selectedFiles.filter((file) => {
       const fileExtension = file.name.split('.').pop().toLowerCase();
-      return !allowedExtensions.includes(fileExtension);  // 허용되지 않는 확장자일 경우
+      return !allowedExtensions.includes(fileExtension); // 허용되지 않는 확장자일 경우
     });
 
-    // 만약 허용되지 않는 파일이 있으면 경고를 출력하고
+    // ✅ 허용되지 않는 파일이 있으면 에러 메시지 설정
     if (invalidFiles.length > 0) {
-      setError('AM2DATA, AM2, AM3DATA, ZIP 확장자만 첨부할 수 있습니다.');
+      setErrorMsg('AM2DATA, AM2, AM3DATA, ZIP 확장자만 첨부할 수 있습니다.');
     } else {
-      setError('');  // 파일이 유효하면 오류 메시지 초기화
+      setErrorMsg(''); // 유효하면 에러 메시지 초기화
     }
 
-    setFiles(selectedFiles);  // 파일 상태 업데이트
+    setFiles(selectedFiles); // 파일 상태 업데이트
   };
 
   const handleCategoryToggle = (category) => {
@@ -55,11 +55,11 @@ const NewPost = () => {
 
   const handleCreatePost = async () => {
     setLoading(true);
-    setError('');
+    setErrorMsg('');
 
-    // 제목과 내용이 비었는지 체크
+    // ✅ 제목과 내용이 비었는지 체크
     if (!title || !content) {
-      setError('제목과 내용은 필수 입력 항목입니다.');
+      setErrorMsg('제목과 내용은 필수 입력 항목입니다.');
       setLoading(false);
       return;
     }
@@ -105,7 +105,7 @@ const NewPost = () => {
       if (insertPostError) throw insertPostError;
       router.push('/');
     } catch (error) {
-      setError('게시글 작성 중 오류가 발생했습니다. 다시 시도해주세요.');
+      setErrorMsg('게시글 작성 중 오류가 발생했습니다. 다시 시도해주세요.');
     } finally {
       setLoading(false);
     }
@@ -125,7 +125,7 @@ const NewPost = () => {
   return (
     <div style={{ maxWidth: '600px', margin: '40px auto', padding: '20px', background: '#fff', borderRadius: '10px', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)' }}>
       <h1>새 게시글 작성</h1>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+      {errorMsg && <p style={{ color: 'red' }}>{errorMsg}</p>} {/* ✅ error → errorMsg로 변경 */}
       <input type="text" placeholder="제목" value={title} onChange={(e) => setTitle(e.target.value)} style={{ width: '100%', padding: '10px', marginBottom: '10px' }} />
       <label>이미지 첨부</label>
       <input type="file" onChange={handleThumbnailChange} style={{ marginBottom: '10px' }} />
@@ -140,10 +140,7 @@ const NewPost = () => {
       </div>
       <label>첨부파일</label>
       <input type="file" multiple onChange={handleFileChange} style={{ marginBottom: '10px' }} />
-      
-      {/* 파일 첨부 후 경고 문구 표시 */}
-      {error && <p style={{ color: 'red', marginTop: '10px' }}>{error}</p>}
-      
+      {errorMsg && <p style={{ color: 'red', marginTop: '10px' }}>{errorMsg}</p>} {/* ✅ 중복된 error 사용 해결 */}
       <input type="text" placeholder="해시태그 (쉼표로 구분)" value={hashtags} onChange={(e) => setHashtags(e.target.value)} style={{ width: '100%', padding: '10px', marginBottom: '10px' }} />
       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '20px' }}>
         <button onClick={handleCreatePost} disabled={loading} style={{ padding: '10px', background: '#28a745', color: '#fff', borderRadius: '5px', border: 'none', cursor: 'pointer' }}>
@@ -153,17 +150,6 @@ const NewPost = () => {
           목록으로 돌아가기
         </button>
       </div>
-      {showConfirm && (
-        <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'white', padding: '20px', borderRadius: '10px', boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.1)' }}>
-          <p>작성된 모든 내용이 사라집니다. 계속하시겠습니까?</p>
-          <button onClick={() => confirmCancel(true)} style={{ marginRight: '10px', padding: '10px', background: '#dc3545', color: 'white', borderRadius: '5px', border: 'none' }}>
-            나가기
-          </button>
-          <button onClick={() => confirmCancel(false)} style={{ padding: '10px', background: '#0070f3', color: 'white', borderRadius: '5px', border: 'none' }}>
-            작성 계속
-          </button>
-        </div>
-      )}
     </div>
   );
 };
