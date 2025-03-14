@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../../lib/supabase';
+import Image from 'next/image';
 
 // URL을 감지하여 링크로 변환하는 함수
 const linkifyContent = (content) => {
@@ -100,8 +101,14 @@ const PostDetail = () => {
       <p><strong>작성자:</strong> {post.user_id}</p>
 
       {post.thumbnail_url && (
-        <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-          <img src={supabase.storage.from('thumbnails').getPublicUrl(post.thumbnail_url).data.publicUrl} alt="Thumbnail" style={{ maxWidth: '100%', borderRadius: '10px' }} />
+        <div style={{ textAlign: 'center', marginBottom: '20px', position: 'relative', width: '100%', height: '300px' }}>
+          <Image 
+            src={supabase.storage.from('thumbnails').getPublicUrl(post.thumbnail_url).data.publicUrl} 
+            alt="Thumbnail" 
+            layout="fill" 
+            objectFit="cover" 
+            style={{ borderRadius: '10px' }}
+          />
         </div>
       )}
 
