@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../../lib/supabase';
+import Image from 'next/image';
 
 const EditPost = () => {
   const router = useRouter();
@@ -141,8 +142,14 @@ const EditPost = () => {
       
       <label>썸네일 수정</label>
       {post.thumbnail_url && (
-        <div style={{ marginBottom: '10px' }}>
-          <img src={supabase.storage.from('thumbnails').getPublicUrl(post.thumbnail_url).data.publicUrl} alt="Thumbnail" style={{ maxWidth: '100%', borderRadius: '10px' }} />
+        <div style={{ marginBottom: '10px', position: 'relative', width: '100%', height: '300px' }}>
+          <Image 
+            src={supabase.storage.from('thumbnails').getPublicUrl(post.thumbnail_url).data.publicUrl} 
+            alt="Thumbnail" 
+            layout="fill" 
+            objectFit="cover" 
+            style={{ borderRadius: '10px' }}
+          />
         </div>
       )}
       <input type="file" onChange={handleThumbnailChange} style={{ marginBottom: '10px' }} />
