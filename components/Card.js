@@ -1,13 +1,13 @@
 import React from 'react';
+import Image from 'next/image'; // ✅ Next.js 최적화된 Image 컴포넌트 사용
 import { supabase } from '../lib/supabase';
 import styles from '../styles/Card.module.css';
 
 // 링크를 감지하여 <a> 태그로 변환하는 함수
 const convertLinksToClickable = (content) => {
-  const urlRegex = /(https?:\/\/[^\s]+)/g;  // URL 정규식
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
   return content.split(' ').map((word, index) => {
     if (word.match(urlRegex)) {
-      // 링크라면 <a> 태그로 감싸서 클릭 가능하게 만든다
       return (
         <a
           key={index}
@@ -26,7 +26,6 @@ const convertLinksToClickable = (content) => {
 
 // 줄바꿈과 링크 변환을 처리하는 함수
 const formatContent = (content) => {
-  // 엔터(\n)를 <br /> 태그로 변환
   return content.split('\n').map((line, index) => (
     <React.Fragment key={index}>
       {convertLinksToClickable(line)}
@@ -36,8 +35,6 @@ const formatContent = (content) => {
 };
 
 const Card = ({ post, handleLike, handleDownload, author }) => {
-  const categories = post.category ? post.category.split(',') : [];
-
   return (
     <div key={post.id} className={styles.card}>
       {/* 제목 - 썸네일 위로 이동 */}
@@ -48,12 +45,14 @@ const Card = ({ post, handleLike, handleDownload, author }) => {
         {post.title}
       </h2>
 
-      {/* 썸네일 - 제목 아래로 */}
+      {/* 썸네일 - Next.js Image 최적화 적용 */}
       {post.thumbnail_url && (
-        <img 
-          src={supabase.storage.from('thumbnails').getPublicUrl(post.thumbnail_url).data.publicUrl} 
-          alt="thumbnail" 
-          className={styles['card-img']} 
+        <Image
+          src={supabase.storage.from('thumbnails').getPublicUrl(post.thumbnail_url).data.publicUrl}
+          alt="thumbnail"
+          width={300} // ✅ 너비 지정
+          height={200} // ✅ 높이 지정
+          className={styles['card-img']}
         />
       )}
 
@@ -96,10 +95,16 @@ const Card = ({ post, handleLike, handleDownload, author }) => {
         </div>
       )}
 
-      {/* 작성자 정보 */}
+      {/* 작성자 정보 - Next.js Image 최적화 적용 */}
       <div className={styles['card-author']}>
         {post.author_image ? (
-          <img src={post.author.image} className={styles['author-image']} alt="Author" />
+          <Image 
+            src={post.author.image} 
+            width={30} // ✅ 너비 지정
+            height={30} // ✅ 높이 지정
+            className={styles['author-image']} 
+            alt="Author" 
+          />
         ) : (
           <div className={styles['author-placeholder']}>
             {author.name ? author.name[0] : 'A'}
