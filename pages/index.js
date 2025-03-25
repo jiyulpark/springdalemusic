@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';  // React 훅 가져오기
+import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import Link from 'next/link';
 import Card from '../components/Card';
 import styles from '../styles/index.module.css';
 
 const Home = () => {
+  const [session, setSession] = useState(null); // ✅ 세션 상태 추가
   const [posts, setPosts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -12,9 +13,26 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedCategories, setSelectedCategories] = useState([]);
-  const [sortOption, setSortOption] = useState('latest');  // 기본값 최신순
+  const [sortOption, setSortOption] = useState('latest');
   const postsPerPage = 20;
 
+  // ✅ 세션 초기화 및 로그인/로그아웃 감지
+  useEffect(() => {
+    const getSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setSession(session);
+    };
+
+    getSession();
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => listener.subscription.unsubscribe();
+  }, []);
+
+  // ✅ 게시글 + 카테고리 로드
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -33,17 +51,13 @@ const Home = () => {
         if (categoriesError) throw categoriesError;
         setCategories(categoriesData || []);
 
-        const { data: likesData, error: likesError } = await supabase.from('likes').select('post_id');
-        if (likesError) throw likesError;
-
+        const { data: likesData } = await supabase.from('likes').select('post_id');
         const likesMap = {};
         likesData?.forEach(like => {
           likesMap[like.post_id] = (likesMap[like.post_id] || 0) + 1;
         });
 
-        const { data: commentsData, error: commentsError } = await supabase.from('comments').select('post_id');
-        if (commentsError) throw commentsError;
-
+        const { data: commentsData } = await supabase.from('comments').select('post_id');
         const commentsMap = {};
         commentsData?.forEach(comment => {
           commentsMap[comment.post_id] = (commentsMap[comment.post_id] || 0) + 1;
@@ -64,6 +78,7 @@ const Home = () => {
       }
     };
 
+    // ✅ 세션 유무와 관계없이 fetchData는 항상 실행
     fetchData();
   }, []);
 
