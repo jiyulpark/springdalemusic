@@ -1,0 +1,35 @@
+{
+  "name": "springdalebbs",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@supabase/auth-ui-react": "^0.4.7",
+    "@supabase/supabase-js": "^2.49.1",
+    "next": "15.2.2"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3",
+    "@tailwindcss/postcss": "^4",
+    "eslint": "^9",
+    "eslint-config-next": "15.2.2",
+    "tailwindcss": "^4"
+  },
+  "resolutions": {
+    "react": "19.0.0",
+    "react-dom": "19.0.0"
+
+  },
+  "overrides": {
+    "react": "19.0.0",
+    "react-dom": "19.0.0"
+  
+
+  }
+  
+}

@@ -1,0 +1,206 @@
+.container {
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 20px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+  
+  .title {
+    font-size: 24px;
+    font-weight: bold;
+  }
+  
+  .content {
+    font-size: 18px;
+    color: #333;
+  }
+  
+  .likeButton, .backButton, .editButton, .deleteButton, .commentButton {
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    margin: 5px;
+    cursor: pointer;
+  }
+  
+  .likeButton { background: #ff4d4d; color: white; }
+  .backButton { background: #0070f3; color: white; }
+  .editButton { background: #28a745; color: white; }
+  .deleteButton { background: #dc3545; color: white; }
+  .commentButton { background: #0070f3; color: white; }
+  
+  .commentInput {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 10px;
+  }
+  
+  .commentList {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .commentItem {
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+  }
+  
+  .buttonContainer {
+    display: flex;        /* Flexbox 적용 */
+    gap: 10px;           /* 버튼 사이의 간격 */
+    align-items: center; /* 세로 정렬을 중앙으로 */
+    justify-content: flex-start; /* 왼쪽 정렬 (필요에 따라 변경 가능) */
+  }
+  
+  /* 개별 버튼 스타일 (선택 사항) */
+  .likeButton,
+  .editButton,
+  .deleteButton,
+  .backButton {
+    padding: 10px 15px;
+    font-size: 14px;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+  }
+  
+  /* 필요하면 버튼 간 크기 조절 */
+  .likeButton {
+    background-color: #ff4d4d;
+    color: white;
+  }
+  
+  .editButton {
+    background-color: #007bff;
+    color: white;
+  }
+  
+  .deleteButton {
+    background-color: #dc3545;
+    color: white;
+  }
+  
+  .backButton {
+    background-color: #6c757d;
+    color: white;
+  }
+
+  .thumbnailContainer {
+    margin: 10px 0;
+    display: flex;
+    justify-content: center;
+  }
+  
+  .thumbnailImage {
+    width: 500px; /* 필요에 따라 크기 조정 */
+    height: auto;
+    object-fit: cover;
+    border-radius: 5px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .categoryBadgeContainer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 20px 0;
+  }
+  
+  .categoryBadge {
+    background-color: #0070f3;
+    color: white;
+    padding: 6px 12px;
+    font-size: 14px;
+    border-radius: 20px;
+    font-weight: 500;
+    transition: background-color 0.3s ease;
+  }
+  
+  .categoryBadge:hover {
+    background-color: #005bb5;
+    cursor: default;
+  }
+  
+  .author {
+    display: flex;
+    align-items: center;
+    margin-top: 10px;
+    margin-bottom: 10px;
+  }
+  
+  .authorImage {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 10px;
+  }
+  
+  .authorName {
+    font-weight: bold;
+    font-size: 15px;
+    color: #0070f3;
+  }
+
+  /* PostDetail.module.css에 추가 */
+.commentHeader {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.commentAvatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  margin-right: 8px;
+  object-fit: cover;
+}
+
+.commentAuthor {
+  font-weight: bold;
+  margin-right: 8px;
+}
+
+.commentDate {
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.commentContent {
+  margin-bottom: 8px;
+}
+  
+/* PostDetail.module.css */
+
+/* 파일 입력 필드 숨기고 버튼 스타일로 만들기 */
+.file-input {
+  display: none; /* 기본 파일 입력 필드 숨기기 */
+}
+
+.file-input-label {
+  display: inline-block;
+  padding: 10px 20px;
+  background-color: #0070f3;
+  color: white;
+  font-weight: bold;
+  border-radius: 5px;
+  cursor: pointer;
+  text-align: center;
+  border: none;
+  font-size: 16px;
+}
+
+.file-input-label:hover {
+  background-color: #005bb5;
+}
+
+.content {
+  white-space: pre-wrap;
+  font-size: 16px;
+  line-height: 1.6;
+  color: #333;
+  word-break: break-word;
+}
