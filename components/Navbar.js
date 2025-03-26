@@ -14,6 +14,7 @@ const Navbar = () => {
   useEffect(() => {
     const fetchSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
+      console.log("🚀 세션 정보:", session); // ✅ 추가
       setSession(session);
 
       if (session) {
@@ -27,6 +28,7 @@ const Navbar = () => {
 
     // ✅ 실시간 세션 상태 변경 감지
     const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      console.log("🌀 auth 상태 변경:", _event, session); // ✅ 추가
       setSession(session);
 
       if (session) {

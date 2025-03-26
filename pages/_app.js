@@ -9,7 +9,7 @@ import { supabase } from '../lib/supabase';
 function MyApp({ Component, pageProps }) {
   const router = useRouter();
 
-  // ✅ 페이지 이동 시 수동으로 GA page_view 이벤트 전송
+  // ✅ 페이지 이동 시 Google Analytics 이벤트 (선택사항)
   useEffect(() => {
     const handleRouteChange = (url) => {
       if (typeof window !== 'undefined' && window.gtag) {
@@ -22,19 +22,7 @@ function MyApp({ Component, pageProps }) {
     return () => router.events.off('routeChangeComplete', handleRouteChange);
   }, [router]);
 
-  // ✅ 세션 에러 감지 시 초기화 (무한 로딩 방지용)
-  useEffect(() => {
-    const checkSession = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error) {
-        console.warn('🧹 세션 에러 → 초기화 + 새로고침');
-        await supabase.auth.signOut();
-        localStorage.removeItem('supabase.auth.token');
-        location.reload();
-      }
-    };
-    checkSession();
-  }, []);
+  // ❌ 삭제됨: 세션 체크 후 signOut + reload → 무한 루프 원인이 됨
 
   return (
     <>
