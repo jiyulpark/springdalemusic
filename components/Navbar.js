@@ -1,4 +1,3 @@
-// components/Navbar.js
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import styles from '../styles/Navbar.module.css';
@@ -9,12 +8,21 @@ const Navbar = () => {
   const { session, role, loading } = useSession();
   const router = useRouter();
 
+  // 로딩 중일 때 빈 컴포넌트 또는 최소한의 스켈레톤 렌더링
+  if (loading) {
+    return (
+      <nav className={styles.navbar}>
+        <div className={styles.navCenter}>
+          <span>로딩 중...</span>
+        </div>
+      </nav>
+    );
+  }
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push('/auth/login');
   };
-
-  if (loading) return null; // ✅ 세션 로딩 중일 땐 렌더링 생략
 
   return (
     <nav className={styles.navbar}>
