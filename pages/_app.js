@@ -3,57 +3,42 @@
 import '../styles/globals.css';
 import Navbar from '../components/Navbar';
 import { useEffect } from 'react';
+import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabase';
 
 function MyApp({ Component, pageProps }) {
-  // ✅ 1. GA 차단 (fetch + sendBeacon 완전 차단)
+  const router = useRouter();
+
+  // ✅ 페이지 이동 시 수동으로 GA page_view 이벤트 전송
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      // fetch 차단
-      const originalFetch = window.fetch;
-      window.fetch = (...args) => {
-        if (args[0]?.toString().includes('google-analytics.com')) {
-          console.warn('🚫 GA 요청 차단(fetch):', args[0]);
-          return Promise.resolve(new Response(null, { status: 204 }));
-        }
-        return originalFetch(...args);
-      };
+    const handleRouteChange = (url) => {
+      if (typeof window !== 'undefined' && window.gtag) {
+        window.gtag('event', 'page_view', {
+          page_path: url,
+        });
+      }
+    };
+    router.events.on('routeChangeComplete', handleRouteChange);
+    return () => router.events.off('routeChangeComplete', handleRouteChange);
+  }, [router]);
 
-      // sendBeacon 차단
-      const originalBeacon = navigator.sendBeacon;
-      navigator.sendBeacon = (...args) => {
-        if (args[0]?.toString().includes('google-analytics.com')) {
-          console.warn('🚫 GA 요청 차단(sendBeacon):', args[0]);
-          return false;
-        }
-        return originalBeacon.apply(navigator, args);
-      };
-    }
-  }, []);
-
-  // ✅ 2. 세션 에러 발생 시 자동 초기화 (무한 로딩 방지)
+  // ✅ 세션 에러 감지 시 초기화 (무한 로딩 방지용)
   useEffect(() => {
     const checkSession = async () => {
       const { data: { session }, error } = await supabase.auth.getSession();
       if (error) {
-        console.warn('🧹 세션 에러 감지 → 초기화 + 새로고침');
+        console.warn('🧹 세션 에러 → 초기화 + 새로고침');
         await supabase.auth.signOut();
         localStorage.removeItem('supabase.auth.token');
         location.reload();
-      } else {
-        console.log('✅ 세션 정상 또는 비로그인 상태');
       }
     };
-
     checkSession();
   }, []);
 
   return (
     <>
-      {/* ✅ 전역 네비게이션 바 */}
       <Navbar />
-
-      {/* ✅ 라이트 테마 강제 고정 */}
       <style jsx global>{`
         :root {
           color-scheme: light;
@@ -63,8 +48,6 @@ function MyApp({ Component, pageProps }) {
           color: black !important;
         }
       `}</style>
-
-      {/* ✅ 페이지 콘텐츠 */}
       <Component {...pageProps} />
     </>
   );
