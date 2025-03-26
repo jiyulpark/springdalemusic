@@ -6,7 +6,6 @@ import styles from '../styles/Card.module.css';
 const Card = ({ post, categories = [] }) => {
   const [downloadCount, setDownloadCount] = useState(post.downloads || 0);
 
-  // ✅ 다운로드 핸들러
   const handleDownload = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -22,12 +21,10 @@ const Card = ({ post, categories = [] }) => {
 
       const { data } = supabase.storage.from('uploads').getPublicUrl(post.file_urls[0]);
       if (data?.publicUrl) {
-        // ✅ 먼저 창 열기
         window.open(data.publicUrl, '_blank');
 
         const newDownloadCount = downloadCount + 1;
 
-        // ✅ 세션 재확인 후 다운로드 수 업데이트
         const { data: { session: currentSession } } = await supabase.auth.getSession();
         if (currentSession) {
           await supabase
@@ -46,12 +43,10 @@ const Card = ({ post, categories = [] }) => {
     }
   };
 
-  // ✅ 썸네일 URL
   const thumbnailUrl = post.thumbnail_url
     ? supabase.storage.from('thumbnails').getPublicUrl(post.thumbnail_url).data.publicUrl
     : null;
 
-  // ✅ 카테고리 텍스트 표시용
   const postCategories = categories.filter(cat => post.category_ids?.includes(cat.id));
 
   return (
@@ -60,28 +55,31 @@ const Card = ({ post, categories = [] }) => {
         <img src={thumbnailUrl} alt="썸네일" className={styles.thumbnail} />
       )}
 
-      <h3 className={styles.title}>
-        <Link href={`/post/${post.id}`}>{post.title}</Link>
-      </h3>
+      <div className={styles.content}>
+        <Link href={`/post/${post.id}`} className={styles.title}>
+          {post.title}
+        </Link>
 
-      <div className={styles.meta}>
-        <span>❤️ {post.like_count || 0}</span>
-        <span>💬 {post.comment_count || 0}</span>
-        <span>⬇️ {downloadCount}</span>
-      </div>
+        <div className={styles.categoryContainer}>
+          {postCategories.map(cat => (
+            <span key={cat.id} className={styles.category}>
+              {cat.name}
+            </span>
+          ))}
+        </div>
 
-      <div className={styles.categories}>
-        {postCategories.map(cat => (
-          <span key={cat.id} className={styles.categoryTag}>
-            {cat.name}
-          </span>
-        ))}
-      </div>
+        <div className={styles.meta}>
+          <span>❤️ {post.like_count || 0}</span>
+          <span>💬 {post.comment_count || 0}</span>
+          <span>⬇️ {downloadCount}</span>
+        </div>
 
-      <div className={styles.actions}>
-        <button onClick={handleDownload} className={styles.downloadButton}>
-          📥 다운로드
-        </button>
+        <div className={styles.footer}>
+          <span></span>
+          <button onClick={handleDownload} className={styles.download}>
+            📥 다운로드
+          </button>
+        </div>
       </div>
     </div>
   );
