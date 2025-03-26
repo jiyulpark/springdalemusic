@@ -17,6 +17,10 @@ export default async function handler(
   }
 
   try {
+    // 중요: 비동기 작업을 빠르게 응답
+    res.status(200).json({ success: true });
+
+    // 백그라운드에서 실제 업데이트 수행
     const { error } = await supabase
       .from('posts')
       .update({ 
@@ -24,14 +28,10 @@ export default async function handler(
       })
       .eq('id', postId);
 
-    if (error) throw error;
-
-    res.status(200).json({ success: true });
+    if (error) {
+      console.error('Background download count update error:', error);
+    }
   } catch (error) {
-    console.error('Download count update error:', error);
-    res.status(500).json({ 
-      message: '다운로드 카운트 업데이트 실패', 
-      error: error.message 
-    });
+    console.error('Unexpected error:', error);
   }
 }

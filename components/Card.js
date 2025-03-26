@@ -3,7 +3,6 @@ import { useState } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabase';
 import styles from '../styles/Card.module.css';
-import axios from 'axios';
 
 const Card = ({ post, categories }) => {
   const router = useRouter();
@@ -35,16 +34,31 @@ const Card = ({ post, categories }) => {
         window.open(data.publicUrl, '_blank');
 
         // 3. 백그라운드에서 다운로드 카운트 업데이트 (비차단)
-        try {
-          await axios.post('/api/download', { 
-            postId: post.id, 
-            currentDownloads: downloadCount + 1 
-          });
-        } catch (error) {
-          console.error('다운로드 카운트 업데이트 실패:', error);
-          // 실패 시 원복
-          setDownloadCount(prev => prev - 1);
-        }
+        const updateDownloadCount = async () => {
+          try {
+            const response = await fetch('/api/download', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ 
+                postId: post.id, 
+                currentDownloads: downloadCount + 1 
+              })
+            });
+
+            if (!response.ok) {
+              throw new Error('Download count update failed');
+            }
+          } catch (error) {
+            console.error('다운로드 카운트 업데이트 실패:', error);
+            // 실패 시 원복
+            setDownloadCount(prev => prev - 1);
+          }
+        };
+
+        // 중요: 비동기 작업을 즉시 트리거하지만 대기하지 않음
+        updateDownloadCount();
       } else {
         alert('파일을 다운로드할 수 없습니다.');
       }
