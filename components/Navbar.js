@@ -5,6 +5,7 @@ import Link from 'next/link';
 import styles from '../styles/Navbar.module.css';
 import { getUserRole, ensureUserInDatabase } from '../lib/auth'; // ✅ import 방식 수정
 
+
 const Navbar = () => {
   const [session, setSession] = useState(null);
   const [role, setRole] = useState('guest'); // ✅ 기본 권한: guest (비회원)
