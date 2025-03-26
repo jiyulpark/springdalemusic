@@ -1,105 +1,92 @@
-import React, { useState } from 'react';
+// components/Card.js
+import React from 'react';
 import { supabase } from '../lib/supabase';
 import styles from '../styles/Card.module.css';
 
-const Card = ({ post, handleLike, handleDownload, author }) => {
-  const [downloading, setDownloading] = useState(false);
+const Card = ({ post, categories = [], handleLike, handleDownload, author }) => {
+  const thumbnailUrl = post.thumbnail_url
+    ? supabase.storage.from('thumbnails').getPublicUrl(post.thumbnail_url).data.publicUrl
+    : null;
 
-  const categories = post.category ? post.category.split(',') : [];
+  const fileList = post.file_urls || [];
+  const categoryNames = categories
+    .filter(cat => post.category_ids?.includes(cat.id))
+    .map(cat => cat.name);
 
-  const handleSafeDownload = async (fileUrl, fileName) => {
-    try {
-      setDownloading(true);
-      await handleDownload(post.id, post.downloads || 0);
-      window.open(fileUrl, '_blank');
-    } catch (error) {
-      console.error("다운로드 실패:", error);
-      alert("파일 다운로드 중 오류가 발생했습니다.");
-    } finally {
-      setDownloading(false);
-    }
+  const downloadFile = (fileUrl, fileName) => {
+    if (handleDownload) handleDownload(post.id, post.downloads || 0);
+    window.open(fileUrl, '_blank');
   };
 
   return (
-    <div key={post.id} className={styles.card}>
-      <h2 
-        className={styles['card-title']} 
-        onClick={() => window.location.href = `/post/${post.id}`}
-      >
+    <div className={styles.card}>
+      {/* 제목 */}
+      <h2 className={styles['card-title']} onClick={() => window.location.href = `/post/${post.id}`}>
         {post.title}
       </h2>
 
-      {post.thumbnail_url && (
-        <img 
-          src={supabase.storage.from('thumbnails').getPublicUrl(post.thumbnail_url).data.publicUrl} 
-          alt="thumbnail" 
-          className={styles['card-img']} 
+      {/* 썸네일 */}
+      {thumbnailUrl && (
+        <img
+          src={thumbnailUrl}
+          alt="thumbnail"
+          className={styles['card-img']}
+          style={{ width: '100%', height: '180px', objectFit: 'cover', borderRadius: '8px' }}
         />
       )}
 
+      {/* 본문 미리보기 */}
       <p className={styles['card-content']}>
-        {post.content.split(' ').map((word, index) => (
-          word.match(/(https?:\/\/[^\s]+)/) ? (
-            <a 
-              key={index}
-              href={word} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              style={{ color: '#0070f3', textDecoration: 'underline' }}
-            >
-              {word + ' '}
-            </a>
-          ) : `${word} `
-        ))}
+        {post.content.length > 100 ? post.content.slice(0, 100) + '...' : post.content}
       </p>
 
-      {post.file_urls && post.file_urls.length > 0 && (
+      {/* 첨부파일 */}
+      {fileList.length > 0 && (
         <div className={styles['card-file-link']}>
-          {post.file_urls.map((file, index) => {
-            const fileUrl = supabase.storage.from('files').getPublicUrl(file).data.publicUrl;
-            const fileName = post.file_names ? post.file_names[index] : `파일 ${index + 1}`;
+          {fileList.map((file, idx) => {
+            const url = supabase.storage.from('files').getPublicUrl(file).data.publicUrl;
+            const fileName = file.split('/').pop();
             return (
-              <p key={index}>
-                <button 
-                  onClick={() => handleSafeDownload(fileUrl, fileName)} 
-                  disabled={downloading}
-                  className={styles['card-file-link']}
-                >
-                  📥 {fileName}
-                </button>
+              <p key={idx}>
+                <a onClick={() => downloadFile(url, fileName)} className={styles['card-file-link']}>
+                  📎 {fileName}
+                </a>
               </p>
             );
           })}
         </div>
       )}
 
-      {post.category && (
+      {/* 카테고리 표시 */}
+      {categoryNames.length > 0 && (
         <div className={styles['card-category-container']}>
-          {categories.map((category, index) => (
-            <span key={index} className={styles['card-category']}>
-              {category}
+          {categoryNames.map((name, idx) => (
+            <span key={idx} className={styles['card-category']}>
+              {name}
             </span>
           ))}
         </div>
       )}
 
+      {/* 작성자 정보 */}
       <div className={styles['card-author']}>
-        {author.image ? (
-          <img src={author.image} className={styles['author-image']} alt="Author" />
+        {author?.image ? (
+          <img src={author.image} className={styles['author-image']} alt="작성자" />
         ) : (
           <div className={styles['author-placeholder']}>
-            {author.name ? author.name[0] : 'A'}
+            {author?.name ? author.name[0] : 'A'}
           </div>
         )}
-        <span>{author.name || '스프링데일뮤직'}</span>
+        <span>{author?.name || '익명'}</span>
       </div>
 
+      {/* 좋아요, 댓글, 다운로드 수 */}
       <div className={styles['card-buttons']}>
-        <button onClick={() => handleLike(post.id, post.likes || 0)} disabled={downloading}>
-          👍 {post.likes || 0}
+        <button onClick={() => handleLike && handleLike(post.id, post.like_count || 0)}>
+          👍 {post.like_count || 0}
         </button>
-        <span>💬 {post.comments || 0}</span>
-        <span>📥 다운로드 {post.downloads || 0}</span>
+        <span>💬 {post.comment_count || 0}</span>
+        <span>📥 {post.downloads || 0}</span>
       </div>
     </div>
   );
