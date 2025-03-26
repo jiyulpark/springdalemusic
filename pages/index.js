@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import Link from 'next/link';
 import Card from '../components/Card';
 import styles from '../styles/index.module.css';
 
@@ -17,37 +16,37 @@ const Home = () => {
   const [sortOption, setSortOption] = useState('latest');
   const postsPerPage = 20;
 
-  // 세션 초기화 및 로그인/로그아웃 감지
   useEffect(() => {
-    const getSession = async () => {
+    let mounted = true;
+
+    const initSession = async () => {
       try {
         const { data } = await supabase.auth.getSession();
-        setSession(data.session);
+        if (mounted) setSession(data.session);
       } catch (err) {
         console.error('세션 가져오기 실패:', err);
-        setError('세션을 불러오는 중 오류가 발생했습니다.');
+        if (mounted) setError('세션 불러오기 실패');
       }
     };
 
-    getSession();
+    initSession();
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (mounted) setSession(session);
     });
 
     return () => {
-      listener.subscription.unsubscribe();
+      mounted = false;
+      authListener.subscription.unsubscribe();
     };
   }, []);
 
-  // 게시글 + 카테고리 로드
   useEffect(() => {
+    let mounted = true;
+
     const fetchData = async () => {
       setLoading(true);
-      setError(null);
-
       try {
-        // 병렬 데이터 페칭
         const [
           { data: postsData, error: postsError },
           { data: categoriesData, error: categoriesError },
@@ -67,8 +66,7 @@ const Home = () => {
           supabase.from('comments').select('post_id')
         ]);
 
-        if (postsError) throw postsError;
-        if (categoriesError) throw categoriesError;
+        if (postsError || categoriesError) throw postsError || categoriesError;
 
         const likesMap = likesData?.reduce((acc, like) => {
           acc[like.post_id] = (acc[like.post_id] || 0) + 1;
@@ -82,25 +80,31 @@ const Home = () => {
 
         const updatedPosts = postsData.map(post => ({
           ...post,
-          like_count: likesMap[post.id] || 0,
-          comment_count: commentsMap[post.id] || 0,
+          like_count: likesMap?.[post.id] || 0,
+          comment_count: commentsMap?.[post.id] || 0,
         }));
 
-        setPosts(updatedPosts);
-        setCategories(categoriesData || []);
-        setFilteredPosts(updatedPosts);
-      } catch (error) {
-        console.error("데이터 로딩 실패:", error.message);
-        setError('데이터를 불러오는 중 오류가 발생했습니다.');
+        if (mounted) {
+          setPosts(updatedPosts);
+          setCategories(categoriesData || []);
+          setFilteredPosts(updatedPosts);
+        }
+      } catch (err) {
+        console.error("데이터 로딩 실패:", err.message);
+        if (mounted) setError('데이터 로딩 실패');
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     };
 
     fetchData();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
-  // 필터링 및 정렬 로직
+  // 필터링 및 정렬
   useEffect(() => {
     let filtered = [...posts];
 
@@ -129,32 +133,70 @@ const Home = () => {
     setCurrentPage(1);
   }, [searchQuery, selectedCategories, sortOption, posts]);
 
-  // 카테고리 토글 함수
   const toggleCategory = (catId) => {
     setSelectedCategories(prev =>
-      prev.includes(catId)
-        ? prev.filter(id => id !== catId)
-        : [...prev, catId]
+      prev.includes(catId) ? prev.filter(id => id !== catId) : [...prev, catId]
     );
   };
 
-  // 페이지네이션 계산
   const indexOfLastPost = currentPage * postsPerPage;
   const indexOfFirstPost = indexOfLastPost - postsPerPage;
   const currentPosts = filteredPosts.slice(indexOfFirstPost, indexOfLastPost);
   const totalPages = Math.ceil(filteredPosts.length / postsPerPage);
 
-  // 에러 상태 처리
+  const handleDownload = async (postId, currentDownloads) => {
+    try {
+      await supabase
+        .from("posts")
+        .update({ downloads: currentDownloads + 1 })
+        .eq("id", postId);
+    } catch (e) {
+      console.error("다운로드 증가 실패", e.message);
+    }
+  };
+
+  const handleLike = async (postId, currentLikes) => {
+    if (!session || !session.user) {
+      alert("로그인이 필요합니다");
+      return;
+    }
+
+    try {
+      const userId = session.user.id;
+      const { data: existingLike, error } = await supabase
+        .from("likes")
+        .select("*")
+        .eq("post_id", postId)
+        .eq("user_id", userId)
+        .single();
+
+      if (error && error.code !== "PGRST116") throw error;
+
+      if (existingLike) {
+        await supabase.from("likes").delete().eq("post_id", postId).eq("user_id", userId);
+        setPosts(prev =>
+          prev.map(post =>
+            post.id === postId ? { ...post, like_count: post.like_count - 1 } : post
+          )
+        );
+      } else {
+        await supabase.from("likes").insert([{ post_id: postId, user_id: userId }]);
+        setPosts(prev =>
+          prev.map(post =>
+            post.id === postId ? { ...post, like_count: post.like_count + 1 } : post
+          )
+        );
+      }
+    } catch (err) {
+      console.error("좋아요 처리 실패:", err.message);
+    }
+  };
+
   if (error) {
     return (
       <div className={styles.container}>
-        <p style={{ color: 'red', textAlign: 'center' }}>
-          {error}
-          <br />
-          <button onClick={() => window.location.reload()}>
-            다시 시도하기
-          </button>
-        </p>
+        <p style={{ color: 'red', textAlign: 'center' }}>{error}</p>
+        <button onClick={() => window.location.reload()}>다시 시도</button>
       </div>
     );
   }
@@ -207,9 +249,22 @@ const Home = () => {
         <p style={{ textAlign: 'center' }}>게시물이 없습니다.</p>
       ) : (
         <div className={styles.grid}>
-          {currentPosts.map(post => (
-            <Card key={post.id} post={post} categories={categories} />
-          ))}
+          {currentPosts.map(post => {
+            const authorInfo = {
+              name: post.users?.nickname || '작성자',
+              image: post.users?.profile_picture || null
+            };
+            return (
+              <Card 
+                key={post.id} 
+                post={post} 
+                categories={categories}
+                handleLike={handleLike}
+                handleDownload={handleDownload}
+                author={authorInfo}
+              />
+            );
+          })}
         </div>
       )}
 
@@ -219,7 +274,10 @@ const Home = () => {
             <button
               key={index + 1}
               className={`${styles.pageButton} ${currentPage === index + 1 ? styles.activePage : ''}`}
-              onClick={() => setCurrentPage(index + 1)}
+              onClick={() => {
+                setCurrentPage(index + 1);
+                window.scrollTo(0, 0); // 페이지 이동 시 스크롤 상단으로
+              }}
             >
               {index + 1}
             </button>
