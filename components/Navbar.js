@@ -1,3 +1,4 @@
+// components/Navbar.js
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import styles from '../styles/Navbar.module.css';
@@ -13,19 +14,22 @@ const Navbar = () => {
     router.push('/auth/login');
   };
 
-  if (loading) return null; // 🔥 로딩 중일 땐 아무것도 렌더링하지 않음
+  if (loading) return null; // ✅ 세션 로딩 중일 땐 렌더링 생략
 
   return (
     <nav className={styles.navbar}>
+      {/* 왼쪽 메뉴 */}
       <div className={styles.navLeft}>
         <Link href="/" className={styles.navLink}>홈</Link>
         {session && <Link href="/userinfo" className={styles.navLink}>프로필</Link>}
       </div>
 
+      {/* 중앙 타이틀 */}
       <div className={styles.navCenter}>
         <span className={styles.siteTitle}>스프링데일뮤직 스퀘어문 자료실</span>
       </div>
 
+      {/* 오른쪽 메뉴 */}
       <div className={styles.navRight}>
         {session ? (
           <>
