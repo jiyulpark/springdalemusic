@@ -18,11 +18,7 @@ const Card = ({ post, categories }) => {
 
   const handleDownload = async () => {
     try {
-      if (!session || !session.user) {
-        alert('로그인이 필요합니다!');
-        return;
-      }
-
+     
       if (!post.file_urls || post.file_urls.length === 0) {
         alert('첨부파일이 없습니다.');
         return;

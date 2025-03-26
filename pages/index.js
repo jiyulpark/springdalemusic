@@ -1,11 +1,12 @@
+// pages/index.js
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import Card from '../components/Card';
 import styles from '../styles/index.module.css';
-import { useSession } from '../lib/SessionContext'; // ✅ 전역 세션 사용
+import { useSession } from '../lib/SessionContext';
 
 const Home = () => {
-  const { session, loading: sessionLoading } = useSession(); // ✅ context에서 가져옴
+  const { session, loading: sessionLoading } = useSession();
   const [posts, setPosts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -174,30 +175,90 @@ const Home = () => {
   }
 
   if (loading || sessionLoading) {
-    return <p style={{ textAlign: 'center' }}>로딩 중...</p>;
+    return <p style={{ textAlign: 'center', fontWeight: 'bold' }}>로딩 중...</p>;
   }
 
   return (
     <div className={styles.container}>
-      {/* ... 생략: 검색창, 카테고리, 정렬 등 */}
-      <div className={styles.grid}>
-        {currentPosts.map(post => {
-          const authorInfo = {
-            name: post.users?.nickname || '작성자',
-            image: post.users?.profile_picture || null
-          };
-          return (
-            <Card 
-              key={post.id}
-              post={post}
-              categories={categories}
-              handleLike={handleLike}
-              handleDownload={handleDownload}
-              author={authorInfo}
-            />
-          );
-        })}
+      <input
+        type="text"
+        placeholder="게시글 검색..."
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        className={styles.searchInput}
+      />
+
+      <div className={styles.categoryFilter}>
+        <button
+          className={selectedCategories.length === 0 ? styles.activeCategory : ''}
+          onClick={() => setSelectedCategories([])}
+        >
+          전체
+        </button>
+        {categories.map(cat => (
+          <button
+            key={cat.id}
+            className={selectedCategories.includes(cat.id) ? styles.activeCategory : ''}
+            onClick={() => toggleCategory(cat.id)}
+          >
+            {cat.name}
+          </button>
+        ))}
       </div>
+
+      <div className={styles.sortFilter}>
+        <select 
+          value={sortOption} 
+          onChange={(e) => setSortOption(e.target.value)} 
+          className={styles.sortSelect}
+        >
+          <option value="latest">최신순</option>
+          <option value="likes">좋아요순</option>
+          <option value="downloads">다운로드순</option>
+        </select>
+      </div>
+
+      <h1 className={styles.title}>게시물 목록</h1>
+
+      {currentPosts.length === 0 ? (
+        <p style={{ textAlign: 'center' }}>게시물이 없습니다.</p>
+      ) : (
+        <div className={styles.grid}> 
+          {currentPosts.map(post => {
+            const authorInfo = {
+              name: post.users?.nickname || '작성자',
+              image: post.users?.profile_picture || null
+            };
+            return (
+              <Card 
+                key={post.id} 
+                post={post} 
+                categories={categories}
+                handleLike={handleLike}
+                handleDownload={handleDownload}
+                author={authorInfo}
+              />
+            );
+          })}
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div className={styles.pagination}>
+          {[...Array(totalPages)].map((_, index) => (
+            <button
+              key={index + 1}
+              className={`${styles.pageButton} ${currentPage === index + 1 ? styles.activePage : ''}`}
+              onClick={() => {
+                setCurrentPage(index + 1);
+                window.scrollTo(0, 0); // 페이지 이동 시 스크롤 상단으로
+              }}
+            >
+              {index + 1}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
