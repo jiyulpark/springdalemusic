@@ -5,22 +5,28 @@ import Card from '../components/Card';
 import styles from '../styles/index.module.css';
 
 const Home = () => {
-  const [session, setSession] = useState(null); // ✅ 세션 상태 추가
+  const [session, setSession] = useState(null);
   const [posts, setPosts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredPosts, setFilteredPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [sortOption, setSortOption] = useState('latest');
   const postsPerPage = 20;
 
-  // ✅ 세션 초기화 및 로그인/로그아웃 감지
+  // 세션 초기화 및 로그인/로그아웃 감지
   useEffect(() => {
     const getSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setSession(session);
+      try {
+        const { data } = await supabase.auth.getSession();
+        setSession(data.session);
+      } catch (err) {
+        console.error('세션 가져오기 실패:', err);
+        setError('세션을 불러오는 중 오류가 발생했습니다.');
+      }
     };
 
     getSession();
@@ -29,39 +35,50 @@ const Home = () => {
       setSession(session);
     });
 
-    return () => listener.subscription.unsubscribe();
+    return () => {
+      listener.subscription.unsubscribe();
+    };
   }, []);
 
-  // ✅ 게시글 + 카테고리 로드
+  // 게시글 + 카테고리 로드
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
+      setError(null);
+
       try {
-        const { data: postsData, error: postsError } = await supabase
-          .from('posts')
-          .select(`
-            id, title, content, thumbnail_url, user_id, category_ids, file_urls, downloads,
-            users ( id, nickname, profile_picture )
-          `)
-          .order('created_at', { ascending: false });
+        // 병렬 데이터 페칭
+        const [
+          { data: postsData, error: postsError },
+          { data: categoriesData, error: categoriesError },
+          { data: likesData },
+          { data: commentsData }
+        ] = await Promise.all([
+          supabase
+            .from('posts')
+            .select(`
+              id, title, content, thumbnail_url, user_id, category_ids, 
+              file_urls, downloads, created_at,
+              users ( id, nickname, profile_picture )
+            `)
+            .order('created_at', { ascending: false }),
+          supabase.from('categories').select('*'),
+          supabase.from('likes').select('post_id'),
+          supabase.from('comments').select('post_id')
+        ]);
 
         if (postsError) throw postsError;
-
-        const { data: categoriesData, error: categoriesError } = await supabase.from('categories').select('*');
         if (categoriesError) throw categoriesError;
-        setCategories(categoriesData || []);
 
-        const { data: likesData } = await supabase.from('likes').select('post_id');
-        const likesMap = {};
-        likesData?.forEach(like => {
-          likesMap[like.post_id] = (likesMap[like.post_id] || 0) + 1;
-        });
+        const likesMap = likesData?.reduce((acc, like) => {
+          acc[like.post_id] = (acc[like.post_id] || 0) + 1;
+          return acc;
+        }, {});
 
-        const { data: commentsData } = await supabase.from('comments').select('post_id');
-        const commentsMap = {};
-        commentsData?.forEach(comment => {
-          commentsMap[comment.post_id] = (commentsMap[comment.post_id] || 0) + 1;
-        });
+        const commentsMap = commentsData?.reduce((acc, comment) => {
+          acc[comment.post_id] = (acc[comment.post_id] || 0) + 1;
+          return acc;
+        }, {});
 
         const updatedPosts = postsData.map(post => ({
           ...post,
@@ -70,18 +87,20 @@ const Home = () => {
         }));
 
         setPosts(updatedPosts);
+        setCategories(categoriesData || []);
         setFilteredPosts(updatedPosts);
       } catch (error) {
-        console.error("❌ 데이터 로딩 실패:", error.message);
+        console.error("데이터 로딩 실패:", error.message);
+        setError('데이터를 불러오는 중 오류가 발생했습니다.');
       } finally {
         setLoading(false);
       }
     };
 
-    // ✅ 세션 유무와 관계없이 fetchData는 항상 실행
     fetchData();
   }, []);
 
+  // 필터링 및 정렬 로직
   useEffect(() => {
     let filtered = [...posts];
 
@@ -110,6 +129,7 @@ const Home = () => {
     setCurrentPage(1);
   }, [searchQuery, selectedCategories, sortOption, posts]);
 
+  // 카테고리 토글 함수
   const toggleCategory = (catId) => {
     setSelectedCategories(prev =>
       prev.includes(catId)
@@ -118,10 +138,26 @@ const Home = () => {
     );
   };
 
+  // 페이지네이션 계산
   const indexOfLastPost = currentPage * postsPerPage;
   const indexOfFirstPost = indexOfLastPost - postsPerPage;
   const currentPosts = filteredPosts.slice(indexOfFirstPost, indexOfLastPost);
   const totalPages = Math.ceil(filteredPosts.length / postsPerPage);
+
+  // 에러 상태 처리
+  if (error) {
+    return (
+      <div className={styles.container}>
+        <p style={{ color: 'red', textAlign: 'center' }}>
+          {error}
+          <br />
+          <button onClick={() => window.location.reload()}>
+            다시 시도하기
+          </button>
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.container}>
@@ -152,7 +188,11 @@ const Home = () => {
       </div>
 
       <div className={styles.sortFilter}>
-        <select value={sortOption} onChange={(e) => setSortOption(e.target.value)} className={styles.sortSelect}>
+        <select 
+          value={sortOption} 
+          onChange={(e) => setSortOption(e.target.value)} 
+          className={styles.sortSelect}
+        >
           <option value="latest">최신순</option>
           <option value="likes">좋아요순</option>
           <option value="downloads">다운로드순</option>
