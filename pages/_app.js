@@ -3,7 +3,7 @@
 import '../styles/globals.css';
 import Navbar from '../components/Navbar';
 import { useEffect } from 'react';
-import { supabase } from '../lib/supabase'; // ✅ 세션 초기화용 supabase import
+import { supabase } from '../lib/supabase';
 
 function MyApp({ Component, pageProps }) {
   // ✅ 1. Google Analytics 추적 요청 강제 차단
@@ -20,17 +20,21 @@ function MyApp({ Component, pageProps }) {
     }
   }, []);
 
-  // ✅ 2. 세션 꼬임 초기화 방지 (로딩 실패, 먹통 방지용)
+  // ✅ 2. 세션 에러 발생 시에만 정리 (무한 로딩 방지)
   useEffect(() => {
     const checkSession = async () => {
       const { data: { session }, error } = await supabase.auth.getSession();
-      if (!session || error) {
-        console.warn('🧹 세션 없음 or 에러 → 초기화 + 새로고침');
+
+      if (error) {
+        console.warn('🧹 세션 에러 감지 → 초기화 + 새로고침');
         await supabase.auth.signOut();
         localStorage.removeItem('supabase.auth.token');
         location.reload();
+      } else {
+        console.log('✅ 세션 정상 또는 비로그인 상태');
       }
     };
+
     checkSession();
   }, []);
 
@@ -39,7 +43,7 @@ function MyApp({ Component, pageProps }) {
       {/* ✅ 전역 네비게이션 바 */}
       <Navbar />
 
-      {/* ✅ 라이트 테마를 강제로 적용 (백업용) */}
+      {/* ✅ 라이트 테마를 강제로 적용 */}
       <style jsx global>{`
         :root {
           color-scheme: light;
