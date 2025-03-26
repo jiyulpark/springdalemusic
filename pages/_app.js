@@ -2,8 +2,23 @@
 
 import '../styles/globals.css';
 import Navbar from '../components/Navbar';
+import { useEffect } from 'react';
 
 function MyApp({ Component, pageProps }) {
+  // ✅ Google Analytics 추적 요청 강제 차단
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const originalFetch = window.fetch;
+      window.fetch = (...args) => {
+        if (args[0]?.includes('google-analytics.com')) {
+          console.warn('🚫 GA 요청 차단됨:', args[0]);
+          return Promise.resolve(new Response(null, { status: 204 }));
+        }
+        return originalFetch(...args);
+      };
+    }
+  }, []);
+
   return (
     <>
       {/* ✅ 전역 네비게이션 바 */}
