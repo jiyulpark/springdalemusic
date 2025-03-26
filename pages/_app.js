@@ -3,9 +3,10 @@
 import '../styles/globals.css';
 import Navbar from '../components/Navbar';
 import { useEffect } from 'react';
+import { supabase } from '../lib/supabase'; // ✅ 세션 초기화용 supabase import
 
 function MyApp({ Component, pageProps }) {
-  // ✅ Google Analytics 추적 요청 강제 차단
+  // ✅ 1. Google Analytics 추적 요청 강제 차단
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const originalFetch = window.fetch;
@@ -17,6 +18,20 @@ function MyApp({ Component, pageProps }) {
         return originalFetch(...args);
       };
     }
+  }, []);
+
+  // ✅ 2. 세션 꼬임 초기화 방지 (로딩 실패, 먹통 방지용)
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (!session || error) {
+        console.warn('🧹 세션 없음 or 에러 → 초기화 + 새로고침');
+        await supabase.auth.signOut();
+        localStorage.removeItem('supabase.auth.token');
+        location.reload();
+      }
+    };
+    checkSession();
   }, []);
 
   return (
