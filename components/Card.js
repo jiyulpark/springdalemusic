@@ -1,92 +1,98 @@
-// components/Card.js
-import React from 'react';
+import Link from 'next/link';
+import { useState } from 'react';
+import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabase';
 import styles from '../styles/Card.module.css';
 
-const Card = ({ post, categories = [], handleLike, handleDownload, author }) => {
+const Card = ({ post, categories }) => {
+  const router = useRouter(); // ✅ 반드시 컴포넌트 안에서 선언
+  const [downloadCount, setDownloadCount] = useState(post.downloads ?? 0);
+
+  // 썸네일 URL 계산
   const thumbnailUrl = post.thumbnail_url
-    ? supabase.storage.from('thumbnails').getPublicUrl(post.thumbnail_url).data.publicUrl
+    ? supabase.storage.from('thumbnails').getPublicUrl(post.thumbnail_url).data?.publicUrl
     : null;
 
-  const fileList = post.file_urls || [];
-  const categoryNames = categories
-    .filter(cat => post.category_ids?.includes(cat.id))
-    .map(cat => cat.name);
+  // 카테고리 매칭
+  const matchedCategories = categories?.filter(cat => post.category_ids?.includes(cat.id)) || [];
 
-  const downloadFile = (fileUrl, fileName) => {
-    if (handleDownload) handleDownload(post.id, post.downloads || 0);
-    window.open(fileUrl, '_blank');
+  // 다운로드 처리
+  const handleDownload = async () => {
+    try {
+      if (!post.file_urls || post.file_urls.length === 0) {
+        alert('첨부파일이 없습니다.');
+        return;
+      }
+
+      const { data } = supabase.storage.from('uploads').getPublicUrl(post.file_urls[0]);
+
+      if (data?.publicUrl) {
+        window.open(data.publicUrl, '_blank');
+
+        const newDownloadCount = downloadCount + 1;
+        setDownloadCount(newDownloadCount);
+
+        await supabase
+          .from('posts')
+          .update({ downloads: newDownloadCount })
+          .eq('id', post.id);
+      } else {
+        alert('파일을 다운로드할 수 없습니다.');
+      }
+    } catch (error) {
+      console.error('❌ 다운로드 오류:', error);
+      alert('다운로드 중 문제가 발생했습니다.');
+    }
   };
-
+  
   return (
     <div className={styles.card}>
-      {/* 제목 */}
-      <h2 className={styles['card-title']} onClick={() => window.location.href = `/post/${post.id}`}>
-        {post.title}
-      </h2>
-
-      {/* 썸네일 */}
+      {/* 썸네일 이미지 */}
       {thumbnailUrl && (
-        <img
-          src={thumbnailUrl}
-          alt="thumbnail"
-          className={styles['card-img']}
-          style={{ width: '100%', height: '180px', objectFit: 'cover', borderRadius: '8px' }}
-        />
+        <img src={thumbnailUrl} alt="Thumbnail" className={styles.thumbnail} />
       )}
 
-      {/* 본문 미리보기 */}
-      <p className={styles['card-content']}>
-        {post.content.length > 100 ? post.content.slice(0, 100) + '...' : post.content}
-      </p>
+      <div className={styles.content}>
+        {/* 제목 */}
+        <Link href={`/post/${post.id}`} className={styles.title}>
+          {post.title}
+        </Link>
 
-      {/* 첨부파일 */}
-      {fileList.length > 0 && (
-        <div className={styles['card-file-link']}>
-          {fileList.map((file, idx) => {
-            const url = supabase.storage.from('files').getPublicUrl(file).data.publicUrl;
-            const fileName = file.split('/').pop();
-            return (
-              <p key={idx}>
-                <a onClick={() => downloadFile(url, fileName)} className={styles['card-file-link']}>
-                  📎 {fileName}
-                </a>
-              </p>
-            );
-          })}
-        </div>
-      )}
-
-      {/* 카테고리 표시 */}
-      {categoryNames.length > 0 && (
-        <div className={styles['card-category-container']}>
-          {categoryNames.map((name, idx) => (
-            <span key={idx} className={styles['card-category']}>
-              {name}
-            </span>
-          ))}
-        </div>
-      )}
-
-      {/* 작성자 정보 */}
-      <div className={styles['card-author']}>
-        {author?.image ? (
-          <img src={author.image} className={styles['author-image']} alt="작성자" />
-        ) : (
-          <div className={styles['author-placeholder']}>
-            {author?.name ? author.name[0] : 'A'}
+        {/* 카테고리 */}
+        {matchedCategories.length > 0 && (
+          <div className={styles.categoryContainer}>
+            {matchedCategories.map(cat => (
+              <span key={cat.id} className={styles.category}>{cat.name}</span>
+            ))}
           </div>
         )}
-        <span>{author?.name || '익명'}</span>
-      </div>
 
-      {/* 좋아요, 댓글, 다운로드 수 */}
-      <div className={styles['card-buttons']}>
-        <button onClick={() => handleLike && handleLike(post.id, post.like_count || 0)}>
-          👍 {post.like_count || 0}
-        </button>
-        <span>💬 {post.comment_count || 0}</span>
-        <span>📥 {post.downloads || 0}</span>
+        {/* 작성자 정보 */}
+        <div className={styles.cardAuthor}>
+          {post.users?.profile_picture ? (
+            <img src={post.users.profile_picture} className={styles.authorImage} alt="Author" />
+          ) : (
+            <div className={styles.authorPlaceholder}>
+              {post.users?.nickname ? post.users.nickname[0] : 'A'}
+            </div>
+          )}
+          <span
+            className={styles.authorName}
+            style={{ cursor: 'pointer', color: '#0070f3', textDecoration: 'underline' }}
+            onClick={() => router.push(`/profile/${post.user_id}`)}
+          >
+            {post.users?.nickname || '스프링데일뮤직'}
+          </span>
+        </div>
+
+        {/* 하단 정보 */}
+        <div className={styles.footer}>
+          <span>❤️ {post.like_count ?? 0}</span>
+          <span>💬 {post.comment_count ?? 0}</span>
+          <span className={styles.download} onClick={handleDownload}>
+            📥 {downloadCount}
+          </span>
+        </div>
       </div>
     </div>
   );
