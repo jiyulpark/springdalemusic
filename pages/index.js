@@ -74,9 +74,13 @@ const Home = () => {
       }
     };
 
-    fetchData();
+    // ✅ 세션 로딩이 끝난 후에만 쿼리 실행
+    if (!sessionLoading && session !== undefined) {
+      fetchData();
+    }
+
     return () => { mounted = false; };
-  }, []);
+  }, [sessionLoading, session]);
 
   useEffect(() => {
     let filtered = [...posts];
@@ -251,7 +255,7 @@ const Home = () => {
               className={`${styles.pageButton} ${currentPage === index + 1 ? styles.activePage : ''}`}
               onClick={() => {
                 setCurrentPage(index + 1);
-                window.scrollTo(0, 0); // 페이지 이동 시 스크롤 상단으로
+                window.scrollTo(0, 0);
               }}
             >
               {index + 1}
