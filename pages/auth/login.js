@@ -1,14 +1,12 @@
 useEffect(() => {
   setIsClient(true);
-
-  const fetchSession = async () => {
+  const checkSession = async () => {
     const { data: { session } } = await supabase.auth.getSession();
-    setSession(session);
-
     if (session) {
       router.push('/');
+    } else {
+      setSession(null);
     }
   };
-
-  fetchSession();
+  checkSession();
 }, [router]);
