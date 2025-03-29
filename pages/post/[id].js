@@ -231,17 +231,21 @@ const PostDetail = () => {
           <h3>첨부 파일</h3>
           <ul>
             {files.map((file, index) => (
-              <li key={index}>
+              <li key={index} className={styles.fileItem}>
                 {canDownload ? (
                   <a
                     href={supabase.storage.from('uploads').getPublicUrl(file.file_url).data.publicUrl}
                     target="_blank"
                     rel="noopener noreferrer"
+                    className={styles.downloadLink}
                   >
                     📥 {file.file_name}
                   </a>
                 ) : (
-                  <span style={{ color: 'gray' }}>🔒 다운로드 권한이 없습니다</span>
+                  <span className={styles.lockedDownload}>🔒 다운로드 권한이 없습니다</span>
+                )}
+                {post.download_permission === 'verified_user' && (
+                  <span className={styles.badge}>인증회원 전용 🔒</span>
                 )}
               </li>
             ))}
