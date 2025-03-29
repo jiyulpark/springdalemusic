@@ -5,16 +5,15 @@ import { supabase } from '../../lib/supabase';
 const NewPost = () => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [thumbnail, setThumbnail] = useState(null); // 썸네일 상태
-  const [files, setFiles] = useState([]); // 파일 상태
-  const [categories, setCategories] = useState([]); // 전체 카테고리 목록
-  const [selectedCategories, setSelectedCategories] = useState([]); // 선택된 카테고리
+  const [thumbnail, setThumbnail] = useState(null);
+  const [files, setFiles] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [selectedCategories, setSelectedCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
-  const [downloadPermission, setDownloadPermission] = useState('verified_user'); // 다운로드 권한 상태 (기본값: 인증 유저)
+  const [downloadPermission, setDownloadPermission] = useState('verified_user');
   const router = useRouter();
 
-  // 업로드 허용 확장자 목록
   const allowedExtensions = ['wav', 'am2data', 'am3data', 'am2', 'zip'];
 
   useEffect(() => {
@@ -30,16 +29,14 @@ const NewPost = () => {
     fetchCategories();
   }, []);
 
-  // 카테고리 선택/해제
   const toggleCategory = (categoryId) => {
     setSelectedCategories(prev =>
       prev.includes(categoryId)
-        ? prev.filter(id => id !== categoryId) // 해제
-        : [...prev, categoryId] // 선택
+        ? prev.filter(id => id !== categoryId)
+        : [...prev, categoryId]
     );
   };
 
-  // 파일 선택 시 확장자 검사 후 상태 업데이트
   const handleFileChange = (e) => {
     const selectedFiles = Array.from(e.target.files);
     const invalidFiles = selectedFiles.filter(file => {
@@ -73,8 +70,6 @@ const NewPost = () => {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError || !user) throw new Error('로그인이 필요합니다.');
 
-      console.log("🚀 로그인한 사용자 ID:", user.id);
-
       let uploadedThumbnailUrl = null;
 
       if (thumbnail) {
@@ -89,8 +84,7 @@ const NewPost = () => {
         const filePath = `uploads/${Date.now()}_${file.name}`;
         const { data, error } = await supabase.storage.from('uploads').upload(filePath, file);
         if (error) throw error;
-        uploadedFileUrls.push(data.path);
-        await supabase.from('files').insert([{ post_id: null, file_url: data.path, file_name: file.name }]);
+        uploadedFileUrls.push({ path: data.path, name: file.name });
       }
 
       const { data: newPost, error: postError } = await supabase.from('posts').insert([{
@@ -98,15 +92,20 @@ const NewPost = () => {
         content,
         user_id: user.id,
         thumbnail_url: uploadedThumbnailUrl,
-        file_urls: uploadedFileUrls,
+        file_urls: uploadedFileUrls.map(f => f.path),
         category_ids: selectedCategories,
-        download_permission: downloadPermission // 다운로드 권한 설정
+        download_permission: downloadPermission
       }]).select().single();
 
       if (postError) throw postError;
 
       if (uploadedFileUrls.length > 0) {
-        await supabase.from('files').update({ post_id: newPost.id }).in('file_url', uploadedFileUrls);
+        const filesToInsert = uploadedFileUrls.map(file => ({
+          post_id: newPost.id,
+          file_url: file.path,
+          file_name: file.name
+        }));
+        await supabase.from('files').insert(filesToInsert);
       }
 
       router.push('/');
@@ -118,7 +117,6 @@ const NewPost = () => {
     }
   };
 
-  // 스타일 객체 정의
   const inputStyle = { width: '100%', padding: '10px', marginBottom: '10px' };
   const buttonStyle = {
     padding: '10px 20px', background: '#28a745', color: '#fff', borderRadius: '5px', border: 'none', cursor: 'pointer'
@@ -152,7 +150,6 @@ const NewPost = () => {
       <h3>파일 업로드</h3>
       <input type="file" multiple onChange={handleFileChange} />
 
-      {/* 🔥 카테고리 선택 UI */}
       <h3>스타일 선택</h3>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginBottom: '10px' }}>
         {categories.filter(cat => cat.type === 'style').map(category => (
