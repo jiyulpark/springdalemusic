@@ -17,38 +17,55 @@ const Card = ({ post, categories }) => {
   const matchedCategories = categories?.filter(cat => post.category_ids?.includes(cat.id)) || [];
 
   const handleDownload = async () => {
-    if (!post.file_urls || post.file_urls.length === 0) {
-      alert('첨부파일이 없습니다.');
-      return;
-    }
-
-    const { data } = supabase.storage.from('uploads').getPublicUrl(post.file_urls[0]);
-
-    if (data?.publicUrl) {
-      window.open(data.publicUrl, '_blank');
-      setDownloadCount(prev => prev + 1);
-
-      try {
-        await fetch('/api/download', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ postId: post.id })
-        });
-      } catch (error) {
-        console.error('❌ 다운로드 카운트 증가 실패:', error);
-        setDownloadCount(prev => prev - 1);
+    try {
+      if (!post.file_urls || post.file_urls.length === 0) {
+        alert('첨부파일이 없습니다.');
+        return;
       }
-    } else {
-      alert('파일을 다운로드할 수 없습니다.');
+
+      const { data } = supabase.storage.from('uploads').getPublicUrl(post.file_urls[0]);
+
+      if (data?.publicUrl) {
+        setDownloadCount(prev => prev + 1);
+        window.open(data.publicUrl, '_blank');
+
+        const response = await fetch('/api/download', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            postId: post.id,
+            currentDownloads: downloadCount + 1,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Download count update failed');
+        }
+      } else {
+        alert('파일을 다운로드할 수 없습니다.');
+      }
+    } catch (error) {
+      console.error('다운로드 오류:', error);
+      alert('다운로드 중 문제가 발생했습니다.');
     }
   };
 
   return (
     <div className={styles.card}>
-      {thumbnailUrl && <img src={thumbnailUrl} alt="Thumbnail" className={styles.thumbnail} />}
+      {thumbnailUrl && (
+        <img
+          src={thumbnailUrl}
+          alt={`Thumbnail for ${post.title}`}
+          className={styles.thumbnail}
+        />
+      )}
 
       <div className={styles.content}>
-        <Link href={`/post/${post.id}`} className={styles.title}>{post.title}</Link>
+        <Link href={`/post/${post.id}`} className={styles.title}>
+          {post.title}
+        </Link>
 
         {matchedCategories.length > 0 && (
           <div className={styles.categoryContainer}>
@@ -60,18 +77,23 @@ const Card = ({ post, categories }) => {
 
         <div className={styles.cardAuthor}>
           {post.users?.profile_picture ? (
-            <img src={post.users.profile_picture} className={styles.authorImage} />
+            <img
+              src={post.users.profile_picture}
+              className={styles.authorImage}
+              alt={`Profile of ${post.users?.nickname}`}
+            />
           ) : (
             <div className={styles.authorPlaceholder}>
-              {post.users?.nickname?.[0] || 'A'}
+              {post.users?.nickname ? post.users.nickname[0] : 'A'}
             </div>
           )}
           <span
-            className={styles.authorName}
-            onClick={() => router.push(`/profile/${post.user_id}`)}
             role="button"
             tabIndex={0}
-            onKeyDown={(e) => e.key === 'Enter' && router.push(`/profile/${post.user_id}`)}
+            className={styles.authorName}
+            style={{ cursor: 'pointer', color: '#0070f3', textDecoration: 'underline' }}
+            onClick={() => router.push(`/profile/${post.user_id}`)}
+            onKeyPress={(e) => e.key === 'Enter' && router.push(`/profile/${post.user_id}`)}
           >
             {post.users?.nickname || '스프링데일뮤직'}
           </span>
@@ -80,15 +102,26 @@ const Card = ({ post, categories }) => {
         <div className={styles.footer}>
           <span>❤️ {post.like_count ?? 0}</span>
           <span>💬 {post.comment_count ?? 0}</span>
-          <span 
+          <span
             className={styles.download}
             onClick={handleDownload}
             role="button"
             tabIndex={0}
-            onKeyDown={(e) => e.key === 'Enter' && handleDownload()}
+            onKeyPress={(e) => e.key === 'Enter' && handleDownload()}
           >
             📥 {downloadCount}
           </span>
+
+          {/* ✅ 다운로드 권한 뱃지 표시 */}
+          {post.download_permission === 'verified_user' && (
+            <span className={styles.badge}>인증회원 전용 🔒</span>
+          )}
+          {post.download_permission === 'user' && (
+            <span className={styles.badge}>일반 유저 이상 🔑</span>
+          )}
+          {post.download_permission === 'guest' && (
+            <span className={styles.badge}>모두 가능 ✅</span>
+          )}
         </div>
       </div>
     </div>
