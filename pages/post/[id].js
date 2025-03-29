@@ -15,7 +15,7 @@ const PostDetail = () => {
   const [categoryNames, setCategoryNames] = useState([]);
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState(null);
-  const [userRole, setUserRole] = useState(''); // 🔥 관리자 체크용
+  const [userRole, setUserRole] = useState('');
 
   useEffect(() => {
     const fetchSession = async () => {
@@ -174,6 +174,13 @@ const PostDetail = () => {
   if (loading) return <p className={styles.loading}>로딩 중...</p>;
   if (!post) return <p className={styles.error}>게시글을 찾을 수 없습니다.</p>;
 
+  const canDownload = (
+    userRole === 'admin' ||
+    post.download_permission === 'guest' ||
+    (post.download_permission === 'user' && ['user', 'verified_user'].includes(userRole)) ||
+    (post.download_permission === 'verified_user' && ['verified_user'].includes(userRole))
+  );
+
   return (
     <div className={styles.container}>
       <h1 className={styles.title}>{post.title}</h1>
@@ -225,13 +232,17 @@ const PostDetail = () => {
           <ul>
             {files.map((file, index) => (
               <li key={index}>
-                <a
-                  href={supabase.storage.from('uploads').getPublicUrl(file.file_url).data.publicUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  📥 {file.file_name}
-                </a>
+                {canDownload ? (
+                  <a
+                    href={supabase.storage.from('uploads').getPublicUrl(file.file_url).data.publicUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    📥 {file.file_name}
+                  </a>
+                ) : (
+                  <span style={{ color: 'gray' }}>🔒 다운로드 권한이 없습니다</span>
+                )}
               </li>
             ))}
           </ul>
