@@ -204,3 +204,33 @@
   color: #333;
   word-break: break-word;
 }
+
+/* PostDetail.module.css에 추가할 것 */
+
+.badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  background-color: #f39c12;
+  color: white;
+  font-size: 0.75rem;
+  border-radius: 4px;
+}
+
+.lockedDownload {
+  color: #999;
+  font-style: italic;
+}
+
+.fileItem {
+  margin-bottom: 10px;
+}
+
+.downloadLink {
+  color: #0070f3;
+  text-decoration: none;
+}
+
+.downloadLink:hover {
+  text-decoration: underline;
+}
