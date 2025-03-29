@@ -10,28 +10,23 @@ export default async function handler(
     return res.status(405).json({ message: 'Method Not Allowed' });
   }
 
-  const { postId, currentDownloads } = req.body;
+  const { postId } = req.body;
 
   if (!postId) {
     return res.status(400).json({ message: 'Post ID is required' });
   }
 
   try {
-    // 중요: 비동기 작업을 빠르게 응답
-    res.status(200).json({ success: true });
+    res.status(200).json({ success: true }); // 빠른 응답
 
-    // 백그라운드에서 실제 업데이트 수행
-    const { error } = await supabase
-      .from('posts')
-      .update({ 
-        downloads: currentDownloads 
-      })
-      .eq('id', postId);
+    const { error } = await supabase.rpc('increment_downloads', {
+      post_id_input: postId,
+    });
 
     if (error) {
-      console.error('Background download count update error:', error);
+      console.error('❌ RPC 다운로드 증가 실패:', error.message);
     }
   } catch (error) {
-    console.error('Unexpected error:', error);
+    console.error('❌ API 에러:', error);
   }
 }
