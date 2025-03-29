@@ -9,9 +9,10 @@ const Navbar = () => {
   const { session, role, loading } = useSession();
   const router = useRouter();
 
-  const handleLogout = async () => {
+   const handleLogout = async () => {
     await supabase.auth.signOut();
-    router.push('/auth/login');
+    localStorage.removeItem('userRole'); // ✅ 캐시 제거
+    router.push('/'); // 또는 로그인 페이지로 이동
   };
 
   if (loading) return null; // ✅ 세션 로딩 중일 땐 렌더링 생략
