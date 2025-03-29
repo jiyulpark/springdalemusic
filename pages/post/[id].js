@@ -11,7 +11,7 @@ const PostDetail = () => {
   const [likes, setLikes] = useState(0);
   const [userLiked, setUserLiked] = useState(false);
   const [newComment, setNewComment] = useState('');
-  const [files, setFiles] = useState([]);
+  const [files, setFiles] = useState([]); // 파일 상태 추가
   const [categoryNames, setCategoryNames] = useState([]);
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState(null);
@@ -93,7 +93,7 @@ const PostDetail = () => {
           .select('*')
           .eq('post_id', id);
 
-        setFiles(filesData || []);
+        setFiles(filesData || []); // 첨부파일 데이터를 설정
         setLoading(false);
       };
 
