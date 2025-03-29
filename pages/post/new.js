@@ -9,9 +9,9 @@ const NewPost = () => {
   const [files, setFiles] = useState([]);
   const [categories, setCategories] = useState([]);
   const [selectedCategories, setSelectedCategories] = useState([]);
+  const [downloadPermission, setDownloadPermission] = useState('verified_user');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
-  const [downloadPermission, setDownloadPermission] = useState('verified_user');
   const router = useRouter();
 
   const allowedExtensions = ['wav', 'am2data', 'am3data', 'am2', 'zip'];
@@ -19,37 +19,28 @@ const NewPost = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       const { data, error } = await supabase.from('categories').select('*');
-      if (error) {
-        console.error("❌ 카테고리 불러오기 실패:", error.message);
-        return;
-      }
-      setCategories(data);
+      if (!error) setCategories(data);
     };
-
     fetchCategories();
   }, []);
 
-  const toggleCategory = (categoryId) => {
-    setSelectedCategories(prev =>
-      prev.includes(categoryId)
-        ? prev.filter(id => id !== categoryId)
-        : [...prev, categoryId]
+  const toggleCategory = (id) => {
+    setSelectedCategories((prev) =>
+      prev.includes(id) ? prev.filter((catId) => catId !== id) : [...prev, id]
     );
   };
 
   const handleFileChange = (e) => {
-    const selectedFiles = Array.from(e.target.files);
-    const invalidFiles = selectedFiles.filter(file => {
-      const fileExt = file.name.split('.').pop().toLowerCase();
-      return !allowedExtensions.includes(fileExt);
+    const selected = Array.from(e.target.files);
+    const invalid = selected.filter(file => {
+      const ext = file.name.split('.').pop().toLowerCase();
+      return !allowedExtensions.includes(ext);
     });
-
-    if (invalidFiles.length > 0) {
-      alert('업로드 가능한 파일 확장자는 WAV, AM2DATA, AM3DATA, AM2, ZIP만 가능합니다.');
+    if (invalid.length > 0) {
+      alert('허용된 확장자: WAV, AM2DATA, AM3DATA, AM2, ZIP');
       return;
     }
-
-    setFiles(selectedFiles);
+    setFiles(selected);
   };
 
   const handleThumbnailChange = (e) => {
@@ -67,150 +58,136 @@ const NewPost = () => {
     }
 
     try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError || !user) throw new Error('로그인이 필요합니다.');
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('로그인이 필요합니다.');
 
-      let uploadedThumbnailUrl = null;
-
+      // 썸네일 업로드
+      let thumbnailUrl = null;
       if (thumbnail) {
-        const fileName = `thumbnails/${Date.now()}_${thumbnail.name}`;
-        const { data, error } = await supabase.storage.from('thumbnails').upload(fileName, thumbnail);
+        const thumbPath = `thumbnails/${Date.now()}_${thumbnail.name}`;
+        const { data, error } = await supabase.storage.from('thumbnails').upload(thumbPath, thumbnail);
         if (error) throw error;
-        uploadedThumbnailUrl = data.path;
+        thumbnailUrl = data.path;
       }
 
-      let uploadedFileUrls = [];
-      for (const file of files) {
-        const filePath = `uploads/${Date.now()}_${file.name}`;
-        const { data, error } = await supabase.storage.from('uploads').upload(filePath, file);
-        if (error) throw error;
-        uploadedFileUrls.push({ path: data.path, name: file.name });
-      }
-
+      // 게시글 먼저 생성 (파일과 연결 위해 ID 필요)
       const { data: newPost, error: postError } = await supabase.from('posts').insert([{
         title,
         content,
         user_id: user.id,
-        thumbnail_url: uploadedThumbnailUrl,
-        file_urls: uploadedFileUrls.map(f => f.path),
+        thumbnail_url: thumbnailUrl,
+        file_urls: [], // 나중에 업데이트
         category_ids: selectedCategories,
-        download_permission: downloadPermission
+        download_permission: downloadPermission,
       }]).select().single();
 
       if (postError) throw postError;
 
-      if (uploadedFileUrls.length > 0) {
-        const filesToInsert = uploadedFileUrls.map(file => ({
+      // 파일 업로드 + files 테이블 저장
+      const uploadedFileUrls = [];
+      for (const file of files) {
+        const path = `uploads/${Date.now()}_${file.name}`;
+        const { data, error } = await supabase.storage.from('uploads').upload(path, file);
+        if (error) throw error;
+
+        uploadedFileUrls.push(path);
+
+        // ✅ files 테이블에 post_id 연결하여 저장
+        await supabase.from('files').insert([{
           post_id: newPost.id,
-          file_url: file.path,
-          file_name: file.name
-        }));
-        await supabase.from('files').insert(filesToInsert);
+          file_url: path,
+          file_name: file.name,
+          file_size: file.size,
+          file_type: file.type,
+        }]);
       }
 
-      router.push('/');
-    } catch (error) {
-      console.error('❌ 게시글 작성 중 오류 발생:', error.message);
-      setErrorMsg(`게시글 작성 중 오류: ${error.message}`);
+      // posts 테이블에 file_urls 업데이트
+      if (uploadedFileUrls.length > 0) {
+        await supabase.from('posts')
+          .update({ file_urls: uploadedFileUrls })
+          .eq('id', newPost.id);
+      }
+
+      router.push(`/post/${newPost.id}`);
+    } catch (err) {
+      console.error('❌ 게시글 작성 오류:', err.message);
+      setErrorMsg(`게시글 작성 중 오류: ${err.message}`);
     } finally {
       setLoading(false);
     }
   };
 
-  const inputStyle = { width: '100%', padding: '10px', marginBottom: '10px' };
-  const buttonStyle = {
-    padding: '10px 20px', background: '#28a745', color: '#fff', borderRadius: '5px', border: 'none', cursor: 'pointer'
-  };
-  const categoryButtonStyle = {
-    padding: '10px', background: '#ddd', color: '#000', borderRadius: '5px', cursor: 'pointer', border: 'none'
-  };
+  const radioOptions = [
+    { value: 'verified_user', label: '인증 유저만 다운로드 가능' },
+    { value: 'user', label: '일반 유저 이상만 다운로드 가능' },
+    { value: 'guest', label: '비회원도 다운로드 가능' },
+  ];
 
   return (
-    <div style={{ maxWidth: '600px', margin: '40px auto', padding: '20px', background: '#fff', borderRadius: '10px', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)' }}>
+    <div style={{ maxWidth: '600px', margin: '40px auto', padding: '20px', background: '#fff', borderRadius: '10px' }}>
       <h1>새 게시글 작성</h1>
       {errorMsg && <p style={{ color: 'red' }}>{errorMsg}</p>}
 
-      <input
-        type="text"
-        placeholder="제목"
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        style={inputStyle}
-      />
-      <textarea
-        placeholder="본문 내용"
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-        style={{ ...inputStyle, height: '150px' }}
-      />
+      <input placeholder="제목" value={title} onChange={(e) => setTitle(e.target.value)} style={{ width: '100%', padding: 10, marginBottom: 10 }} />
+      <textarea placeholder="내용" value={content} onChange={(e) => setContent(e.target.value)} style={{ width: '100%', height: 120, padding: 10, marginBottom: 10 }} />
 
-      <h3>썸네일 업로드</h3>
-      <input type="file" onChange={handleThumbnailChange} />
+      <h4>썸네일 업로드</h4>
+      <input type="file" accept="image/*" onChange={handleThumbnailChange} />
 
-      <h3>파일 업로드</h3>
+      <h4>파일 업로드</h4>
       <input type="file" multiple onChange={handleFileChange} />
 
-      <h3>스타일 선택</h3>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginBottom: '10px' }}>
-        {categories.filter(cat => cat.type === 'style').map(category => (
-          <button
-            key={category.id}
-            onClick={() => toggleCategory(category.id)}
-            style={{ ...categoryButtonStyle, background: selectedCategories.includes(category.id) ? '#007bff' : '#ddd', color: selectedCategories.includes(category.id) ? '#fff' : '#000' }}
-          >
-            {category.name}
-          </button>
+      <h4>스타일 선택</h4>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: 10 }}>
+        {categories.filter(c => c.type === 'style').map(c => (
+          <button key={c.id} onClick={() => toggleCategory(c.id)} style={{
+            padding: 8,
+            background: selectedCategories.includes(c.id) ? '#007bff' : '#ddd',
+            color: selectedCategories.includes(c.id) ? '#fff' : '#000',
+            border: 'none',
+            borderRadius: 5,
+            cursor: 'pointer',
+          }}>{c.name}</button>
         ))}
       </div>
 
-      <h3>타입 선택</h3>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginBottom: '10px' }}>
-        {categories.filter(cat => cat.type === 'type').map(category => (
-          <button
-            key={category.id}
-            onClick={() => toggleCategory(category.id)}
-            style={{ ...categoryButtonStyle, background: selectedCategories.includes(category.id) ? '#007bff' : '#ddd', color: selectedCategories.includes(category.id) ? '#fff' : '#000' }}
-          >
-            {category.name}
-          </button>
+      <h4>타입 선택</h4>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: 10 }}>
+        {categories.filter(c => c.type === 'type').map(c => (
+          <button key={c.id} onClick={() => toggleCategory(c.id)} style={{
+            padding: 8,
+            background: selectedCategories.includes(c.id) ? '#007bff' : '#ddd',
+            color: selectedCategories.includes(c.id) ? '#fff' : '#000',
+            border: 'none',
+            borderRadius: 5,
+            cursor: 'pointer',
+          }}>{c.name}</button>
         ))}
       </div>
 
-      <h3>다운로드 권한 설정</h3>
-      <div style={{ marginBottom: '10px' }}>
-        <label>
+      <h4>다운로드 권한</h4>
+      {radioOptions.map((opt) => (
+        <label key={opt.value} style={{ display: 'block', marginBottom: '5px' }}>
           <input
             type="radio"
             name="downloadPermission"
-            value="verified_user"
-            checked={downloadPermission === 'verified_user'}
-            onChange={() => setDownloadPermission('verified_user')}
-          />
-          인증 유저만 다운로드 가능
+            value={opt.value}
+            checked={downloadPermission === opt.value}
+            onChange={() => setDownloadPermission(opt.value)}
+          /> {opt.label}
         </label>
-        <label>
-          <input
-            type="radio"
-            name="downloadPermission"
-            value="user"
-            checked={downloadPermission === 'user'}
-            onChange={() => setDownloadPermission('user')}
-          />
-          일반 유저 이상만 다운로드 가능
-        </label>
-        <label>
-          <input
-            type="radio"
-            name="downloadPermission"
-            value="guest"
-            checked={downloadPermission === 'guest'}
-            onChange={() => setDownloadPermission('guest')}
-          />
-          비회원도 다운로드 가능
-        </label>
-      </div>
+      ))}
 
-      <button onClick={handleCreatePost} disabled={loading} style={buttonStyle}>
+      <button onClick={handleCreatePost} disabled={loading} style={{
+        padding: '10px 20px',
+        background: '#28a745',
+        color: '#fff',
+        border: 'none',
+        borderRadius: '5px',
+        marginTop: 20,
+        cursor: 'pointer'
+      }}>
         {loading ? '작성 중...' : '게시글 작성'}
       </button>
     </div>
