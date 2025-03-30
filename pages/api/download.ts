@@ -1,86 +1,67 @@
 // pages/api/download.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createServerSupabaseClient } from '@supabase/auth-helpers-nextjs';
-import { supabase } from '../../lib/supabase';
-
-const roleLevels = {
-  guest: 0,
-  user: 1,
-  verified_user: 2,
-  admin: 3,
-};
+import { roleLevels } from '@/utils/roleLevels';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const { postId, filePath } = req.query;
-
-  if (!postId || !filePath || typeof postId !== 'string' || typeof filePath !== 'string') {
-    return res.status(400).json({ error: '잘못된 요청입니다.' });
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: '허용되지 않은 메서드입니다.' });
   }
 
-  try {
-    // 1️⃣ 게시글 정보 조회
-    const { data: post, error: postError } = await supabase
-      .from('posts')
-      .select('download_permission')
-      .eq('id', postId)
-      .single();
+  const supabase = createServerSupabaseClient({ req, res });
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
 
-    if (postError || !post) {
-      return res.status(404).json({ error: '게시글을 찾을 수 없습니다.' });
-    }
-
-    const requiredLevel = roleLevels[post.download_permission ?? 'guest'];
-
-    // 2️⃣ guest는 누구나 허용
-    if (requiredLevel === 0) {
-      return await downloadAndTrack(res, postId, filePath);
-    }
-
-    // 3️⃣ 서버용 Supabase 클라이언트로 세션 확인
-    const supabaseServer = createServerSupabaseClient({ req, res });
-    const {
-      data: { session },
-    } = await supabaseServer.auth.getSession();
-
-    if (!session || !session.user) {
-      return res.status(403).json({ error: '로그인이 필요합니다.' });
-    }
-
-    const userId = session.user.id;
-
-    const { data: user, error: userError } = await supabase
-      .from('users')
-      .select('role')
-      .eq('id', userId)
-      .single();
-
-    if (userError || !user) {
-      return res.status(403).json({ error: '유저 정보를 찾을 수 없습니다.' });
-    }
-
-    const userLevel = roleLevels[user.role ?? 'guest'];
-
-    if (userLevel < requiredLevel) {
-      return res.status(403).json({ error: '다운로드 권한이 없습니다.' });
-    }
-
-    // 4️⃣ 다운로드 허용
-    return await downloadAndTrack(res, postId, filePath);
-  } catch (err) {
-    console.error('다운로드 오류:', err);
-    return res.status(500).json({ error: '서버 오류 발생' });
+  if (!session) {
+    return res.status(401).json({ error: '로그인이 필요합니다.' });
   }
-}
 
-async function downloadAndTrack(res: NextApiResponse, postId: string, filePath: string) {
+  const { postId, filePath } = req.body;
+
+  if (!postId || !filePath) {
+    return res.status(400).json({ error: '필수 정보가 누락되었습니다.' });
+  }
+
+  // 게시물 정보 가져오기
+  const { data: post, error: postError } = await supabase
+    .from('posts')
+    .select('id, downloads, download_permission')
+    .eq('id', postId)
+    .single();
+
+  if (postError || !post) {
+    return res.status(404).json({ error: '게시글을 찾을 수 없습니다.' });
+  }
+
+  // 사용자 권한 조회
+  const { data: userInfo, error: userError } = await supabase
+    .from('users')
+    .select('role')
+    .eq('id', session.user.id)
+    .single();
+
+  if (userError || !userInfo) {
+    return res.status(403).json({ error: '권한 정보를 가져오지 못했습니다.' });
+  }
+
+  const userRoleLevel = roleLevels[userInfo.role] ?? 0;
+  const requiredLevel = roleLevels[post.download_permission] ?? 0;
+
+  if (userRoleLevel < requiredLevel) {
+    return res.status(403).json({ error: '다운로드 권한이 없습니다.' });
+  }
+
+  // 다운로드 수 증가
   await supabase.rpc('increment_downloads', { post_id_input: postId });
 
-  const { data } = supabase.storage.from('uploads').getPublicUrl(filePath);
-  const publicUrl = data?.publicUrl;
+  // 파일 공개 URL 생성
+  const { data: urlData } = supabase.storage.from('uploads').getPublicUrl(filePath);
+  const downloadUrl = urlData?.publicUrl;
 
-  if (!publicUrl) {
-    return res.status(500).json({ error: '파일 경로를 찾을 수 없습니다.' });
+  if (!downloadUrl) {
+    return res.status(500).json({ error: '다운로드 URL 생성 실패' });
   }
 
-  return res.redirect(publicUrl);
+  return res.status(200).json({ url: downloadUrl });
 }
