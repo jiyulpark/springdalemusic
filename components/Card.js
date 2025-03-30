@@ -31,7 +31,6 @@ const Card = ({ post, categories }) => {
         return;
       }
 
-      // 📦 /api/download 경로로 이동 (권한 체크 + 다운로드 수 증가 포함)
       const downloadUrl = `/api/download?postId=${post.id}&filePath=${encodeURIComponent(filePath)}`;
       setDownloadCount(prev => prev + 1);
       window.open(downloadUrl, '_blank');
@@ -80,7 +79,6 @@ const Card = ({ post, categories }) => {
             role="button"
             tabIndex={0}
             className={styles.authorName}
-            style={{ cursor: 'pointer', color: '#0070f3', textDecoration: 'underline' }}
             onClick={() => router.push(`/profile/${post.user_id}`)}
             onKeyPress={(e) => e.key === 'Enter' && router.push(`/profile/${post.user_id}`)}
           >
