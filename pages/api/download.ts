@@ -1,4 +1,3 @@
-// pages/api/download.ts
 import { supabase } from '../../lib/supabase';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
@@ -8,11 +7,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const { postId, filePath } = req.body;
-  if (!postId || !filePath) {
-    return res.status(400).json({ error: 'postId 또는 filePath가 없습니다.' });
+
+  // 🔥 filePath가 string이 아니라 객체일 수도 있음!
+  const finalPath = typeof filePath === 'string' 
+    ? filePath 
+    : filePath?.file_url;
+
+  if (!postId) {
+    return res.status(400).json({ error: 'postId가 없습니다.' });
+  }
+  if (!finalPath) {
+    return res.status(400).json({ error: '파일 경로가 없습니다.' });
   }
 
   try {
+    // 🔐 세션 토큰 처리
     const token = req.headers.authorization?.replace('Bearer ', '');
     if (!token) return res.status(401).json({ error: '로그인이 필요합니다.' });
 
@@ -23,13 +32,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const userId = userInfo.user.id;
 
-    const { data: userData, error: fetchUserError } = await supabase
+    const { data: userData, error: userFetchError } = await supabase
       .from('users')
       .select('role')
       .eq('id', userId)
       .single();
 
-    if (fetchUserError || !userData) {
+    if (userFetchError || !userData) {
       return res.status(403).json({ error: '권한 조회 실패' });
     }
 
@@ -60,20 +69,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .update({ downloads: downloads + 1 })
       .eq('id', postId);
 
-    const { data: fileData } = supabase.storage
-      .from('uploads')
-      .getPublicUrl(filePath);
+    const { data: fileData, error: fileError } = await supabase.storage
+      .from('uploads') // 버킷명 정확히 확인
+      .createSignedUrl(finalPath.replace('uploads/', ''), 60); // 🔥 경로에서 'uploads/' 제거
 
-    if (!fileData?.publicUrl) {
+    if (fileError || !fileData?.signedUrl) {
       return res.status(500).json({ error: '다운로드 URL 생성 실패' });
     }
 
-    return res.status(200).json({
-      success: true,
-      url: fileData.publicUrl,
-    });
+    return res.status(200).json({ success: true, url: fileData.signedUrl });
   } catch (error) {
-    console.error('🔥 다운로드 처리 중 오류:', error);
+    console.error('🔥 서버 오류:', error);
     return res.status(500).json({ error: '서버 오류 발생' });
   }
 }
