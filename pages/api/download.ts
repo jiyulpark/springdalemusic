@@ -61,19 +61,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(403).json({ error: '다운로드 권한이 없습니다.' });
     }
 
-    // ⬆️ 다운로드 수 증가
-    const { error: updateError } = await supabase
-      .from('posts')
-      .update({ downloads: downloads + 1 })
-      .eq('id', postId);
+   // ⬆️ 다운로드 수 증가
+const { error: updateError } = await supabase
+  .from('posts')
+  .update({ downloads: downloads + 1 })
+  .eq('id', postId);
 
-    if (updateError) {
-      return res.status(500).json({ error: '다운로드 수 증가 실패' });
-    }
-
-    return res.status(200).json({ success: true });
-  } catch (error) {
-    console.error('🔥 다운로드 처리 중 오류:', error);
-    return res.status(500).json({ error: '서버 오류 발생' });
-  }
+if (updateError) {
+  return res.status(500).json({ error: '다운로드 수 증가 실패' });
 }
+
+// 🔗 다운로드 URL 생성
+const { data: fileData, error: fileError } = await supabase
+  .storage
+  .from('your-bucket-name') // 실제 버킷 이름으로 변경하세요
+  .createSignedUrl(req.body.filePath, 60); // 60초 동안 유효한 서명된 URL 생성
+
+if (fileError) {
+  return res.status(500).json({ error: '다운로드 URL 생성 실패' });
+}
+
+return res.status(200).json({ 
+  success: true,
+  url: fileData.signedUrl 
+});
