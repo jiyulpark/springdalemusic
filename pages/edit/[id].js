@@ -43,30 +43,22 @@ const EditPost = () => {
     setLoading(true);
     try {
       const { data, error } = await supabase.from('posts').select('*').eq('id', id).single();
-      
-      if (error) {
-        throw new Error(error.message);
-      }
-      
-      // 사용자 권한 확인
-      if (session && data.user_id !== session.user.id) {
-        throw new Error('이 게시글을 수정할 권한이 없습니다.');
-      }
-      
+      if (error) throw new Error(error.message);
+      if (session && data.user_id !== session.user.id) throw new Error('이 게시글을 수정할 권한이 없습니다.');
+
       setPost(data);
       setTitle(data.title);
       setContent(data.content);
       setExistingFiles(data.file_urls || []);
       setDownloadPermission(data.download_permission || 'verified_user');
       setSelectedCategories(data.category_ids || []);
-      
       if (data.thumbnail_url) {
         setThumbnailPath(data.thumbnail_url);
         setThumbnailUrl(supabase.storage.from('thumbnails').getPublicUrl(data.thumbnail_url).data.publicUrl);
       }
     } catch (error) {
       console.error('게시글 불러오기 실패:', error.message);
-      setErrorMsg(게시글을 불러오는 중 오류가 발생했습니다: ${error.message});
+      setErrorMsg(`게시글을 불러오는 중 오류가 발생했습니다: ${error.message}`);
     } finally {
       setLoading(false);
     }
@@ -75,23 +67,16 @@ const EditPost = () => {
   const fetchCategories = async () => {
     try {
       const { data, error } = await supabase.from('categories').select('*');
-      if (error) {
-        throw new Error(error.message);
-      }
+      if (error) throw new Error(error.message);
       setCategories(data);
     } catch (error) {
       console.error("❌ 카테고리 불러오기 실패:", error.message);
-      setErrorMsg(카테고리를 불러오는 중 오류가 발생했습니다: ${error.message});
+      setErrorMsg(`카테고리를 불러오는 중 오류가 발생했습니다: ${error.message}`);
     }
   };
 
-  // 카테고리 선택/해제 함수
   const toggleCategory = (categoryId) => {
-    setSelectedCategories(prev => 
-      prev.includes(categoryId)
-        ? prev.filter(id => id !== categoryId) // 선택 해제
-        : [...prev, categoryId] // 선택
-    );
+    setSelectedCategories(prev => prev.includes(categoryId) ? prev.filter(id => id !== categoryId) : [...prev, categoryId]);
   };
 
   const handleFileChange = (e) => {
@@ -100,95 +85,61 @@ const EditPost = () => {
       const fileExt = file.name.split('.').pop().toLowerCase();
       return !allowedExtensions.includes(fileExt);
     });
-
     if (invalidFiles.length > 0) {
-      setErrorMsg(업로드 가능한 파일 확장자는 ${allowedExtensions.join(', ')}만 가능합니다.);
+      setErrorMsg(`업로드 가능한 파일 확장자는 ${allowedExtensions.join(', ')}만 가능합니다.`);
       return;
     }
-
     setFiles(selectedFiles);
-    setErrorMsg(''); // 에러 메시지 초기화
+    setErrorMsg('');
   };
 
   const handleThumbnailChange = (e) => {
     const file = e.target.files[0];
     if (file) {
       setThumbnail(file);
-      // 미리보기 URL 생성
-      const previewUrl = URL.createObjectURL(file);
-      setThumbnailUrl(previewUrl);
+      setThumbnailUrl(URL.createObjectURL(file));
     }
   };
 
   const handleDeleteFile = async (fileUrl) => {
     if (!window.confirm('정말로 이 파일을 삭제하시겠습니까?')) return;
-
     try {
       setIsSubmitting(true);
-      
       const { error: storageError } = await supabase.storage.from('uploads').remove([fileUrl]);
-      if (storageError) {
-        throw new Error(storageError.message);
-      }
-
+      if (storageError) throw new Error(storageError.message);
       await supabase.from('files').delete().eq('file_url', fileUrl);
-
       const updatedFiles = existingFiles.filter((file) => file !== fileUrl);
       setExistingFiles(updatedFiles);
-
       await supabase.from('posts').update({ file_urls: updatedFiles }).eq('id', id);
-
-      setIsSubmitting(false);
       alert('파일이 삭제되었습니다.');
     } catch (error) {
       console.error('파일 삭제 실패:', error.message);
-      setErrorMsg(파일 삭제 중 오류가 발생했습니다: ${error.message});
+      setErrorMsg(`파일 삭제 중 오류가 발생했습니다: ${error.message}`);
+    } finally {
       setIsSubmitting(false);
     }
   };
 
   const uploadThumbnail = async () => {
     if (!thumbnail) return thumbnailPath;
-    
     try {
-      // 기존 썸네일이 있으면 삭제
-      if (thumbnailPath) {
-        await supabase.storage.from('thumbnails').remove([thumbnailPath]);
-      }
-
-      const fileName = thumbnails/${Date.now()}_${thumbnail.name};
+      if (thumbnailPath) await supabase.storage.from('thumbnails').remove([thumbnailPath]);
+      const fileName = `thumbnails/${Date.now()}_${thumbnail.name}`;
       const { data, error } = await supabase.storage.from('thumbnails').upload(fileName, thumbnail);
-      
-      if (error) {
-        throw new Error(error.message);
-      }
-      
+      if (error) throw new Error(error.message);
       return data.path;
     } catch (error) {
-      throw new Error(썸네일 업로드 중 오류가 발생했습니다: ${error.message});
+      throw new Error(`썸네일 업로드 중 오류가 발생했습니다: ${error.message}`);
     }
   };
 
   const uploadFiles = async () => {
     if (files.length === 0) return [...existingFiles];
-    
     try {
       const uploadPromises = files.map(async (file, index) => {
-        const filePath = uploads/${Date.now()}_${file.name};
-        
-        const { data, error } = await supabase.storage.from('uploads').upload(filePath, file, {
-          onUploadProgress: (progress) => {
-            // 개별 파일의 업로드 진행률 업데이트
-            const totalProgress = (index / files.length) + (progress.loaded / progress.total) * (1 / files.length);
-            setUploadProgress(Math.round(totalProgress * 100));
-          }
-        });
-        
-        if (error) {
-          throw new Error(error.message);
-        }
-        
-        // 파일 메타데이터 저장
+        const filePath = `uploads/${Date.now()}_${file.name}`;
+        const { data, error } = await supabase.storage.from('uploads').upload(filePath, file);
+        if (error) throw new Error(error.message);
         await supabase.from('files').insert([{ 
           post_id: id, 
           file_url: data.path, 
@@ -196,15 +147,12 @@ const EditPost = () => {
           file_size: file.size,
           file_type: file.type
         }]);
-        
         return data.path;
       });
-      
-      // 모든 파일 업로드 병렬 처리
       const uploadedPaths = await Promise.all(uploadPromises);
       return [...existingFiles, ...uploadedPaths];
     } catch (error) {
-      throw new Error(파일 업로드 중 오류가 발생했습니다: ${error.message});
+      throw new Error(`파일 업로드 중 오류가 발생했습니다: ${error.message}`);
     }
   };
 
@@ -213,38 +161,27 @@ const EditPost = () => {
       setErrorMsg('제목과 내용을 입력하세요!');
       return;
     }
-
     try {
       setIsSubmitting(true);
       setErrorMsg('');
       setUploadProgress(0);
-      
-      // 썸네일 업로드
       const uploadedThumbnailPath = await uploadThumbnail();
-      
-      // 파일 업로드
       const uploadedFileUrls = await uploadFiles();
-      
-      // 게시글 업데이트
       const { error } = await supabase.from('posts').update({
         title,
         content,
         file_urls: uploadedFileUrls,
         thumbnail_url: uploadedThumbnailPath,
         category_ids: selectedCategories,
-        download_permission: downloadPermission,
-    
+        download_permission: downloadPermission
       }).eq('id', id);
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
+      if (error) throw new Error(error.message);
       alert('게시글이 성공적으로 수정되었습니다.');
-      router.push(/post/${id});
+      router.push(`/post/${id}`);
     } catch (error) {
       console.error('게시글 수정 실패:', error.message);
-      setErrorMsg(게시글 수정 중 오류가 발생했습니다: ${error.message});
+      setErrorMsg(`게시글 수정 중 오류가 발생했습니다: ${error.message}`);
+    } finally {
       setIsSubmitting(false);
     }
   };
