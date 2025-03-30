@@ -15,48 +15,49 @@ const Card = ({ post, categories }) => {
     ? supabase.storage.from('thumbnails').getPublicUrl(post.thumbnail_url).data?.publicUrl
     : null;
 
-  const matchedCategories = categories?.filter(cat => post.category_ids?.includes(cat.id)) || [];
+  const matchedCategories = categories?.filter(cat =>
+    post.category_ids?.includes(cat.id)
+  ) || [];
 
-const handleDownload = async () => {
-  if (!post.file_urls || post.file_urls.length === 0) {
-    alert('첨부파일이 없습니다.');
-    return;
-  }
-  
-  const firstFile = typeof post.file_urls[0] === 'string' 
-    ? post.file_urls[0] 
-    : post.file_urls[0]?.file_url;
-  
+  const handleDownload = async () => {
+    if (!post.file_urls || post.file_urls.length === 0) {
+      alert('첨부파일이 없습니다.');
+      return;
+    }
+
+    const firstFile = typeof post.file_urls[0] === 'string'
+      ? post.file_urls[0]
+      : post.file_urls[0]?.file_url;
+
     try {
-    const token = session?.access_token;
-    
-    if (!token) {
-      alert('로그인이 필요합니다.');
-      return;
+      const token = session?.access_token;
+      if (!token) {
+        alert('로그인이 필요합니다.');
+        return;
+      }
+
+      const res = await fetch('/api/download', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ postId: post.id, filePath: firstFile })
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || '다운로드에 실패했습니다.');
+        return;
+      }
+
+      setDownloadCount(prev => prev + 1);
+      window.open(data.url, '_blank');
+    } catch (err) {
+      console.error('다운로드 오류:', err);
+      alert('다운로드 중 문제가 발생했습니다.');
     }
-    
-    const res = await fetch('/api/download', {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({ postId: post.id, filePath: firstFile })
-    });
-    
-    const data = await res.json();
-    if (!res.ok) {
-      alert(data.error || '다운로드에 실패했습니다.');
-      return;
-    }
-    
-    setDownloadCount(prev => prev + 1);
-    window.open(data.url, '_blank');
-  } catch (err) {
-    console.error('다운로드 오류:', err);
-    alert('다운로드 중 문제가 발생했습니다.');
-  }
-};
+  };
 
   return (
     <div className={styles.card}>
@@ -100,10 +101,7 @@ const handleDownload = async () => {
         <div className={styles.footer}>
           <span>❤️ {post.like_count ?? 0}</span>
           <span>💬 {post.comment_count ?? 0}</span>
-          <span
-            className={styles.download}
-            onClick={handleDownload}
-          >
+          <span className={styles.download} onClick={handleDownload}>
             📥 {downloadCount}
           </span>
 
