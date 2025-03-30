@@ -1,6 +1,6 @@
 // pages/api/download.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { supabase } from '../../lib/supabase'; // 절대경로 대신 상대경로
+import { supabase } from '../../lib/supabase';
 
 const roleLevels: Record<string, number> = {
   guest: 0,
@@ -17,6 +17,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
+    // 1️⃣ Supabase 세션 가져오기
     const {
       data: { session },
     } = await supabase.auth.getSession();
@@ -24,7 +25,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const user = session?.user || null;
     const userId = user?.id || null;
 
-    // 게시글 다운로드 권한 불러오기
+    // 2️⃣ 게시글에서 권한 확인
     const { data: post, error: postError } = await supabase
       .from('posts')
       .select('download_permission')
@@ -36,8 +37,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(404).json({ error: '게시글을 찾을 수 없습니다.' });
     }
 
-    const requiredRole = post.download_permission?.toLowerCase() || 'guest';
+    const requiredRole = (post.download_permission ?? 'guest').toLowerCase();
 
+    // 3️⃣ 유저 권한 확인
     let userRole = 'guest';
 
     if (userId) {
@@ -52,31 +54,38 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
 
       if (userInfo?.role) {
-        userRole = userInfo.role.toLowerCase();
+        userRole = userInfo.role.toLowerCase(); // 대소문자 방지
       }
     }
 
-    // ✅ 디버깅 로그
+    // ✅ 로그 출력 for 디버깅
     console.log('🧑‍💻 로그인 유저 ID:', userId);
     console.log('📌 유저 권한:', userRole);
-    console.log('📌 게시글 다운로드 요구 권한:', requiredRole);
+    console.log('📌 게시글 권한:', requiredRole);
+    console.log('📊 비교:', {
+      userLevel: roleLevels[userRole],
+      requiredLevel: roleLevels[requiredRole],
+      isAdmin: userRole === 'admin',
+    });
 
-    // ✅ 관리자 우선 허용
-    if (userRole !== 'admin' && roleLevels[userRole] < roleLevels[requiredRole]) {
-      console.warn(`⛔ 다운로드 권한 부족: ${userRole} < ${requiredRole}`);
+    // 4️⃣ 권한 체크
+    const isAdmin = userRole === 'admin';
+
+    if (!isAdmin && roleLevels[userRole] < roleLevels[requiredRole]) {
+      console.warn(`⛔ 다운로드 차단: ${userRole} < ${requiredRole}`);
       return res.status(403).json({ error: '다운로드 권한이 없습니다.' });
     }
 
-    // ✅ Public URL 생성
-    const storageResult = supabase.storage.from('uploads').getPublicUrl(filePath);
-    const publicUrl = storageResult?.data?.publicUrl;
+    // 5️⃣ 파일 URL 생성
+    const { data: storageData } = supabase.storage.from('uploads').getPublicUrl(filePath);
+    const publicUrl = storageData?.publicUrl;
 
     if (!publicUrl) {
       console.error('❌ 파일 URL 생성 실패:', filePath);
       return res.status(500).json({ error: '파일 URL 생성 실패' });
     }
 
-    // ✅ 다운로드 수 증가 (RPC)
+    // 6️⃣ 다운로드 수 증가
     const { error: rpcError } = await supabase.rpc('increment_downloads', {
       post_id_input: postId,
     });
@@ -87,7 +96,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       console.log(`✅ 다운로드 수 증가 완료 (postId: ${postId})`);
     }
 
-    // ✅ 다운로드 리디렉션
+    // 7️⃣ 다운로드 시작
     return res.redirect(publicUrl);
   } catch (err: any) {
     console.error('❌ 다운로드 API 처리 중 에러:', err.message || err);
