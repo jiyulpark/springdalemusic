@@ -84,9 +84,7 @@ export default async function handler(req, res) {
       ? filePath
       : filePath?.file_url;
 
-    const finalPath = rawPath?.startsWith('uploads/')
-      ? rawPath.replace('uploads/', '')
-      : rawPath;
+    const finalPath = rawPath?.replace(/^uploads\//, '').replace(/^thumbnails\//, '').replace(/^avatars\//, '');
 
     console.log('=== 파일 다운로드 디버그 정보 ===');
     console.log('원본 경로:', rawPath);

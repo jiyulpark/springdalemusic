@@ -234,7 +234,7 @@ const PostDetail = () => {
               <li key={index} className={styles.fileItem}>
                 {canDownload ? (
                   <a
-                    href={supabase.storage.from('uploads').getPublicUrl(file.file_url).data.publicUrl}
+                    href={`/api/download?postId=${post.id}&filePath=${encodeURIComponent(file.file_url)}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className={styles.downloadLink}
