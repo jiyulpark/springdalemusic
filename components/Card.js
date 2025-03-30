@@ -31,25 +31,10 @@ const Card = ({ post, categories }) => {
         return;
       }
 
-      const { data: urlData, error } = supabase.storage.from('uploads').getPublicUrl(filePath);
-
-      if (error || !urlData?.publicUrl) {
-        alert('파일을 다운로드할 수 없습니다.');
-        return;
-      }
-
+      // 📦 /api/download 경로로 이동 (권한 체크 + 다운로드 수 증가 포함)
+      const downloadUrl = `/api/download?postId=${post.id}&filePath=${encodeURIComponent(filePath)}`;
       setDownloadCount(prev => prev + 1);
-      window.open(urlData.publicUrl, '_blank');
-
-      const response = await fetch('/api/download', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ postId: post.id, currentDownloads: downloadCount + 1 })
-      });
-
-      if (!response.ok) {
-        throw new Error('다운로드 수 업데이트 실패');
-      }
+      window.open(downloadUrl, '_blank');
     } catch (error) {
       console.error('다운로드 오류:', error);
       alert('다운로드 중 문제가 발생했습니다.');
