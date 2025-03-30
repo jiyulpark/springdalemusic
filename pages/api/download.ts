@@ -8,13 +8,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const { postId, filePath } = req.body;
-
   if (!postId || !filePath) {
     return res.status(400).json({ error: 'postId 또는 filePath가 없습니다.' });
   }
 
   try {
-    // 🛡️ 권한 체크 생략 불가 - 유지
     const token = req.headers.authorization?.replace('Bearer ', '');
     if (!token) return res.status(401).json({ error: '로그인이 필요합니다.' });
 
@@ -49,7 +47,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const { download_permission, downloads } = postData;
 
-    // ✅ 권한 순서 비교
     const roleOrder = ['guest', 'user', 'verified_user', 'admin'];
     const userLevel = roleOrder.indexOf(userRole);
     const requiredLevel = roleOrder.indexOf(download_permission);
@@ -58,13 +55,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(403).json({ error: '다운로드 권한이 없습니다.' });
     }
 
-    // 🔼 다운로드 수 증가
     await supabase
       .from('posts')
       .update({ downloads: downloads + 1 })
       .eq('id', postId);
 
-    // ✅ public 버킷이므로 getPublicUrl 사용
     const { data: fileData } = supabase.storage
       .from('uploads')
       .getPublicUrl(filePath);
