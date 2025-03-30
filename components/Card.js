@@ -23,8 +23,13 @@ const Card = ({ post, categories }) => {
         return;
       }
 
-      const firstFile = post.file_urls[0];
-      const filePath = typeof firstFile === 'string' ? firstFile : firstFile.file_url;
+      const firstFileRaw = post.file_urls[0];
+      const filePath =
+        typeof firstFileRaw === 'string'
+          ? firstFileRaw
+          : typeof firstFileRaw === 'object' && firstFileRaw?.file_url
+          ? firstFileRaw.file_url
+          : null;
 
       if (!filePath) {
         alert('파일 경로가 유효하지 않습니다.');
