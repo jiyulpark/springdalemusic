@@ -23,7 +23,6 @@ const Card = ({ post, categories }) => {
         return;
       }
 
-      // ✅ 객체 or 문자열 모두 처리
       const firstFile = post.file_urls[0];
       const filePath = typeof firstFile === 'string' ? firstFile : firstFile.file_url;
 
@@ -117,7 +116,6 @@ const Card = ({ post, categories }) => {
             📥 {downloadCount}
           </span>
 
-          {/* ✅ 다운로드 권한 뱃지 표시 */}
           {post.download_permission === 'verified_user' && (
             <span className={styles.badge}>인증회원 전용 🔒</span>
           )}
