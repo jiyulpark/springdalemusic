@@ -191,7 +191,7 @@ const EditPost = () => {
       <p style={{ textAlign: 'center' }}>게시글을 불러오는 중...</p>
     </div>
   );
-  
+
   if (!post) return (
     <div className="error-container">
       <p style={{ textAlign: 'center', color: 'red' }}>
@@ -308,7 +308,7 @@ const EditPost = () => {
       margin: '10px 0'
     },
     progressFill: (progress) => ({
-      width: ${progress}%,
+      width: `${progress}%`,
       height: '100%',
       backgroundColor: '#4caf50',
       borderRadius: '5px',
