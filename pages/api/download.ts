@@ -1,6 +1,6 @@
 // pages/api/download.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '../../lib/supabase';
 
 const roleLevels = {
   guest: 0,
