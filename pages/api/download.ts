@@ -1,11 +1,15 @@
-// pages/api/download.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createServerSupabaseClient } from '@supabase/auth-helpers-nextjs';
-import { roleLevels } from '../../utils/roleLevels';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'POST') {
+  if (req.method !== 'GET') {
     return res.status(405).json({ error: '허용되지 않은 메서드입니다.' });
+  }
+
+  const { postId, filePath } = req.query;
+
+  if (!postId || typeof postId !== 'string' || !filePath || typeof filePath !== 'string') {
+    return res.status(400).json({ error: '요청 파라미터가 유효하지 않습니다.' });
   }
 
   const supabase = createServerSupabaseClient({ req, res });
@@ -13,20 +17,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     data: { session },
   } = await supabase.auth.getSession();
 
-  if (!session) {
-    return res.status(401).json({ error: '로그인이 필요합니다.' });
+  const userId = session?.user?.id || null;
+
+  // 유저 role 가져오기
+  let userRole = 'guest';
+  if (userId) {
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', userId)
+      .single();
+
+    if (userData?.role) userRole = userData.role;
   }
 
-  const { postId, filePath } = req.body;
-
-  if (!postId || !filePath) {
-    return res.status(400).json({ error: '필수 정보가 누락되었습니다.' });
-  }
-
-  // 게시물 정보 가져오기
+  // 게시글 다운로드 권한 확인
   const { data: post, error: postError } = await supabase
     .from('posts')
-    .select('id, downloads, download_permission')
+    .select('download_permission')
     .eq('id', postId)
     .single();
 
@@ -34,34 +42,35 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(404).json({ error: '게시글을 찾을 수 없습니다.' });
   }
 
-  // 사용자 권한 조회
-  const { data: userInfo, error: userError } = await supabase
-    .from('users')
-    .select('role')
-    .eq('id', session.user.id)
-    .single();
+  const requiredPermission = post.download_permission;
 
-  if (userError || !userInfo) {
-    return res.status(403).json({ error: '권한 정보를 가져오지 못했습니다.' });
-  }
+  // ✅ 등급 숫자 비교 함수
+  const isAuthorized = (userRole: string, required: string) => {
+    const levels: Record<string, number> = {
+      guest: 0,
+      user: 1,
+      verified_user: 2,
+      admin: 3,
+    };
+    return (levels[userRole] ?? 0) >= (levels[required] ?? 0);
+  };
 
-  const userRoleLevel = roleLevels[userInfo.role] ?? 0;
-  const requiredLevel = roleLevels[post.download_permission] ?? 0;
-
-  if (userRoleLevel < requiredLevel) {
+  // 🔒 권한 부족
+  if (!isAuthorized(userRole, requiredPermission)) {
     return res.status(403).json({ error: '다운로드 권한이 없습니다.' });
   }
 
-  // 다운로드 수 증가
+  // 📊 다운로드 수 증가 RPC 호출
   await supabase.rpc('increment_downloads', { post_id_input: postId });
 
-  // 파일 공개 URL 생성
-  const { data: urlData } = supabase.storage.from('uploads').getPublicUrl(filePath);
-  const downloadUrl = urlData?.publicUrl;
+  // ✅ Storage에서 서명된 URL 생성
+  const { data: urlData, error: urlError } = await supabase.storage
+    .from('uploads')
+    .createSignedUrl(filePath, 60); // 유효 시간: 60초
 
-  if (!downloadUrl) {
-    return res.status(500).json({ error: '다운로드 URL 생성 실패' });
+  if (urlError || !urlData?.signedUrl) {
+    return res.status(500).json({ error: '파일 다운로드 URL 생성 실패' });
   }
 
-  return res.status(200).json({ url: downloadUrl });
+  return res.redirect(urlData.signedUrl);
 }
