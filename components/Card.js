@@ -17,37 +17,48 @@ const Card = ({ post, categories }) => {
 
   const matchedCategories = categories?.filter(cat => post.category_ids?.includes(cat.id)) || [];
 
-  const handleDownload = async () => {
-    if (!post.file_urls || post.file_urls.length === 0) {
-      alert('첨부파일이 없습니다.');
+const handleDownload = async () => {
+  if (!post.file_urls || post.file_urls.length === 0) {
+    alert('첨부파일이 없습니다.');
+    return;
+  }
+  
+  const firstFile = typeof post.file_urls[0] === 'string' 
+    ? post.file_urls[0] 
+    : post.file_urls[0]?.file_url;
+  
+  try {
+    // 세션에서 토큰 가져오기
+    const token = session?.access_token;
+    
+    if (!token) {
+      alert('로그인이 필요합니다.');
+      router.push('/login'); // 로그인 페이지로 이동
       return;
     }
-
-    const firstFile = typeof post.file_urls[0] === 'string' 
-      ? post.file_urls[0] 
-      : post.file_urls[0]?.file_url;
-
-    try {
-      const res = await fetch('/api/download', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ postId: post.id, filePath: firstFile })
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        alert(data.error || '다운로드에 실패했습니다.');
-        return;
-      }
-
-      setDownloadCount(prev => prev + 1);
-      window.open(data.url, '_blank');
-    } catch (err) {
-      console.error('다운로드 오류:', err);
-      alert('다운로드 중 문제가 발생했습니다.');
+    
+    const res = await fetch('/api/download', {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}` // 토큰 추가
+      },
+      body: JSON.stringify({ postId: post.id, filePath: firstFile })
+    });
+    
+    const data = await res.json();
+    if (!res.ok) {
+      alert(data.error || '다운로드에 실패했습니다.');
+      return;
     }
-  };
+    
+    setDownloadCount(prev => prev + 1);
+    window.open(data.url, '_blank');
+  } catch (err) {
+    console.error('다운로드 오류:', err);
+    alert('다운로드 중 문제가 발생했습니다.');
+  }
+};
 
   return (
     <div className={styles.card}>
