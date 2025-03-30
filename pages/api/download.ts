@@ -1,6 +1,6 @@
 // pages/api/download.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '../../lib/supabase'; // ✅ 여기!! 완벽하게 고쳤사옵니다
 
 const roleLevels: Record<string, number> = {
   guest: 0,
@@ -24,7 +24,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { data: { session }, error: sessionError } = await supabase.auth.getSession();
   const userId = session?.user?.id ?? null;
 
-  // 게시글 데이터 가져오기
+  // 게시글 정보 조회
   const { data: post, error: postError } = await supabase
     .from('posts')
     .select('download_permission')
@@ -63,10 +63,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(403).json({ error: '다운로드 권한이 없습니다.' });
   }
 
-  // 📈 다운로드 수 증가
+  // 다운로드 수 증가
   await supabase.rpc('increment_downloads', { post_id_input: postId });
 
-  // 📦 파일 URL 생성
+  // 파일 URL 생성
   const { data: storageData } = supabase.storage.from('uploads').getPublicUrl(filePath);
   const publicUrl = storageData?.publicUrl;
 
@@ -74,6 +74,5 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(500).json({ error: '파일을 찾을 수 없습니다.' });
   }
 
-  // 📤 리다이렉트
   return res.redirect(publicUrl);
 }
