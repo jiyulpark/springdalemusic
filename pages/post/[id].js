@@ -11,11 +11,11 @@ const PostDetail = () => {
   const [likes, setLikes] = useState(0);
   const [userLiked, setUserLiked] = useState(false);
   const [newComment, setNewComment] = useState('');
-  const [files, setFiles] = useState([]); // 파일 상태 추가
+  const [files, setFiles] = useState([]);
   const [categoryNames, setCategoryNames] = useState([]);
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState(null);
-  const [userRole, setUserRole] = useState('');
+  const [userRole, setUserRole] = useState(''); // 🔥 관리자 체크용
 
   useEffect(() => {
     const fetchSession = async () => {
@@ -41,7 +41,7 @@ const PostDetail = () => {
 
         const { data: postData, error: postError } = await supabase
           .from('posts')
-          .select(`*, users (id, nickname, profile_picture)`)
+          .select(*, users (id, nickname, profile_picture))
           .eq('id', id)
           .single();
 
@@ -93,7 +93,7 @@ const PostDetail = () => {
           .select('*')
           .eq('post_id', id);
 
-        setFiles(filesData || []); // 첨부파일 데이터를 설정
+        setFiles(filesData || []);
         setLoading(false);
       };
 
@@ -174,13 +174,6 @@ const PostDetail = () => {
   if (loading) return <p className={styles.loading}>로딩 중...</p>;
   if (!post) return <p className={styles.error}>게시글을 찾을 수 없습니다.</p>;
 
-  const canDownload = (
-    userRole === 'admin' ||
-    post.download_permission === 'guest' ||
-    (post.download_permission === 'user' && ['user', 'verified_user'].includes(userRole)) ||
-    (post.download_permission === 'verified_user' && ['verified_user'].includes(userRole))
-  );
-
   return (
     <div className={styles.container}>
       <h1 className={styles.title}>{post.title}</h1>
@@ -231,22 +224,14 @@ const PostDetail = () => {
           <h3>첨부 파일</h3>
           <ul>
             {files.map((file, index) => (
-              <li key={index} className={styles.fileItem}>
-                {canDownload ? (
-                  <a
-                    href={supabase.storage.from('uploads').getPublicUrl(file.file_url).data.publicUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={styles.downloadLink}
-                  >
-                    📥 {file.file_name}
-                  </a>
-                ) : (
-                  <span className={styles.lockedDownload}>🔒 다운로드 권한이 없습니다</span>
-                )}
-                {post.download_permission === 'verified_user' && (
-                  <span className={styles.badge}>인증회원 전용 🔒</span>
-                )}
+              <li key={index}>
+                <a
+                  href={supabase.storage.from('uploads').getPublicUrl(file.file_url).data.publicUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  📥 {file.file_name}
+                </a>
               </li>
             ))}
           </ul>
@@ -258,7 +243,7 @@ const PostDetail = () => {
 
         {(session?.user.id === post.user_id || userRole === 'admin') && (
           <>
-            <button onClick={() => router.push(`/edit/${id}`)} className={styles.editButton}>수정</button>
+            <button onClick={() => router.push(/edit/${id})} className={styles.editButton}>수정</button>
             <button onClick={handleDelete} className={styles.deleteButton}>삭제</button>
           </>
         )}
