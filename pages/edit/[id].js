@@ -66,7 +66,7 @@ const EditPost = () => {
       }
     } catch (error) {
       console.error('게시글 불러오기 실패:', error.message);
-      setErrorMsg(`게시글을 불러오는 중 오류가 발생했습니다: ${error.message}`);
+      setErrorMsg(게시글을 불러오는 중 오류가 발생했습니다: ${error.message});
     } finally {
       setLoading(false);
     }
@@ -81,7 +81,7 @@ const EditPost = () => {
       setCategories(data);
     } catch (error) {
       console.error("❌ 카테고리 불러오기 실패:", error.message);
-      setErrorMsg(`카테고리를 불러오는 중 오류가 발생했습니다: ${error.message}`);
+      setErrorMsg(카테고리를 불러오는 중 오류가 발생했습니다: ${error.message});
     }
   };
 
@@ -102,7 +102,7 @@ const EditPost = () => {
     });
 
     if (invalidFiles.length > 0) {
-      setErrorMsg(`업로드 가능한 파일 확장자는 ${allowedExtensions.join(', ')}만 가능합니다.`);
+      setErrorMsg(업로드 가능한 파일 확장자는 ${allowedExtensions.join(', ')}만 가능합니다.);
       return;
     }
 
@@ -142,7 +142,7 @@ const EditPost = () => {
       alert('파일이 삭제되었습니다.');
     } catch (error) {
       console.error('파일 삭제 실패:', error.message);
-      setErrorMsg(`파일 삭제 중 오류가 발생했습니다: ${error.message}`);
+      setErrorMsg(파일 삭제 중 오류가 발생했습니다: ${error.message});
       setIsSubmitting(false);
     }
   };
@@ -156,7 +156,7 @@ const EditPost = () => {
         await supabase.storage.from('thumbnails').remove([thumbnailPath]);
       }
 
-      const fileName = `thumbnails/${Date.now()}_${thumbnail.name}`;
+      const fileName = thumbnails/${Date.now()}_${thumbnail.name};
       const { data, error } = await supabase.storage.from('thumbnails').upload(fileName, thumbnail);
       
       if (error) {
@@ -165,7 +165,7 @@ const EditPost = () => {
       
       return data.path;
     } catch (error) {
-      throw new Error(`썸네일 업로드 중 오류가 발생했습니다: ${error.message}`);
+      throw new Error(썸네일 업로드 중 오류가 발생했습니다: ${error.message});
     }
   };
 
@@ -174,7 +174,7 @@ const EditPost = () => {
     
     try {
       const uploadPromises = files.map(async (file, index) => {
-        const filePath = `uploads/${Date.now()}_${file.name}`;
+        const filePath = uploads/${Date.now()}_${file.name};
         
         const { data, error } = await supabase.storage.from('uploads').upload(filePath, file, {
           onUploadProgress: (progress) => {
@@ -204,7 +204,7 @@ const EditPost = () => {
       const uploadedPaths = await Promise.all(uploadPromises);
       return [...existingFiles, ...uploadedPaths];
     } catch (error) {
-      throw new Error(`파일 업로드 중 오류가 발생했습니다: ${error.message}`);
+      throw new Error(파일 업로드 중 오류가 발생했습니다: ${error.message});
     }
   };
 
@@ -241,10 +241,10 @@ const EditPost = () => {
       }
 
       alert('게시글이 성공적으로 수정되었습니다.');
-      router.push(`/post/${id}`);
+      router.push(/post/${id});
     } catch (error) {
       console.error('게시글 수정 실패:', error.message);
-      setErrorMsg(`게시글 수정 중 오류가 발생했습니다: ${error.message}`);
+      setErrorMsg(게시글 수정 중 오류가 발생했습니다: ${error.message});
       setIsSubmitting(false);
     }
   };
@@ -371,7 +371,7 @@ const EditPost = () => {
       margin: '10px 0'
     },
     progressFill: (progress) => ({
-      width: `${progress}%`,
+      width: ${progress}%,
       height: '100%',
       backgroundColor: '#4caf50',
       borderRadius: '5px',
