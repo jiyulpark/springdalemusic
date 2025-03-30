@@ -27,13 +27,11 @@ const handleDownload = async () => {
     ? post.file_urls[0] 
     : post.file_urls[0]?.file_url;
   
-  try {
-    // 세션에서 토큰 가져오기
+    try {
     const token = session?.access_token;
     
     if (!token) {
       alert('로그인이 필요합니다.');
-      router.push('/login'); // 로그인 페이지로 이동
       return;
     }
     
@@ -41,7 +39,7 @@ const handleDownload = async () => {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}` // 토큰 추가
+        'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify({ postId: post.id, filePath: firstFile })
     });
