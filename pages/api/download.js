@@ -84,12 +84,15 @@ export default async function handler(req, res) {
       ? filePath
       : filePath?.file_url;
 
-    const finalPath = rawPath?.replace(/^uploads\//, '').replace(/^thumbnails\//, '').replace(/^avatars\//, '');
+    // 파일 경로에서 버킷 이름 추출
+    const bucketMatch = rawPath.match(/^(uploads|thumbnails|avatars)\//);
+    const bucket = bucketMatch ? bucketMatch[1] : 'uploads';
+    const finalPath = rawPath.replace(/^(uploads|thumbnails|avatars)\//, '');
 
     console.log('=== 파일 다운로드 디버그 정보 ===');
     console.log('원본 경로:', rawPath);
+    console.log('버킷:', bucket);
     console.log('최종 경로:', finalPath);
-    console.log('버킷 이름: uploads');
     console.log('============================');
 
     // ✅ 다운로드 수 증가 (타임아웃 설정)
@@ -104,7 +107,7 @@ export default async function handler(req, res) {
     ]);
 
     // ✅ 서명된 URL 생성 (재시도 로직 사용)
-    const { data: fileData, error: fileError } = await createSignedUrl('uploads', finalPath, 60);
+    const { data: fileData, error: fileError } = await createSignedUrl(bucket, finalPath, 60);
 
     if (fileError || !fileData?.signedUrl) {
       console.error('URL 생성 에러:', fileError);

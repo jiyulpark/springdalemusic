@@ -234,9 +234,33 @@ const PostDetail = () => {
               <li key={index} className={styles.fileItem}>
                 {canDownload ? (
                   <a
-                    href={`/api/download?postId=${post.id}&filePath=${encodeURIComponent(file.file_url)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    href="#"
+                    onClick={async (e) => {
+                      e.preventDefault();
+                      try {
+                        const response = await fetch('/api/download', {
+                          method: 'POST',
+                          headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${session?.access_token}`
+                          },
+                          body: JSON.stringify({
+                            postId: post.id,
+                            filePath: file.file_url
+                          })
+                        });
+                        
+                        const data = await response.json();
+                        if (!response.ok) {
+                          throw new Error(data.error || '다운로드 URL 생성 실패');
+                        }
+                        
+                        window.open(data.url, '_blank');
+                      } catch (error) {
+                        console.error('다운로드 오류:', error);
+                        alert('다운로드 중 오류가 발생했습니다.');
+                      }
+                    }}
                     className={styles.downloadLink}
                   >
                     📥 {file.file_name}
