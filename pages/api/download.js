@@ -1,4 +1,4 @@
-import { supabase } from '../../lib/supabase';
+import { supabase, createSignedUrl } from '../../lib/supabase';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -88,6 +88,12 @@ export default async function handler(req, res) {
       ? rawPath.replace('uploads/', '')
       : rawPath;
 
+    console.log('=== 파일 다운로드 디버그 정보 ===');
+    console.log('원본 경로:', rawPath);
+    console.log('최종 경로:', finalPath);
+    console.log('버킷 이름: uploads');
+    console.log('============================');
+
     // ✅ 다운로드 수 증가 (타임아웃 설정)
     await Promise.race([
       supabase
@@ -99,19 +105,15 @@ export default async function handler(req, res) {
       )
     ]);
 
-    // ✅ 서명된 URL 생성 (타임아웃 설정)
-    const { data: fileData, error: fileError } = await Promise.race([
-      supabase.storage
-        .from('uploads')
-        .createSignedUrl(finalPath, 60),
-      new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('URL 생성 시간 초과')), 5000)
-      )
-    ]);
+    // ✅ 서명된 URL 생성 (재시도 로직 사용)
+    const { data: fileData, error: fileError } = await createSignedUrl('uploads', finalPath, 60);
 
     if (fileError || !fileData?.signedUrl) {
       console.error('URL 생성 에러:', fileError);
-      return res.status(500).json({ error: '다운로드 URL 생성 실패' });
+      return res.status(500).json({ 
+        error: '다운로드 URL 생성 실패',
+        details: fileError?.message || '알 수 없는 오류'
+      });
     }
 
     return res.status(200).json({
