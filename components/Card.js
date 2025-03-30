@@ -23,37 +23,32 @@ const Card = ({ post, categories }) => {
         return;
       }
 
-      const firstFileRaw = post.file_urls[0];
-      const filePath =
-        typeof firstFileRaw === 'string'
-          ? firstFileRaw
-          : typeof firstFileRaw === 'object' && firstFileRaw?.file_url
-          ? firstFileRaw.file_url
-          : null;
+      const firstFile = post.file_urls[0];
+      const filePath = typeof firstFile === 'string' ? firstFile : firstFile?.file_url;
 
-      if (!filePath) {
+      if (!filePath || typeof filePath !== 'string') {
         alert('파일 경로가 유효하지 않습니다.');
         return;
       }
 
-      const { data } = supabase.storage.from('uploads').getPublicUrl(filePath);
-      const publicUrl = data?.publicUrl;
+      const { data: urlData, error } = supabase.storage.from('uploads').getPublicUrl(filePath);
 
-      if (publicUrl) {
-        setDownloadCount(prev => prev + 1);
-        window.open(publicUrl, '_blank');
-
-        const response = await fetch('/api/download', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ postId: post.id, currentDownloads: downloadCount + 1 }),
-        });
-
-        if (!response.ok) {
-          throw new Error('다운로드 수 업데이트 실패');
-        }
-      } else {
+      if (error || !urlData?.publicUrl) {
         alert('파일을 다운로드할 수 없습니다.');
+        return;
+      }
+
+      setDownloadCount(prev => prev + 1);
+      window.open(urlData.publicUrl, '_blank');
+
+      const response = await fetch('/api/download', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ postId: post.id, currentDownloads: downloadCount + 1 })
+      });
+
+      if (!response.ok) {
+        throw new Error('다운로드 수 업데이트 실패');
       }
     } catch (error) {
       console.error('다운로드 오류:', error);
