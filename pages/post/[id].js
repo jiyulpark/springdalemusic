@@ -256,7 +256,7 @@ const PostDetail = () => {
                           },
                           body: JSON.stringify({
                             postId: post.id,
-                            filePath: file.file_url
+                            filePath: file.file_url.replace(/^uploads\//, '')
                           })
                         });
                         
