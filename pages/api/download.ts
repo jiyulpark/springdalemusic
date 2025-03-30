@@ -1,39 +1,69 @@
 // pages/api/download.ts
-import type { NextApiRequest, NextApiResponse } from 'next';
-import { supabase } from '../../lib/supabase';
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ message: 'Method Not Allowed' });
+import { createServerSupabaseClient } from '@supabase/auth-helpers-nextjs';
+import { supabase } from '@/lib/supabase';
+
+const roleLevels = {
+  guest: 0,
+  user: 1,
+  verified_user: 2,
+  admin: 3,
+};
+
+export default async function handler(req, res) {
+  const { postId, filePath } = req.query;
+
+  if (!postId || !filePath) {
+    return res.status(400).json({ error: '잘못된 요청입니다.' });
   }
 
-  const { postId } = req.body;
+  const supabaseServerClient = createServerSupabaseClient({ req, res });
+  const {
+    data: { session },
+  } = await supabaseServerClient.auth.getSession();
 
-  if (!postId) {
-    console.warn('❗ postId가 전달되지 않았습니다.');
-    return res.status(400).json({ message: 'Post ID is required' });
+  // 세션 없을 경우 guest로 간주
+  const user = session?.user || null;
+  const userId = user?.id || null;
+
+  // 1. 게시글의 다운로드 권한 가져오기
+  const { data: post, error: postError } = await supabase
+    .from('posts')
+    .select('download_permission')
+    .eq('id', postId)
+    .single();
+
+  if (postError || !post) {
+    return res.status(404).json({ error: '게시물을 찾을 수 없습니다.' });
   }
 
-  try {
-    // 빠르게 응답
-    res.status(200).json({ success: true });
+  const requiredRole = post.download_permission || 'guest';
 
-    // RPC 실행
-    const { error } = await supabase.rpc('increment_downloads', {
-      post_id_input: postId,
-    });
-
-    if (error) {
-      console.error('❌ 다운로드 수 증가 실패 (postId: ', postId, ') →', error.message);
-      // 서버에서는 로그 남기되 사용자 응답은 이미 전송됨
-    } else {
-      console.log('✅ 다운로드 수 증가 성공 (postId:', postId, ')');
-    }
-  } catch (error: any) {
-    console.error('❌ 예외 발생:', error.message || error);
-    // 응답은 이미 완료되었기 때문에 여기선 로그만 남김
+  // 2. 유저 권한 가져오기
+  let userRole = 'guest';
+  if (userId) {
+    const { data: userInfo, error: userError } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', userId)
+      .single();
+    if (userInfo?.role) userRole = userInfo.role;
   }
+
+  // 3. 권한 레벨 비교
+  if (roleLevels[userRole] < roleLevels[requiredRole]) {
+    return res.status(403).json({ error: '다운로드 권한이 없습니다.' });
+  }
+
+  // 4. Storage에서 다운로드 URL 발급
+  const { data } = supabase.storage.from('uploads').getPublicUrl(filePath);
+  if (!data?.publicUrl) {
+    return res.status(500).json({ error: '파일 URL을 찾을 수 없습니다.' });
+  }
+
+  // 5. 다운로드 수 증가 (RPC 호출)
+  await supabase.rpc('increment_downloads', { post_id_input: postId });
+
+  // 6. 실제 파일로 리디렉션
+  return res.redirect(data.publicUrl);
 }
