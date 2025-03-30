@@ -15,13 +15,12 @@ const PostDetail = () => {
   const [categoryNames, setCategoryNames] = useState([]);
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState(null);
-  const [userRole, setUserRole] = useState(''); // 🔥 관리자 체크용
+  const [userRole, setUserRole] = useState('');
 
   useEffect(() => {
     const fetchSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       setSession(session);
-
       if (session?.user?.id) {
         const { data: userInfo } = await supabase
           .from('users')
@@ -38,29 +37,24 @@ const PostDetail = () => {
     if (id) {
       const fetchPostData = async () => {
         setLoading(true);
-
         const { data: postData, error: postError } = await supabase
           .from('posts')
-          .select(*, users (id, nickname, profile_picture))
+          .select('*, users (id, nickname, profile_picture)')
           .eq('id', id)
           .single();
-
         if (!postError) {
           setPost(postData);
-
           if (postData.category_ids?.length > 0) {
             const { data: allCategories } = await supabase.from('categories').select('id, name');
             const matched = allCategories.filter(cat => postData.category_ids.includes(cat.id));
             setCategoryNames(matched.map(c => c.name));
           }
         }
-
         const { data: commentsData } = await supabase
           .from('comments')
           .select('*')
           .eq('post_id', id)
           .order('created_at', { ascending: true });
-
         if (commentsData) {
           const commentsWithUsers = await Promise.all(
             commentsData.map(async (comment) => {
@@ -77,26 +71,21 @@ const PostDetail = () => {
           );
           setComments(commentsWithUsers);
         }
-
         const { data: likesData } = await supabase
           .from('likes')
           .select('*')
           .eq('post_id', id);
-
         setLikes(likesData ? likesData.length : 0);
         if (session?.user) {
           setUserLiked(likesData?.some(like => like.user_id === session.user.id));
         }
-
         const { data: filesData } = await supabase
           .from('files')
           .select('*')
           .eq('post_id', id);
-
         setFiles(filesData || []);
         setLoading(false);
       };
-
       fetchPostData();
     }
   }, [id, session]);
@@ -115,7 +104,6 @@ const PostDetail = () => {
       .eq('post_id', id)
       .eq('user_id', session.user.id)
       .single();
-
     if (existingLike) {
       await supabase.from('likes').delete().eq('id', existingLike.id);
       setLikes(likes - 1);
@@ -130,30 +118,25 @@ const PostDetail = () => {
   const handleAddComment = async () => {
     if (!session?.user) return alert('로그인이 필요합니다!');
     if (!newComment.trim()) return alert('댓글을 입력하세요!');
-
     const { data: commentData, error } = await supabase
       .from('comments')
       .insert([{ post_id: id, user_id: session.user.id, content: newComment }])
       .select();
-
     if (error) {
       alert('댓글 등록에 실패했습니다.');
       console.error(error);
       return;
     }
-
     if (commentData && commentData.length > 0) {
       const { data: userData } = await supabase
         .from('users')
         .select('nickname, profile_picture')
         .eq('id', session.user.id)
         .single();
-
       const newCommentWithUser = {
         ...commentData[0],
         user: userData || { nickname: "익명", profile_picture: null }
       };
-
       setComments([...comments, newCommentWithUser]);
       setNewComment('');
     }
@@ -177,7 +160,6 @@ const PostDetail = () => {
   return (
     <div className={styles.container}>
       <h1 className={styles.title}>{post.title}</h1>
-
       {post.thumbnail_url && (
         <div className={styles.thumbnailContainer}>
           <img
@@ -187,7 +169,6 @@ const PostDetail = () => {
           />
         </div>
       )}
-
       <div className={styles.content}>
         {post.content.split('\n').map((line, i) => (
           <div key={i}>
@@ -210,7 +191,6 @@ const PostDetail = () => {
           </div>
         ))}
       </div>
-
       {categoryNames.length > 0 && (
         <div className={styles.categoryBadgeContainer}>
           {categoryNames.map((name, index) => (
@@ -218,7 +198,6 @@ const PostDetail = () => {
           ))}
         </div>
       )}
-
       {files.length > 0 && (
         <div className={styles.files}>
           <h3>첨부 파일</h3>
@@ -237,20 +216,16 @@ const PostDetail = () => {
           </ul>
         </div>
       )}
-
       <div className={styles.buttonContainer}>
         <button onClick={handleLike} className={styles.likeButton}>❤️ {likes}</button>
-
         {(session?.user.id === post.user_id || userRole === 'admin') && (
           <>
-            <button onClick={() => router.push(/edit/${id})} className={styles.editButton}>수정</button>
+            <button onClick={() => router.push(`/edit/${id}`)} className={styles.editButton}>수정</button>
             <button onClick={handleDelete} className={styles.deleteButton}>삭제</button>
           </>
         )}
-
         <button onClick={() => router.push('/')} className={styles.backButton}>목록으로</button>
       </div>
-
       <div className={styles.commentSection}>
         <h3>댓글</h3>
         {comments.length > 0 ? (
@@ -265,15 +240,10 @@ const PostDetail = () => {
                       className={styles.commentAvatar}
                     />
                   )}
-                  <span className={styles.commentAuthor}>
-                    {comment.user?.nickname || "익명"}
-                  </span>
-                  <span className={styles.commentDate}>
-                    {new Date(comment.created_at).toLocaleString('ko-KR')}
-                  </span>
+                  <span className={styles.commentAuthor}>{comment.user?.nickname || "익명"}</span>
+                  <span className={styles.commentDate}>{new Date(comment.created_at).toLocaleString('ko-KR')}</span>
                 </div>
                 <p className={styles.commentContent}>{comment.content}</p>
-
                 {(session?.user.id === comment.user_id || userRole === 'admin') && (
                   <button
                     onClick={() => handleDeleteComment(comment.id)}
@@ -288,7 +258,6 @@ const PostDetail = () => {
         ) : (
           <p className={styles.noComments}>댓글이 없습니다.</p>
         )}
-
         {session && (
           <div className={styles.commentInputContainer}>
             <input
