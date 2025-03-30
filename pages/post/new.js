@@ -70,29 +70,29 @@ const NewPost = () => {
         thumbnailUrl = data.path;
       }
 
-      // 게시글 먼저 생성 (파일과 연결 위해 ID 필요)
+      // 게시글 생성
       const { data: newPost, error: postError } = await supabase.from('posts').insert([{
         title,
         content,
         user_id: user.id,
         thumbnail_url: thumbnailUrl,
-        file_urls: [], // 나중에 업데이트
+        file_urls: [],
         category_ids: selectedCategories,
         download_permission: downloadPermission,
       }]).select().single();
 
       if (postError) throw postError;
 
-      // 파일 업로드 + files 테이블 저장
       const uploadedFileUrls = [];
+
+      // 파일 업로드 및 files 테이블 저장
       for (const file of files) {
         const path = `uploads/${Date.now()}_${file.name}`;
         const { data, error } = await supabase.storage.from('uploads').upload(path, file);
         if (error) throw error;
 
-        uploadedFileUrls.push(path);
+        uploadedFileUrls.push({ file_url: path, file_name: file.name });
 
-        // ✅ files 테이블에 post_id 연결하여 저장
         await supabase.from('files').insert([{
           post_id: newPost.id,
           file_url: path,
@@ -102,7 +102,7 @@ const NewPost = () => {
         }]);
       }
 
-      // posts 테이블에 file_urls 업데이트
+      // 게시글에 파일 URL 업데이트
       if (uploadedFileUrls.length > 0) {
         await supabase.from('posts')
           .update({ file_urls: uploadedFileUrls })
@@ -118,14 +118,8 @@ const NewPost = () => {
     }
   };
 
-  const radioOptions = [
-    { value: 'verified_user', label: '인증 유저만 다운로드 가능' },
-    { value: 'user', label: '일반 유저 이상만 다운로드 가능' },
-    { value: 'guest', label: '비회원도 다운로드 가능' },
-  ];
-
   return (
-    <div style={{ maxWidth: '600px', margin: '40px auto', padding: '20px', background: '#fff', borderRadius: '10px' }}>
+    <div style={{ maxWidth: 600, margin: '40px auto', padding: 20, background: '#fff', borderRadius: 10 }}>
       <h1>새 게시글 작성</h1>
       {errorMsg && <p style={{ color: 'red' }}>{errorMsg}</p>}
 
@@ -138,55 +132,8 @@ const NewPost = () => {
       <h4>파일 업로드</h4>
       <input type="file" multiple onChange={handleFileChange} />
 
-      <h4>스타일 선택</h4>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: 10 }}>
-        {categories.filter(c => c.type === 'style').map(c => (
-          <button key={c.id} onClick={() => toggleCategory(c.id)} style={{
-            padding: 8,
-            background: selectedCategories.includes(c.id) ? '#007bff' : '#ddd',
-            color: selectedCategories.includes(c.id) ? '#fff' : '#000',
-            border: 'none',
-            borderRadius: 5,
-            cursor: 'pointer',
-          }}>{c.name}</button>
-        ))}
-      </div>
-
-      <h4>타입 선택</h4>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: 10 }}>
-        {categories.filter(c => c.type === 'type').map(c => (
-          <button key={c.id} onClick={() => toggleCategory(c.id)} style={{
-            padding: 8,
-            background: selectedCategories.includes(c.id) ? '#007bff' : '#ddd',
-            color: selectedCategories.includes(c.id) ? '#fff' : '#000',
-            border: 'none',
-            borderRadius: 5,
-            cursor: 'pointer',
-          }}>{c.name}</button>
-        ))}
-      </div>
-
-      <h4>다운로드 권한</h4>
-      {radioOptions.map((opt) => (
-        <label key={opt.value} style={{ display: 'block', marginBottom: '5px' }}>
-          <input
-            type="radio"
-            name="downloadPermission"
-            value={opt.value}
-            checked={downloadPermission === opt.value}
-            onChange={() => setDownloadPermission(opt.value)}
-          /> {opt.label}
-        </label>
-      ))}
-
       <button onClick={handleCreatePost} disabled={loading} style={{
-        padding: '10px 20px',
-        background: '#28a745',
-        color: '#fff',
-        border: 'none',
-        borderRadius: '5px',
-        marginTop: 20,
-        cursor: 'pointer'
+        padding: '10px 20px', background: '#28a745', color: '#fff', border: 'none', borderRadius: 5, marginTop: 20, cursor: 'pointer'
       }}>
         {loading ? '작성 중...' : '게시글 작성'}
       </button>
