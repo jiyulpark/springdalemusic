@@ -8,23 +8,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const { postId, filePath } = req.body;
 
-  // 🔥 filePath가 string이 아니라 객체일 수도 있음!
-  const finalPath = typeof filePath === 'string' 
-    ? filePath 
-    : filePath?.file_url;
-
-  if (!postId) {
-    return res.status(400).json({ error: 'postId가 없습니다.' });
-  }
-  if (!finalPath) {
-    return res.status(400).json({ error: '파일 경로가 없습니다.' });
+  if (!postId || !filePath) {
+    return res.status(400).json({ error: 'postId 또는 filePath가 없습니다.' });
   }
 
   try {
-    // 🔐 세션 토큰 처리
+    // ✅ 토큰 추출
     const token = req.headers.authorization?.replace('Bearer ', '');
-    if (!token) return res.status(401).json({ error: '로그인이 필요합니다.' });
+    if (!token) {
+      return res.status(401).json({ error: '로그인이 필요합니다.' });
+    }
 
+    // ✅ 사용자 인증
     const { data: userInfo, error: userError } = await supabase.auth.getUser(token);
     if (userError || !userInfo?.user) {
       return res.status(401).json({ error: '세션이 유효하지 않습니다.' });
@@ -32,18 +27,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const userId = userInfo.user.id;
 
-    const { data: userData, error: userFetchError } = await supabase
+    // ✅ 유저 역할 확인
+    const { data: userData, error: fetchUserError } = await supabase
       .from('users')
       .select('role')
       .eq('id', userId)
       .single();
 
-    if (userFetchError || !userData) {
+    if (fetchUserError || !userData) {
       return res.status(403).json({ error: '권한 조회 실패' });
     }
 
-    const userRole = userData.role;
+    const userRole = userData.role; // admin, verified_user, user, guest
 
+    // ✅ 게시글 다운로드 권한 확인
     const { data: postData, error: postError } = await supabase
       .from('posts')
       .select('download_permission, downloads')
@@ -64,20 +61,34 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(403).json({ error: '다운로드 권한이 없습니다.' });
     }
 
+    // ✅ 파일 경로 정리
+    const rawPath = typeof filePath === 'string'
+      ? filePath
+      : filePath?.file_url;
+
+    const finalPath = rawPath?.startsWith('uploads/')
+      ? rawPath.replace('uploads/', '')
+      : rawPath;
+
+    // ✅ 다운로드 수 증가
     await supabase
       .from('posts')
       .update({ downloads: downloads + 1 })
       .eq('id', postId);
 
+    // ✅ 서명된 URL 생성
     const { data: fileData, error: fileError } = await supabase.storage
-      .from('uploads') // 버킷명 정확히 확인
-      .createSignedUrl(finalPath.replace('uploads/', ''), 60); // 🔥 경로에서 'uploads/' 제거
+      .from('uploads') // 🔥 uploads = 버킷 이름
+      .createSignedUrl(finalPath, 60);
 
     if (fileError || !fileData?.signedUrl) {
       return res.status(500).json({ error: '다운로드 URL 생성 실패' });
     }
 
-    return res.status(200).json({ success: true, url: fileData.signedUrl });
+    return res.status(200).json({
+      success: true,
+      url: fileData.signedUrl,
+    });
   } catch (error) {
     console.error('🔥 서버 오류:', error);
     return res.status(500).json({ error: '서버 오류 발생' });
