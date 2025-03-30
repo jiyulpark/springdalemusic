@@ -1,3 +1,4 @@
+// components/Card.js
 import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/router';
@@ -31,12 +32,23 @@ const Card = ({ post, categories }) => {
         return;
       }
 
-      const downloadUrl = `/api/download?postId=${post.id}&filePath=${encodeURIComponent(filePath)}`;
+      const response = await fetch('/api/download', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ postId: post.id, filePath })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || '다운로드 실패');
+      }
+
       setDownloadCount(prev => prev + 1);
-      window.open(downloadUrl, '_blank');
+      window.open(result.url, '_blank');
     } catch (error) {
-      console.error('다운로드 오류:', error);
-      alert('다운로드 중 문제가 발생했습니다.');
+      console.error('다운로드 오류:', error.message);
+      alert(error.message || '다운로드 중 문제가 발생했습니다.');
     }
   };
 
@@ -79,6 +91,7 @@ const Card = ({ post, categories }) => {
             role="button"
             tabIndex={0}
             className={styles.authorName}
+            style={{ cursor: 'pointer', color: '#0070f3', textDecoration: 'underline' }}
             onClick={() => router.push(`/profile/${post.user_id}`)}
             onKeyPress={(e) => e.key === 'Enter' && router.push(`/profile/${post.user_id}`)}
           >
