@@ -238,11 +238,21 @@ const PostDetail = () => {
                     onClick={async (e) => {
                       e.preventDefault();
                       try {
+                        if (!session?.access_token) {
+                          throw new Error('로그인이 필요합니다.');
+                        }
+
+                        console.log('다운로드 시도:', {
+                          postId: post.id,
+                          filePath: file.file_url,
+                          fileName: file.file_name
+                        });
+
                         const response = await fetch('/api/download', {
                           method: 'POST',
                           headers: {
                             'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${session?.access_token}`
+                            'Authorization': `Bearer ${session.access_token}`
                           },
                           body: JSON.stringify({
                             postId: post.id,
@@ -255,10 +265,15 @@ const PostDetail = () => {
                           throw new Error(data.error || '다운로드 URL 생성 실패');
                         }
                         
+                        if (!data.url) {
+                          throw new Error('다운로드 URL이 생성되지 않았습니다.');
+                        }
+
+                        console.log('다운로드 URL 생성 성공:', data.url);
                         window.open(data.url, '_blank');
                       } catch (error) {
                         console.error('다운로드 오류:', error);
-                        alert('다운로드 중 오류가 발생했습니다.');
+                        alert(`다운로드 중 오류가 발생했습니다: ${error.message}`);
                       }
                     }}
                     className={styles.downloadLink}
