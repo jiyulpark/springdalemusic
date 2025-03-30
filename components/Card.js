@@ -26,6 +26,11 @@ const Card = ({ post, categories }) => {
       const firstFile = post.file_urls[0];
       const filePath = typeof firstFile === 'string' ? firstFile : firstFile.file_url;
 
+      if (!filePath) {
+        alert('파일 경로가 유효하지 않습니다.');
+        return;
+      }
+
       const { data } = supabase.storage.from('uploads').getPublicUrl(filePath);
       const publicUrl = data?.publicUrl;
 
@@ -35,17 +40,12 @@ const Card = ({ post, categories }) => {
 
         const response = await fetch('/api/download', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            postId: post.id,
-            currentDownloads: downloadCount + 1,
-          }),
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ postId: post.id, currentDownloads: downloadCount + 1 }),
         });
 
         if (!response.ok) {
-          throw new Error('Download count update failed');
+          throw new Error('다운로드 수 업데이트 실패');
         }
       } else {
         alert('파일을 다운로드할 수 없습니다.');
