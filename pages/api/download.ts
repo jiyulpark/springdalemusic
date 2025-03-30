@@ -1,7 +1,7 @@
 // pages/api/download.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createServerSupabaseClient } from '@supabase/auth-helpers-nextjs';
-import { roleLevels } from '@/utils/roleLevels';
+import { roleLevels } from '../../utils/roleLevels';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
