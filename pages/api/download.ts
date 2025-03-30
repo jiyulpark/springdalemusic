@@ -1,72 +1,79 @@
-// pages/api/download.ts
 import { supabase } from '../../lib/supabase';
-import { NextApiRequest, NextApiResponse } from 'next';
+import type { NextApiRequest, NextApiResponse } from 'next';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: '허용되지 않은 메서드입니다.' });
   }
 
-  const { postId, filePath } = req.body;
-
-  if (!postId || !filePath) {
-    return res.status(400).json({ error: '잘못된 요청입니다.' });
+  const { postId } = req.body;
+  if (!postId) {
+    return res.status(400).json({ error: 'postId가 없습니다.' });
   }
 
-  // 세션 가져오기
-  const token = req.headers.authorization?.split(' ')[1] || '';
-  let userId = null;
-  let userRole = 'guest';
-
-  if (token) {
-    const { data, error } = await supabase.auth.getUser(token);
-    if (data?.user) {
-      userId = data.user.id;
-      const { data: userInfo } = await supabase
-        .from('users')
-        .select('role')
-        .eq('id', userId)
-        .single();
-      if (userInfo?.role) userRole = userInfo.role;
+  try {
+    // 🔐 Supabase 세션 확인 (AccessToken 추출)
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    if (!token) {
+      return res.status(401).json({ error: '로그인이 필요합니다.' });
     }
+
+    // 🔍 세션을 이용해 유저 정보 조회
+    const { data: userInfo, error: userError } = await supabase.auth.getUser(token);
+    if (userError || !userInfo?.user) {
+      return res.status(401).json({ error: '세션이 유효하지 않습니다.' });
+    }
+
+    const userId = userInfo.user.id;
+
+    // 🔎 유저 role 조회
+    const { data: userData, error: fetchUserError } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', userId)
+      .single();
+
+    if (fetchUserError || !userData) {
+      return res.status(403).json({ error: '권한 조회 실패' });
+    }
+
+    const userRole = userData.role; // admin, verified_user, user, guest
+
+    // 🔒 게시글 정보 가져오기
+    const { data: postData, error: postError } = await supabase
+      .from('posts')
+      .select('download_permission, downloads')
+      .eq('id', postId)
+      .single();
+
+    if (postError || !postData) {
+      return res.status(404).json({ error: '게시글이 존재하지 않습니다.' });
+    }
+
+    const { download_permission, downloads } = postData;
+
+    // ✅ 다운로드 권한 확인
+    const roleOrder = ['guest', 'user', 'verified_user', 'admin'];
+    const userLevel = roleOrder.indexOf(userRole);
+    const requiredLevel = roleOrder.indexOf(download_permission);
+
+    if (userLevel < requiredLevel) {
+      return res.status(403).json({ error: '다운로드 권한이 없습니다.' });
+    }
+
+    // ⬆️ 다운로드 수 증가
+    const { error: updateError } = await supabase
+      .from('posts')
+      .update({ downloads: downloads + 1 })
+      .eq('id', postId);
+
+    if (updateError) {
+      return res.status(500).json({ error: '다운로드 수 증가 실패' });
+    }
+
+    return res.status(200).json({ success: true });
+  } catch (error) {
+    console.error('🔥 다운로드 처리 중 오류:', error);
+    return res.status(500).json({ error: '서버 오류 발생' });
   }
-
-  // 게시물 확인
-  const { data: post, error: postError } = await supabase
-    .from('posts')
-    .select('download_permission')
-    .eq('id', postId)
-    .single();
-
-  if (postError || !post) {
-    return res.status(404).json({ error: '게시물을 찾을 수 없습니다.' });
-  }
-
-  // 권한 확인
-  const requiredLevel = {
-    guest: 0,
-    user: 1,
-    verified_user: 2,
-    admin: 3,
-  };
-
-  const userLevel = requiredLevel[userRole] ?? 0;
-  const postLevel = requiredLevel[post.download_permission] ?? 0;
-
-  if (userLevel < postLevel) {
-    return res.status(403).json({ error: '다운로드 권한이 없습니다.' });
-  }
-
-  // 다운로드 수 증가
-  await supabase.rpc('increment_downloads', { post_id_input: postId });
-
-  // 파일 URL 반환
-  const { data: storage } = supabase.storage.from('uploads').getPublicUrl(filePath);
-  const downloadUrl = storage?.publicUrl;
-
-  if (!downloadUrl) {
-    return res.status(500).json({ error: '파일 URL을 가져올 수 없습니다.' });
-  }
-
-  return res.status(200).json({ url: downloadUrl });
 }
