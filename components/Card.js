@@ -23,11 +23,16 @@ const Card = ({ post, categories }) => {
         return;
       }
 
-      const { data } = supabase.storage.from('uploads').getPublicUrl(post.file_urls[0]);
+      // ✅ 객체 or 문자열 모두 처리
+      const firstFile = post.file_urls[0];
+      const filePath = typeof firstFile === 'string' ? firstFile : firstFile.file_url;
 
-      if (data?.publicUrl) {
+      const { data } = supabase.storage.from('uploads').getPublicUrl(filePath);
+      const publicUrl = data?.publicUrl;
+
+      if (publicUrl) {
         setDownloadCount(prev => prev + 1);
-        window.open(data.publicUrl, '_blank');
+        window.open(publicUrl, '_blank');
 
         const response = await fetch('/api/download', {
           method: 'POST',
