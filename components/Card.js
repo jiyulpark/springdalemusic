@@ -62,6 +62,15 @@ const Card = ({ post, categories }) => {
       const data = await response.json();
       
       if (!response.ok) {
+        if (response.status === 403) {
+          const roleNames = {
+            'guest': '비로그인',
+            'user': '일반 회원',
+            'verified_user': '인증 회원',
+            'admin': '관리자'
+          };
+          throw new Error(`${roleNames[data.requiredRole]} 이상만 다운로드할 수 있습니다. (현재: ${roleNames[data.currentRole]})`);
+        }
         throw new Error(data.error || '다운로드에 실패했습니다.');
       }
 

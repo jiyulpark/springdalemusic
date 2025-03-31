@@ -27,6 +27,21 @@ export default async function handler(req, res) {
 
     console.log('✅ 세션 검증 성공:', user.id);
 
+    // 사용자 역할 조회
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+
+    if (userError || !userData) {
+      console.error('❌ 사용자 정보 조회 실패:', userError?.message);
+      return res.status(500).json({ error: '사용자 정보를 가져올 수 없습니다.' });
+    }
+
+    const userRole = userData.role || 'guest';
+    console.log('👤 사용자 역할:', userRole);
+
     // 게시물 정보 조회
     const { data: post, error: postError } = await supabase
       .from('posts')
@@ -37,6 +52,32 @@ export default async function handler(req, res) {
     if (postError || !post) {
       console.error('❌ 게시물 조회 실패:', postError?.message);
       return res.status(404).json({ error: '게시물을 찾을 수 없습니다.' });
+    }
+
+    // 다운로드 권한 체크
+    const downloadPermission = post.download_permission || 'guest';
+    console.log('🔒 다운로드 권한 요구사항:', downloadPermission);
+
+    const roleHierarchy = {
+      'guest': 0,
+      'user': 1,
+      'verified_user': 2,
+      'admin': 3
+    };
+
+    const userRoleLevel = roleHierarchy[userRole] || 0;
+    const requiredRoleLevel = roleHierarchy[downloadPermission] || 0;
+
+    if (userRoleLevel < requiredRoleLevel) {
+      console.error('❌ 권한 부족:', {
+        사용자역할: userRole,
+        요구사항: downloadPermission
+      });
+      return res.status(403).json({ 
+        error: '다운로드 권한이 없습니다.',
+        requiredRole: downloadPermission,
+        currentRole: userRole
+      });
     }
 
     // 파일 경로 처리
