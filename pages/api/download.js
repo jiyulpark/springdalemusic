@@ -1,5 +1,4 @@
-import { supabase, createSignedUrl } from '../../lib/supabase';
-import { createClient } from '../../lib/supabase';
+import { supabase } from '../../lib/supabase';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -8,7 +7,6 @@ export default async function handler(req, res) {
 
   try {
     const { postId, filePath } = req.body;
-    const supabase = createClient();
 
     // 세션 확인
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
