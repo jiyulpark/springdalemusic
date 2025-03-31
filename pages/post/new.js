@@ -58,7 +58,13 @@ const NewPost = () => {
     }
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      // 세션 체크 강화
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) {
+        console.error('❌ 세션 확인 실패:', sessionError);
+        throw new Error('세션 확인 중 오류가 발생했습니다.');
+      }
+      
       if (!session?.user) {
         throw new Error('로그인이 필요합니다.');
       }
@@ -70,7 +76,10 @@ const NewPost = () => {
       if (thumbnail) {
         const thumbPath = `thumbnails/${Date.now()}_${thumbnail.name}`;
         const { data, error } = await supabase.storage.from('thumbnails').upload(thumbPath, thumbnail);
-        if (error) throw error;
+        if (error) {
+          console.error('❌ 썸네일 업로드 실패:', error);
+          throw new Error('썸네일 업로드 중 오류가 발생했습니다.');
+        }
         thumbnailUrl = data.path;
       }
 
@@ -80,7 +89,7 @@ const NewPost = () => {
         .insert([{
           title,
           content,
-          user_id: session.user.id,
+          user_id: session.user.id,  // RLS 정책을 위해 반드시 필요
           thumbnail_url: thumbnailUrl,
           file_urls: [], // 나중에 업데이트
           category_ids: selectedCategories,
@@ -93,7 +102,12 @@ const NewPost = () => {
 
       if (postError) {
         console.error('❌ 게시글 생성 실패:', postError);
-        throw postError;
+        if (postError.code === '23505') {
+          throw new Error('이미 존재하는 게시글입니다.');
+        } else if (postError.code === '42501') {
+          throw new Error('권한이 없습니다. 다시 로그인해주세요.');
+        }
+        throw new Error('게시글 생성 중 오류가 발생했습니다.');
       }
 
       console.log('✅ 게시글 생성 성공:', newPost.id);
@@ -104,24 +118,37 @@ const NewPost = () => {
       for (const file of files) {
         const path = `uploads/${Date.now()}_${file.name}`;
         const { data, error } = await supabase.storage.from('uploads').upload(path, file);
-        if (error) throw error;
+        if (error) {
+          console.error('❌ 파일 업로드 실패:', error);
+          throw new Error('파일 업로드 중 오류가 발생했습니다.');
+        }
 
         uploadedFileUrls.push({ file_url: path, file_name: file.name });
 
-        await supabase.from('files').insert([{
+        const { error: fileInsertError } = await supabase.from('files').insert([{
           post_id: newPost.id,
           file_url: path,
           file_name: file.name,
           file_size: file.size,
           file_type: file.type,
         }]);
+
+        if (fileInsertError) {
+          console.error('❌ 파일 정보 저장 실패:', fileInsertError);
+          throw new Error('파일 정보 저장 중 오류가 발생했습니다.');
+        }
       }
 
       // 게시글에 파일 URL 업데이트
       if (uploadedFileUrls.length > 0) {
-        await supabase.from('posts')
+        const { error: updateError } = await supabase.from('posts')
           .update({ file_urls: uploadedFileUrls })
           .eq('id', newPost.id);
+
+        if (updateError) {
+          console.error('❌ 파일 URL 업데이트 실패:', updateError);
+          throw new Error('파일 URL 업데이트 중 오류가 발생했습니다.');
+        }
       }
 
       router.push(`/post/${newPost.id}`);
