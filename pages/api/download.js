@@ -40,6 +40,11 @@ export default async function handler(req, res) {
     }
 
     // 파일 경로 처리
+    if (!filePath) {
+      console.error('❌ 파일 경로 없음');
+      return res.status(400).json({ error: '파일 경로가 필요합니다.' });
+    }
+
     const rawPath = filePath;
     const bucketMatch = rawPath.match(/^(uploads|thumbnails|avatars)\//);
     const bucketName = bucketMatch ? bucketMatch[1] : 'uploads';
@@ -50,6 +55,24 @@ export default async function handler(req, res) {
       버킷: bucketName,
       최종경로: finalPath
     });
+
+    // 파일 존재 여부 확인
+    const { data: fileExists, error: fileCheckError } = await supabase.storage
+      .from(bucketName)
+      .list(finalPath.split('/').slice(0, -1).join('/'));
+
+    if (fileCheckError) {
+      console.error('❌ 파일 확인 실패:', fileCheckError.message);
+      return res.status(404).json({ error: '파일을 찾을 수 없습니다.' });
+    }
+
+    const fileName = finalPath.split('/').pop();
+    const fileFound = fileExists?.some(file => file.name === fileName);
+
+    if (!fileFound) {
+      console.error('❌ 파일이 존재하지 않음:', finalPath);
+      return res.status(404).json({ error: '파일을 찾을 수 없습니다.' });
+    }
 
     // 다운로드 URL 생성
     const { data: urlData, error: urlError } = await supabase.storage

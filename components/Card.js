@@ -22,11 +22,30 @@ const Card = ({ post, categories }) => {
   const handleDownload = async (e) => {
     e.preventDefault();
     try {
+      if (!post.file_urls || post.file_urls.length === 0) {
+        alert('첨부파일이 없습니다.');
+        return;
+      }
+
+      const firstFile = typeof post.file_urls[0] === 'string'
+        ? post.file_urls[0]
+        : post.file_urls[0]?.file_url;
+
+      if (!firstFile) {
+        alert('유효하지 않은 파일입니다.');
+        return;
+      }
+
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         alert('다운로드하려면 로그인이 필요합니다.');
         return;
       }
+
+      console.log('📥 다운로드 요청:', {
+        postId: post.id,
+        filePath: firstFile
+      });
 
       const response = await fetch('/api/download', {
         method: 'POST',
@@ -36,20 +55,21 @@ const Card = ({ post, categories }) => {
         },
         body: JSON.stringify({
           postId: post.id,
-          filePath: post.file_urls[0]
+          filePath: firstFile
         })
       });
 
+      const data = await response.json();
+      
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || '다운로드에 실패했습니다.');
+        throw new Error(data.error || '다운로드에 실패했습니다.');
       }
 
-      const { url } = await response.json();
+      console.log('✅ 다운로드 URL 생성 성공');
       setDownloadCount(prev => prev + 1);
-      window.open(url, '_blank');
+      window.open(data.url, '_blank');
     } catch (error) {
-      console.error('다운로드 에러:', error);
+      console.error('❌ 다운로드 에러:', error);
       alert(error.message);
     }
   };
