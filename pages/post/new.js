@@ -58,8 +58,12 @@ const NewPost = () => {
     }
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('로그인이 필요합니다.');
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) {
+        throw new Error('로그인이 필요합니다.');
+      }
+
+      console.log('👤 현재 사용자:', session.user.id);
 
       // 썸네일 업로드
       let thumbnailUrl = null;
@@ -71,17 +75,28 @@ const NewPost = () => {
       }
 
       // 게시글 생성
-      const { data: newPost, error: postError } = await supabase.from('posts').insert([{
-        title,
-        content,
-        user_id: user.id,
-        thumbnail_url: thumbnailUrl,
-        file_urls: [], // 나중에 업데이트
-        category_ids: selectedCategories,
-        download_permission: downloadPermission,
-      }]).select().single();
+      const { data: newPost, error: postError } = await supabase
+        .from('posts')
+        .insert([{
+          title,
+          content,
+          user_id: session.user.id,
+          thumbnail_url: thumbnailUrl,
+          file_urls: [], // 나중에 업데이트
+          category_ids: selectedCategories,
+          download_permission: downloadPermission,
+          downloads: 0,
+          likes: 0
+        }])
+        .select()
+        .single();
 
-      if (postError) throw postError;
+      if (postError) {
+        console.error('❌ 게시글 생성 실패:', postError);
+        throw postError;
+      }
+
+      console.log('✅ 게시글 생성 성공:', newPost.id);
 
       const uploadedFileUrls = [];
 
