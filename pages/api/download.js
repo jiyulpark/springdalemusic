@@ -14,12 +14,14 @@ export default async function handler(req, res) {
       return res.status(401).json({ error: '인증이 필요합니다.' });
     }
 
-    // 세션 토큰 추출
     const token = authHeader.replace('Bearer ', '');
     console.log('🔑 토큰:', token.substring(0, 10) + '...');
 
-    // 세션 검증
-    const { data: { user }, error: sessionError } = await supabase.auth.getUser(token);
+    const {
+      data: { user },
+      error: sessionError
+    } = await supabase.auth.getUser(token);
+
     if (sessionError || !user) {
       console.error('❌ 세션 검증 실패:', sessionError?.message);
       return res.status(401).json({ error: '유효하지 않은 세션입니다.' });
@@ -27,7 +29,6 @@ export default async function handler(req, res) {
 
     console.log('✅ 세션 검증 성공:', user.id);
 
-    // 사용자 역할 조회
     const { data: userData, error: userError } = await supabase
       .from('users')
       .select('role')
@@ -42,7 +43,6 @@ export default async function handler(req, res) {
     const userRole = userData.role || 'guest';
     console.log('👤 사용자 역할:', userRole);
 
-    // 게시물 정보 조회
     const { data: post, error: postError } = await supabase
       .from('posts')
       .select('*')
@@ -54,15 +54,14 @@ export default async function handler(req, res) {
       return res.status(404).json({ error: '게시물을 찾을 수 없습니다.' });
     }
 
-    // 다운로드 권한 체크
     const downloadPermission = post.download_permission || 'guest';
     console.log('🔒 다운로드 권한 요구사항:', downloadPermission);
 
     const roleHierarchy = {
-      'guest': 0,
-      'user': 1,
-      'verified_user': 2,
-      'admin': 3
+      guest: 0,
+      user: 1,
+      verified_user: 2,
+      admin: 3
     };
 
     const userRoleLevel = roleHierarchy[userRole] || 0;
@@ -73,49 +72,49 @@ export default async function handler(req, res) {
         사용자역할: userRole,
         요구사항: downloadPermission
       });
-      return res.status(403).json({ 
+      return res.status(403).json({
         error: '다운로드 권한이 없습니다.',
         requiredRole: downloadPermission,
         currentRole: userRole
       });
     }
 
-    // 파일 경로 처리
     if (!filePath) {
       console.error('❌ 파일 경로 없음');
       return res.status(400).json({ error: '파일 경로가 필요합니다.' });
     }
 
-    const rawPath = filePath;
-    const bucketMatch = rawPath.match(/^(uploads|thumbnails|avatars)\//);
-    const bucketName = bucketMatch ? bucketMatch[1] : 'uploads';
-    const finalPath = rawPath.replace(/^(uploads|thumbnails|avatars)\//, '');
+    // 🔥 uploads/ 같은 prefix 제거
+    const rawPath = filePath.replace(/^(uploads|thumbnails|avatars)\//, '');
+    const bucketName = 'uploads'; // 기본 버킷 이름 고정
+    const finalPath = rawPath;
 
     console.log('📁 파일 정보:', {
-      원본경로: rawPath,
+      원본경로: filePath,
       버킷: bucketName,
       최종경로: finalPath
     });
 
-    // 파일 존재 여부 확인
+    // 파일 존재 확인
+    const folderPath = finalPath.split('/').slice(0, -1).join('/');
+    const fileName = finalPath.split('/').pop();
+
     const { data: fileExists, error: fileCheckError } = await supabase.storage
       .from(bucketName)
-      .list(finalPath.split('/').slice(0, -1).join('/'));
+      .list(folderPath || '');
 
     if (fileCheckError) {
       console.error('❌ 파일 확인 실패:', fileCheckError.message);
       return res.status(404).json({ error: '파일을 찾을 수 없습니다.' });
     }
 
-    const fileName = finalPath.split('/').pop();
     const fileFound = fileExists?.some(file => file.name === fileName);
-
     if (!fileFound) {
       console.error('❌ 파일이 존재하지 않음:', finalPath);
       return res.status(404).json({ error: '파일을 찾을 수 없습니다.' });
     }
 
-    // 다운로드 URL 생성
+    // 사인 URL 생성
     const { data: urlData, error: urlError } = await supabase.storage
       .from(bucketName)
       .createSignedUrl(finalPath, 60);
