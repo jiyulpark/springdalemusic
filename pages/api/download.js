@@ -1,62 +1,80 @@
 import { supabase } from '../../lib/supabase';
-import { checkDownloadPermission } from '../../lib/auth';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    return res.status(405).json({ error: '허용되지 않는 메서드입니다.' });
   }
 
   try {
     const { postId, filePath } = req.body;
+    const authHeader = req.headers.authorization;
 
-    // 세션 확인
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    if (sessionError || !session) {
-      console.error('세션 오류:', sessionError);
-      return res.status(401).json({ error: '인증되지 않은 사용자입니다.' });
+    if (!authHeader) {
+      console.error('❌ 인증 헤더 없음');
+      return res.status(401).json({ error: '인증이 필요합니다.' });
     }
 
-    // 게시글 정보 조회
+    // 세션 토큰 추출
+    const token = authHeader.replace('Bearer ', '');
+    console.log('🔑 토큰:', token.substring(0, 10) + '...');
+
+    // 세션 검증
+    const { data: { user }, error: sessionError } = await supabase.auth.getUser(token);
+    if (sessionError || !user) {
+      console.error('❌ 세션 검증 실패:', sessionError?.message);
+      return res.status(401).json({ error: '유효하지 않은 세션입니다.' });
+    }
+
+    console.log('✅ 세션 검증 성공:', user.id);
+
+    // 게시물 정보 조회
     const { data: post, error: postError } = await supabase
       .from('posts')
       .select('*')
       .eq('id', postId)
       .single();
 
-    if (postError) {
-      console.error('게시글 조회 오류:', postError);
-      return res.status(404).json({ error: '게시글을 찾을 수 없습니다.' });
+    if (postError || !post) {
+      console.error('❌ 게시물 조회 실패:', postError?.message);
+      return res.status(404).json({ error: '게시물을 찾을 수 없습니다.' });
     }
 
-    // 다운로드 권한 확인
-    const canDownload = await checkDownloadPermission(session.user.id, post);
-    if (!canDownload) {
-      return res.status(403).json({ error: '다운로드 권한이 없습니다.' });
-    }
+    // 파일 경로 처리
+    const rawPath = filePath;
+    const bucketMatch = rawPath.match(/^(uploads|thumbnails|avatars)\//);
+    const bucketName = bucketMatch ? bucketMatch[1] : 'uploads';
+    const finalPath = rawPath.replace(/^(uploads|thumbnails|avatars)\//, '');
+
+    console.log('📁 파일 정보:', {
+      원본경로: rawPath,
+      버킷: bucketName,
+      최종경로: finalPath
+    });
 
     // 다운로드 URL 생성
     const { data: urlData, error: urlError } = await supabase.storage
-      .from('uploads')
-      .createSignedUrl(filePath, 60);
+      .from(bucketName)
+      .createSignedUrl(finalPath, 60);
 
     if (urlError) {
-      console.error('URL 생성 오류:', urlError);
-      return res.status(500).json({ error: '다운로드 URL 생성 실패' });
+      console.error('❌ 다운로드 URL 생성 실패:', urlError.message);
+      return res.status(500).json({ error: '다운로드 URL 생성에 실패했습니다.' });
     }
 
-    // 다운로드 횟수 증가
+    // 다운로드 카운트 증가
     const { error: updateError } = await supabase
       .from('posts')
       .update({ download_count: (post.download_count || 0) + 1 })
       .eq('id', postId);
 
     if (updateError) {
-      console.error('다운로드 횟수 업데이트 오류:', updateError);
+      console.error('❌ 다운로드 카운트 업데이트 실패:', updateError.message);
     }
 
+    console.log('✅ 다운로드 URL 생성 성공');
     return res.status(200).json({ url: urlData.signedUrl });
   } catch (error) {
-    console.error('다운로드 처리 오류:', error);
+    console.error('❌ 다운로드 처리 중 에러:', error.message);
     return res.status(500).json({ error: '서버 오류가 발생했습니다.' });
   }
 }
