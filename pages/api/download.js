@@ -1,61 +1,43 @@
-import { supabase } from '../../lib/supabase';
+import supabase from '../../lib/supabase'; // ✅ default export 사용
+import { getUserRoleFromRequest } from '@/utils/auth'; // 세션 기반 유저 역할 판별 함수
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+  const { postId, fileUrl, fileName, requiredRole } = req.body;
+
+  if (!postId || !fileUrl || !fileName || !requiredRole) {
+    return res.status(400).json({ error: '필수 파라미터 누락' });
   }
 
   try {
-    const { postId, filePath } = req.body;
+    // 1. 유저 권한 확인
+    const userRole = await getUserRoleFromRequest(req);
 
-    // 세션 확인
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    if (sessionError || !session) {
-      console.error('세션 오류:', sessionError);
-      return res.status(401).json({ error: '인증되지 않은 사용자입니다.' });
-    }
+    const rolePriority = {
+      guest: 0,
+      user: 1,
+      verified_user: 2,
+      admin: 3,
+    };
 
-    // 게시글 정보 조회
-    const { data: post, error: postError } = await supabase
-      .from('posts')
-      .select('*')
-      .eq('id', postId)
-      .single();
-
-    if (postError) {
-      console.error('게시글 조회 오류:', postError);
-      return res.status(404).json({ error: '게시글을 찾을 수 없습니다.' });
-    }
-
-    // 다운로드 권한 확인
-    const canDownload = await checkDownloadPermission(session.user.id, post);
-    if (!canDownload) {
+    if (!userRole || rolePriority[userRole] < rolePriority[requiredRole]) {
       return res.status(403).json({ error: '다운로드 권한이 없습니다.' });
     }
 
-    // 다운로드 URL 생성
-    const { data: urlData, error: urlError } = await supabase.storage
-      .from('uploads')
-      .createSignedUrl(filePath, 60);
+    // 2. Supabase Storage에서 signed URL 생성
+    const { data, error } = await supabase.storage
+      .from('uploads') // 버킷 이름
+      .createSignedUrl(fileUrl, 60); // 60초간 유효한 URL
 
-    if (urlError) {
-      console.error('URL 생성 오류:', urlError);
-      return res.status(500).json({ error: '다운로드 URL 생성 실패' });
+    if (error || !data) {
+      return res.status(500).json({ error: 'Signed URL 생성 실패' });
     }
 
-    // 다운로드 횟수 증가
-    const { error: updateError } = await supabase
-      .from('posts')
-      .update({ download_count: (post.download_count || 0) + 1 })
-      .eq('id', postId);
+    // 3. 다운로드 카운트 증가 (RPC 호출)
+    await supabase.rpc('increment_downloads', { post_id_input: postId });
 
-    if (updateError) {
-      console.error('다운로드 횟수 업데이트 오류:', updateError);
-    }
-
-    return res.status(200).json({ url: urlData.signedUrl });
-  } catch (error) {
-    console.error('다운로드 처리 오류:', error);
-    return res.status(500).json({ error: '서버 오류가 발생했습니다.' });
+    return res.status(200).json({ url: data.signedUrl });
+  } catch (err) {
+    console.error('Download API 오류:', err);
+    return res.status(500).json({ error: '서버 오류 발생' });
   }
-} 
+}
