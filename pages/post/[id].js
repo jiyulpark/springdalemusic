@@ -245,7 +245,8 @@ const PostDetail = () => {
                         console.log('다운로드 시도:', {
                           postId: post.id,
                           filePath: file.file_url,
-                          fileName: file.file_name
+                          fileName: file.file_name,
+                          userRole: session.user.role
                         });
 
                         const response = await fetch('/api/download', {
@@ -256,12 +257,21 @@ const PostDetail = () => {
                           },
                           body: JSON.stringify({
                             postId: post.id,
-                            filePath: file.file_url.replace(/^uploads\//, '')
+                            filePath: file.file_url
                           })
                         });
                         
                         const data = await response.json();
                         if (!response.ok) {
+                          if (response.status === 403) {
+                            const roleNames = {
+                              'guest': '비로그인',
+                              'user': '일반 회원',
+                              'verified_user': '인증 회원',
+                              'admin': '관리자'
+                            };
+                            throw new Error(`${roleNames[data.requiredRole]} 이상만 다운로드할 수 있습니다. (현재: ${roleNames[data.currentRole]})`);
+                          }
                           throw new Error(data.error || '다운로드 URL 생성 실패');
                         }
                         
@@ -285,6 +295,12 @@ const PostDetail = () => {
                 )}
                 {post.download_permission === 'verified_user' && (
                   <span className={styles.badge}>인증회원 전용 🔒</span>
+                )}
+                {post.download_permission === 'user' && (
+                  <span className={styles.badge}>일반 유저 이상 🔑</span>
+                )}
+                {post.download_permission === 'guest' && (
+                  <span className={styles.badge}>모두 가능 ✅</span>
                 )}
               </li>
             ))}

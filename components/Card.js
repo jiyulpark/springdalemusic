@@ -36,15 +36,15 @@ const Card = ({ post, categories }) => {
         return;
       }
 
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
+      if (!session?.access_token) {
         alert('다운로드하려면 로그인이 필요합니다.');
         return;
       }
 
       console.log('📥 다운로드 요청:', {
         postId: post.id,
-        filePath: firstFile
+        filePath: firstFile,
+        userRole: session.user.role
       });
 
       const response = await fetch('/api/download', {

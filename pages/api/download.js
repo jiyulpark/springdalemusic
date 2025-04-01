@@ -67,7 +67,10 @@ export default async function handler(req, res) {
     const userRoleLevel = roleHierarchy[userRole] || 0;
     const requiredRoleLevel = roleHierarchy[downloadPermission] || 0;
 
-    if (userRoleLevel < requiredRoleLevel) {
+    // admin은 모든 파일 다운로드 가능
+    if (userRole === 'admin') {
+      console.log('✅ 관리자 권한으로 다운로드 승인');
+    } else if (userRoleLevel < requiredRoleLevel) {
       console.error('❌ 권한 부족:', {
         사용자역할: userRole,
         요구사항: downloadPermission
