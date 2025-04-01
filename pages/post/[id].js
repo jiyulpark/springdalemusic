@@ -16,6 +16,7 @@ const PostDetail = () => {
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState(null);
   const [userRole, setUserRole] = useState('');
+  const [downloadCount, setDownloadCount] = useState(0);
 
   useEffect(() => {
     const fetchSession = async () => {
@@ -50,6 +51,7 @@ const PostDetail = () => {
 
         if (!postError) {
           setPost(postData);
+          setDownloadCount(postData.download_count || 0);
 
           if (postData.category_ids?.length > 0) {
             const { data: allCategories } = await supabase.from('categories').select('id, name');
@@ -197,6 +199,32 @@ const PostDetail = () => {
           />
         </div>
       )}
+
+      <div className={styles.postInfo}>
+        <span className={styles.author}>
+          {post.users?.profile_picture ? (
+            <img
+              src={post.users.profile_picture}
+              className={styles.authorImg}
+              alt="작성자 프로필"
+            />
+          ) : (
+            <div className={styles.authorPlaceholder}>
+              {post.users?.nickname?.[0] || 'A'}
+            </div>
+          )}
+          {post.users?.nickname || '익명'}
+        </span>
+        <span>조회 {post.view_count || 0}</span>
+        <span>다운로드 {downloadCount}</span>
+        <span>
+          {new Date(post.created_at).toLocaleDateString('ko-KR', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          })}
+        </span>
+      </div>
 
       <div className={styles.content}>
         {post.content.split('\n').map((line, i) => (
