@@ -94,8 +94,8 @@ const Card = ({ post, categories, handleDownload, handleLike, author }) => {
     }
   };
 
-  // 작성자 닉네임 첫 글자 또는 기본값
-  const authorInitial = post.users?.nickname ? post.users.nickname[0] : 'S';
+  // 기본 프로필 이미지 URL
+  const defaultProfileImage = "https://springdalemusic.vercel.app/profile-default.png";
 
   return (
     <div className={styles.card}>
@@ -117,17 +117,11 @@ const Card = ({ post, categories, handleDownload, handleLike, author }) => {
         )}
 
         <div className={styles.cardAuthor}>
-          {post.users?.profile_picture ? (
-            <img
-              src={post.users.profile_picture}
-              className={styles.authorImage}
-              alt="작성자 프로필"
-            />
-          ) : (
-            <div className={styles.authorPlaceholder}>
-              {authorInitial}
-            </div>
-          )}
+          <img
+            src={post.users?.profile_picture || defaultProfileImage}
+            className={styles.authorImage}
+            alt="작성자 프로필"
+          />
           <span
             className={styles.authorName}
             onClick={() => router.push(`/profile/${post.user_id}`)}
