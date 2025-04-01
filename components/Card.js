@@ -6,7 +6,7 @@ import { supabase } from '../lib/supabase';
 import { useSession } from '../lib/SessionContext';
 import styles from '../styles/Card.module.css';
 
-const Card = ({ post, categories }) => {
+const Card = ({ post, categories, handleDownload, handleLike, author }) => {
   const router = useRouter();
   const { session } = useSession();
   const [downloadCount, setDownloadCount] = useState(post.downloads ?? 0);
@@ -77,7 +77,16 @@ const Card = ({ post, categories }) => {
       }
 
       console.log('✅ 다운로드 URL 생성 성공');
-      setDownloadCount(prev => prev + 1);
+      
+      // 다운로드 카운트 증가시키기
+      const newCount = (post.downloads || 0) + 1;
+      setDownloadCount(newCount);
+      
+      // index.js의 handleDownload 함수 호출
+      if (handleDownload) {
+        handleDownload(post.id, post.downloads || 0);
+      }
+      
       window.open(data.url, '_blank');
     } catch (error) {
       console.error('❌ 다운로드 에러:', error);
@@ -128,7 +137,7 @@ const Card = ({ post, categories }) => {
           <span>❤️ {post.like_count ?? 0}</span>
           <span>💬 {post.comment_count ?? 0}</span>
           <span className={styles.download} onClick={handleDownload}>
-            📥 {downloadCount}
+            📥 {downloadCount} {downloadCount !== post.downloads && `(${post.downloads})`}
           </span>
 
           {post.download_permission === 'verified_user' && (
