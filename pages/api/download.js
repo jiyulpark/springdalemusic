@@ -9,6 +9,8 @@ export default async function handler(req, res) {
     const { postId, filePath } = req.body;
     const authHeader = req.headers.authorization;
 
+    console.log('📥 다운로드 요청 수신: ', { postId, filePath });
+
     if (!authHeader) {
       console.error('❌ 인증 헤더 없음');
       return res.status(401).json({ error: '인증이 필요합니다.' });
@@ -118,42 +120,53 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: '파일 경로가 필요합니다.' });
     }
 
+    // 파일 경로가 문자열화된 JSON 객체인 경우 다시 파싱
+    let filePathObj = filePath;
+    if (typeof filePath === 'string' && (filePath.startsWith('{') || filePath.includes('file_url'))) {
+      try {
+        filePathObj = JSON.parse(filePath);
+        console.log('📝 JSON 문자열에서 파싱된 경로:', filePathObj);
+      } catch (e) {
+        console.error('❌ JSON 파싱 실패:', e.message);
+        // 파싱 실패 시 원래 문자열 사용
+      }
+    }
+
     // 파일 경로가 객체로 전달된 경우 처리
     let finalPath = filePath;
-    if (typeof filePath === 'object') {
-      finalPath = filePath.file_url || filePath.url || null;
+    if (typeof filePathObj === 'object') {
+      finalPath = filePathObj.file_url || filePathObj.url || null;
       if (!finalPath) {
-        console.error('❌ 유효하지 않은 파일 경로 객체:', filePath);
+        console.error('❌ 유효하지 않은 파일 경로 객체:', filePathObj);
         return res.status(400).json({ error: '유효하지 않은 파일 경로입니다.' });
       }
     }
 
     console.log('✅ 원본 파일 경로:', finalPath);
 
-    // 5-1. 실제 파일이 존재하는지 확인을 위한 파일 조회 작업
-    // 파일 ID만 추출 (날짜_파일명 형태로 있다고 가정)
-    const fileNameMatch = finalPath.match(/(\d+_[^/]+)$/);
-    if (!fileNameMatch) {
-      console.error('❌ 파일명 추출 실패:', finalPath);
-      return res.status(400).json({ error: '파일 경로 형식이 올바르지 않습니다.' });
-    }
-
-    const fileName = fileNameMatch[1];
-    console.log('📄 추출된 파일명:', fileName);
-
-    // 5-2. files 테이블에서 실제 파일 정보 조회
+    // 5-1. files 테이블에서 실제 파일 정보 조회
     try {
+      // 파일명 추출 시도
+      let fileNameForSearch = finalPath;
+      
+      // 경로에서 파일명 추출 시도
+      const fileNameMatch = finalPath.match(/([^/]+)$/);
+      if (fileNameMatch) {
+        fileNameForSearch = fileNameMatch[1];
+      }
+      
+      console.log('🔍 DB에서 파일 검색 (파일명):', fileNameForSearch);
+      
       const { data: fileData, error: fileError } = await supabase
         .from('files')
-        .select('file_url')
+        .select('file_url, file_name')
         .eq('post_id', postId)
-        .like('file_url', `%${fileName}%`)
-        .maybeSingle();
+        .single();
 
       if (fileError) {
         console.error('❌ 파일 정보 조회 실패:', fileError.message);
       } else if (fileData?.file_url) {
-        console.log('✅ DB에서 파일 정보 찾음:', fileData.file_url);
+        console.log('✅ DB에서 파일 정보 찾음:', fileData);
         finalPath = fileData.file_url;
       }
     } catch (error) {
@@ -179,7 +192,44 @@ export default async function handler(req, res) {
       버킷: bucketName
     });
 
-    // 7. 다운로드 URL 생성 전략
+    // 7. 파일 존재 확인
+    try {
+      // 폴더 경로와 파일명 분리
+      const lastSlashIndex = pathWithoutBucket.lastIndexOf('/');
+      const folderPath = lastSlashIndex >= 0 ? pathWithoutBucket.slice(0, lastSlashIndex) : '';
+      const fileName = lastSlashIndex >= 0 ? pathWithoutBucket.slice(lastSlashIndex + 1) : pathWithoutBucket;
+      
+      console.log('📂 경로 분석:', { 폴더경로: folderPath, 파일명: fileName });
+      
+      // Supabase Storage에서 파일 목록 확인
+      const { data: fileList, error: listError } = await supabase.storage
+        .from(bucketName)
+        .list(folderPath);
+        
+      if (listError) {
+        console.error('❌ 폴더 내 파일 목록 조회 실패:', listError);
+      } else {
+        console.log('📋 폴더 내 파일 목록:', fileList.map(f => f.name));
+        // 파일이 존재하는지 확인
+        if (!fileList.some(f => f.name === fileName)) {
+          console.log('⚠️ 파일이 목록에 없습니다. 대체 파일을 시도합니다.');
+          // 대체 파일 검색 (비슷한 이름의 파일 찾기)
+          const similarFiles = fileList.filter(f => 
+            f.name.includes(fileName.split('_').pop()) || // 원본 파일명 부분만으로 검색
+            fileName.includes(f.name.split('_').pop())   // 또는 목록의 파일명 원본 부분이 일치
+          );
+          
+          if (similarFiles.length > 0) {
+            console.log('✅ 비슷한 이름의 파일 발견:', similarFiles[0].name);
+            pathWithoutBucket = folderPath ? `${folderPath}/${similarFiles[0].name}` : similarFiles[0].name;
+          }
+        }
+      }
+    } catch (error) {
+      console.error('❌ 파일 존재 확인 중 오류:', error.message);
+    }
+
+    // 8. 다운로드 URL 생성 전략
     // 먼저 공개 URL 시도 (가장 안정적)
     console.log('🔗 공개 URL 생성 시도:', pathWithoutBucket);
     const publicUrlResult = supabase.storage
@@ -187,7 +237,7 @@ export default async function handler(req, res) {
       .getPublicUrl(pathWithoutBucket);
       
     if (publicUrlResult?.data?.publicUrl) {
-      console.log('✅ 공개 URL 생성 성공');
+      console.log('✅ 공개 URL 생성 성공:', publicUrlResult.data.publicUrl.substring(0, 50) + '...');
       
       // 다운로드 카운트 증가
       try {
@@ -219,33 +269,28 @@ export default async function handler(req, res) {
         console.error('❌ 서명된 URL 생성 오류:', error);
         
         // 다른 경로 형식으로 재시도
-        let alternativePath = pathWithoutBucket;
+        let alternativePath = pathWithoutBucket.split('/').pop(); // 파일명만 사용
+        console.log('🔄 대체 경로 시도 (파일명만):', alternativePath);
         
-        // 파일이 다른 폴더에 있을 수 있음
-        if (alternativePath.includes('/')) {
-          // 폴더 경로 제거하고 파일명만으로 시도
-          alternativePath = alternativePath.split('/').pop();
-          console.log('🔄 대체 경로 시도 (파일명만):', alternativePath);
+        // 파일명만으로 공개 URL 시도
+        const altResult = supabase.storage
+          .from(bucketName)
+          .getPublicUrl(alternativePath);
           
-          const altResult = supabase.storage
-            .from(bucketName)
-            .getPublicUrl(alternativePath);
-            
-          if (altResult?.data?.publicUrl) {
-            console.log('✅ 대체 경로로 공개 URL 생성 성공');
-            
-            // 다운로드 카운트 증가
-            try {
-              await supabase
-                .from('posts')
-                .update({ download_count: (post.download_count || 0) + 1 })
-                .eq('id', postId);
-            } catch (updateError) {
-              console.error('❌ 다운로드 카운트 업데이트 실패:', updateError.message);
-            }
-            
-            return res.status(200).json({ url: altResult.data.publicUrl });
+        if (altResult?.data?.publicUrl) {
+          console.log('✅ 대체 경로로 공개 URL 생성 성공');
+          
+          // 다운로드 카운트 증가
+          try {
+            await supabase
+              .from('posts')
+              .update({ download_count: (post.download_count || 0) + 1 })
+              .eq('id', postId);
+          } catch (updateError) {
+            console.error('❌ 다운로드 카운트 업데이트 실패:', updateError.message);
           }
+          
+          return res.status(200).json({ url: altResult.data.publicUrl });
         }
         
         throw error;
@@ -267,6 +312,31 @@ export default async function handler(req, res) {
       return res.status(200).json({ url: data.signedUrl });
     } catch (error) {
       console.error('❌ 다운로드 URL 생성 실패:', error.message);
+      
+      // 마지막 시도: 원본 저장소 직접 접근
+      // Supabase 프로젝트 호스트명을 추출하여 직접 URL 생성
+      try {
+        // 프로젝트 기본 URL 추출
+        const projectUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+        if (projectUrl) {
+          const storageUrl = `${projectUrl}/storage/v1/object/public/${bucketName}/${pathWithoutBucket}`;
+          console.log('⚠️ 직접 스토리지 URL 시도:', storageUrl);
+          
+          // 다운로드 카운트 업데이트 시도
+          try {
+            await supabase
+              .from('posts')
+              .update({ download_count: (post.download_count || 0) + 1 })
+              .eq('id', postId);
+          } catch (updateError) {
+            console.error('❌ 다운로드 카운트 업데이트 실패:', updateError.message);
+          }
+          
+          return res.status(200).json({ url: storageUrl });
+        }
+      } catch (finalError) {
+        console.error('❌ 최종 URL 생성 시도 실패:', finalError);
+      }
       
       // 모든 시도가 실패하면 자세한 에러 메시지 반환
       const errorMessage = `파일을 찾을 수 없습니다. 경로를 확인해 주세요. (요청 경로: ${pathWithoutBucket})`;
