@@ -94,6 +94,9 @@ const Card = ({ post, categories, handleDownload, handleLike, author }) => {
     }
   };
 
+  // 작성자 닉네임 첫 글자 또는 기본값
+  const authorInitial = post.users?.nickname ? post.users.nickname[0] : 'S';
+
   return (
     <div className={styles.card}>
       {thumbnailUrl && (
@@ -122,7 +125,7 @@ const Card = ({ post, categories, handleDownload, handleLike, author }) => {
             />
           ) : (
             <div className={styles.authorPlaceholder}>
-              {post.users?.nickname ? post.users.nickname[0] : 'A'}
+              {authorInitial}
             </div>
           )}
           <span
