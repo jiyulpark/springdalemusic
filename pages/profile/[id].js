@@ -54,20 +54,21 @@ const UserProfile = () => {
 
   if (!user) return <p style={{ textAlign: 'center' }}>로딩 중...</p>;
 
+  // 기본 프로필 이미지 URL
+  const defaultProfileImage = "https://springdalemusic.vercel.app/profile-default.png";
+
   return (
     <div style={{ maxWidth: '600px', margin: '40px auto', textAlign: 'center' }}>
       <h1>{user.nickname}님의 프로필</h1>
 
       {/* 프로필 이미지 */}
-      {user.profile_picture && (
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
-          <img
-            src={user.profile_picture}
-            alt="Profile"
-            style={{ width: '150px', height: '150px', borderRadius: '50%', objectFit: 'cover' }}
-          />
-        </div>
-      )}
+      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
+        <img
+          src={user.profile_picture || defaultProfileImage}
+          alt="Profile"
+          style={{ width: '150px', height: '150px', borderRadius: '50%', objectFit: 'cover' }}
+        />
+      </div>
 
       {/* 상태 메시지 및 정보 */}
       <p><strong>상태 메시지:</strong> {user.status_message || '없음'}</p>

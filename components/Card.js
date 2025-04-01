@@ -13,8 +13,9 @@ const Card = ({ post, categories, handleDownload, handleLike, author }) => {
   
   console.log(`Card 컴포넌트 ID ${post.id} 다운로드 수:`, post.downloads);
 
+  // 썸네일 URL 생성 로직 수정
   const thumbnailUrl = post.thumbnail_url
-    ? supabase.storage.from('thumbnails').getPublicUrl(post.thumbnail_url).data?.publicUrl
+    ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/thumbnails/${post.thumbnail_url}`
     : null;
 
   const matchedCategories = categories?.filter(cat =>
