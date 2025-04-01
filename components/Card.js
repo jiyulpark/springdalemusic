@@ -36,23 +36,23 @@ const Card = ({ post, categories }) => {
         return;
       }
 
-      if (!session?.access_token) {
-        alert('다운로드하려면 로그인이 필요합니다.');
-        return;
-      }
-
       console.log('📥 다운로드 요청:', {
         postId: post.id,
         filePath: firstFile,
-        userRole: session.user.role
+        userRole: session?.user?.role || 'guest'
       });
+
+      const headers = {
+        'Content-Type': 'application/json'
+      };
+      
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      }
 
       const response = await fetch('/api/download', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`
-        },
+        headers,
         body: JSON.stringify({
           postId: post.id,
           filePath: firstFile
