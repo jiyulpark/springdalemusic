@@ -143,9 +143,7 @@ const EditPost = () => {
         await supabase.from('files').insert([{ 
           post_id: id, 
           file_url: data.path, 
-          file_name: file.name,
-          file_size: file.size,
-          file_type: file.type
+          file_name: file.name
         }]);
         return data.path;
       });
