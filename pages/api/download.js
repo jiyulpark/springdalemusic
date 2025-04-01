@@ -178,7 +178,11 @@ export default async function handler(req, res) {
     let pathWithoutBucket = finalPath;
 
     // uploads/ 접두사 처리
-    if (finalPath.startsWith('uploads/')) {
+    if (finalPath.startsWith('uploads/uploads/')) {
+      // uploads/uploads/ 중복 패턴 처리
+      pathWithoutBucket = finalPath.substring(8); // 첫 번째 'uploads/'만 제거
+      console.log('⚠️ 중복된 uploads/ 경로 발견, 첫 번째만 제거:', pathWithoutBucket);
+    } else if (finalPath.startsWith('uploads/')) {
       pathWithoutBucket = finalPath.substring(8); // 'uploads/'의 길이인 8을 자름
     } else if (finalPath.startsWith('thumbnails/')) {
       pathWithoutBucket = finalPath.substring(11); // 'thumbnails/'의 길이인 11을 자름
@@ -319,7 +323,11 @@ export default async function handler(req, res) {
         // 프로젝트 기본 URL 추출
         const projectUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
         if (projectUrl) {
-          const storageUrl = `${projectUrl}/storage/v1/object/public/${bucketName}/${pathWithoutBucket}`;
+          let storageUrl = `${projectUrl}/storage/v1/object/public/${bucketName}/${pathWithoutBucket}`;
+          
+          // URL에 이중 슬래시가 있는지 확인하고 수정
+          storageUrl = storageUrl.replace(/([^:])\/\//g, '$1/');
+          
           console.log('⚠️ 직접 스토리지 URL 시도:', storageUrl);
           
           // 다운로드 카운트 업데이트 시도
