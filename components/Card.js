@@ -95,8 +95,10 @@ const Card = ({ post, categories, handleDownload, handleLike, author }) => {
     }
   };
 
-  // 기본 프로필 이미지 URL
-  const defaultProfileImage = "https://springdalemusic.vercel.app/profile-default.png";
+  // 프로필 이미지 URL 생성 로직 수정
+  const profileImageUrl = post.users?.profile_picture
+    ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/profiles/${post.users.profile_picture}`
+    : "https://springdalemusic.vercel.app/profile-default.png";
 
   return (
     <div className={styles.card}>
@@ -119,7 +121,7 @@ const Card = ({ post, categories, handleDownload, handleLike, author }) => {
 
         <div className={styles.cardAuthor}>
           <img
-            src={post.users?.profile_picture || defaultProfileImage}
+            src={profileImageUrl}
             className={styles.authorImage}
             alt="작성자 프로필"
           />

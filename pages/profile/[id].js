@@ -54,8 +54,10 @@ const UserProfile = () => {
 
   if (!user) return <p style={{ textAlign: 'center' }}>로딩 중...</p>;
 
-  // 기본 프로필 이미지 URL
-  const defaultProfileImage = "https://springdalemusic.vercel.app/profile-default.png";
+  // 프로필 이미지 URL 생성 로직 수정
+  const profileImageUrl = user.profile_picture
+    ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/profiles/${user.profile_picture}`
+    : "https://springdalemusic.vercel.app/profile-default.png";
 
   return (
     <div style={{ maxWidth: '600px', margin: '40px auto', textAlign: 'center' }}>
@@ -64,7 +66,7 @@ const UserProfile = () => {
       {/* 프로필 이미지 */}
       <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
         <img
-          src={user.profile_picture || defaultProfileImage}
+          src={profileImageUrl}
           alt="Profile"
           style={{ width: '150px', height: '150px', borderRadius: '50%', objectFit: 'cover' }}
         />
