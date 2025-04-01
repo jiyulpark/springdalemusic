@@ -19,100 +19,47 @@ export default async function handler(req, res) {
     const token = authHeader.replace('Bearer ', '');
     console.log('🔑 토큰:', token.substring(0, 10) + '...');
 
-    // 1. 사용자 인증 (최대 3초 대기)
-    let user = null;
-    try {
-      const { data, error } = await Promise.race([
-        supabase.auth.getUser(token),
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('사용자 인증 시간 초과')), 3000)
-        )
-      ]);
-      
-      if (error) throw error;
-      if (!data.user) throw new Error('사용자 정보가 없습니다.');
-      
-      user = data.user;
-      console.log('✅ 사용자 인증 성공:', user.id);
-    } catch (error) {
-      console.error('❌ 사용자 인증 실패:', error.message);
-      return res.status(401).json({ error: '인증에 실패했습니다.' });
-    }
-
-    // 2. 사용자 역할 조회 (최대 3초 대기, 실패 시 admin 가정)
-    let userRole = 'guest';
-    try {
-      const { data, error } = await Promise.race([
-        supabase
-          .from('users')
-          .select('role')
-          .eq('id', user.id)
-          .single(),
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('역할 조회 시간 초과')), 3000)
-        )
-      ]);
-      
-      if (error) throw error;
-      if (!data) throw new Error('역할 정보가 없습니다.');
-      
-      userRole = data.role || 'guest';
-    } catch (error) {
-      console.error('❌ 역할 조회 실패, 역할을 admin으로 가정:', error.message);
-      // 일시적인 오류로 인한 액세스 제한 방지를 위해 admin으로 가정
-      userRole = 'admin';
-    }
+    // 1. 사용자 인증 확인
+    const { data: { session } } = await supabase.auth.getSession();
+    const user = session?.user;
     
-    console.log('👤 사용자 역할:', userRole);
-
-    // 3. 게시글 조회 (최대 3초 대기)
-    let post = null;
-    try {
-      const { data, error } = await Promise.race([
-        supabase
-          .from('posts')
-          .select('*')
-          .eq('id', postId)
-          .single(),
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('게시글 조회 시간 초과')), 3000)
-        )
-      ]);
+    // 2. 게시글 정보 조회
+    const { data: post, error: postError } = await supabase
+      .from('posts')
+      .select('*')
+      .eq('id', postId)
+      .single();
       
-      if (error) throw error;
-      if (!data) throw new Error('게시글을 찾을 수 없습니다.');
-      
-      post = data;
-    } catch (error) {
-      console.error('❌ 게시글 조회 실패:', error.message);
+    if (postError) {
+      console.error('❌ 게시글 조회 실패:', postError);
       return res.status(404).json({ error: '게시글을 찾을 수 없습니다.' });
     }
 
-    const downloadPermission = post.download_permission || 'guest';
-    console.log('🔒 다운로드 권한 요구사항:', downloadPermission);
-
-    // 4. 권한 체크
-    const roleHierarchy = {
-      guest: 0,
-      user: 1,
-      verified_user: 2,
-      admin: 3
-    };
-
-    const userRoleLevel = roleHierarchy[userRole] || 0;
-    const requiredRoleLevel = roleHierarchy[downloadPermission] || 0;
-
-    if (userRole !== 'admin' && userRoleLevel < requiredRoleLevel) {
-      console.error('❌ 권한 부족:', {
-        사용자역할: userRole,
-        요구사항: downloadPermission
-      });
-      return res.status(403).json({
-        error: '다운로드 권한이 없습니다.',
-        requiredRole: downloadPermission,
-        currentRole: userRole
-      });
+    // 4. 다운로드 권한 확인
+    if (post.download_permission !== 'guest' && !user) {
+      console.error('❌ 권한 없음: 로그인이 필요합니다.');
+      return res.status(401).json({ error: '로그인이 필요합니다.' });
     }
+
+    // 로그인한 경우 추가 권한 체크
+    if (user && post.download_permission === 'admin') {
+      const { data: userData } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+      if (!userData || userData.role !== 'admin') {
+        console.error('❌ 권한 없음: 관리자 권한이 필요합니다.');
+        return res.status(403).json({ error: '관리자만 다운로드할 수 있습니다.' });
+      }
+    }
+
+    console.log('✅ 다운로드 권한 확인 완료:', {
+      게시글ID: postId,
+      다운로드권한: post.download_permission,
+      사용자: user ? '로그인' : '비로그인'
+    });
 
     // 5. 파일 경로 처리
     if (!filePath) {
