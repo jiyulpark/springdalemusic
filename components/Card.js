@@ -21,7 +21,7 @@ const Card = ({ post, categories, handleDownload, handleLike, author }) => {
     post.category_ids?.includes(cat.id)
   ) || [];
 
-  const handleDownload = async (e) => {
+  const handleFileDownload = async (e) => {
     e.preventDefault();
     try {
       if (!post.file_urls || post.file_urls.length === 0) {
@@ -136,7 +136,7 @@ const Card = ({ post, categories, handleDownload, handleLike, author }) => {
         <div className={styles.footer}>
           <span>❤️ {post.like_count ?? 0}</span>
           <span>💬 {post.comment_count ?? 0}</span>
-          <span className={styles.download} onClick={handleDownload}>
+          <span className={styles.download} onClick={handleFileDownload}>
             📥 {downloadCount} {downloadCount !== post.downloads && `(${post.downloads})`}
           </span>
 
