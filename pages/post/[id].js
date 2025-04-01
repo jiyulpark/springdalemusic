@@ -245,6 +245,10 @@ const PostDetail = () => {
                           throw new Error('로그인이 필요합니다.');
                         }
 
+                        if (!file.file_url) {
+                          throw new Error('파일 경로가 없습니다.');
+                        }
+
                         console.log('다운로드 시도:', {
                           postId: post.id,
                           filePath: file.file_url,
