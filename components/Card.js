@@ -79,7 +79,7 @@ const Card = ({ post, categories, handleDownload, handleLike, author }) => {
 
       console.log('✅ 다운로드 URL 생성 성공');
       
-      // 다운로드 카운트 증가시키기
+      // 다운로드 카운트 증가시키기 (로그인/비로그인 모두)
       const newCount = (post.downloads || 0) + 1;
       setDownloadCount(newCount);
       

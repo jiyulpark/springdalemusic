@@ -22,34 +22,49 @@ const UserProfile = () => {
   }, [id]);
 
   const fetchUserInfo = async () => {
-    const { data, error } = await supabase
-      .from('users')
-      .select('nickname, profile_picture, status_message, join_date, role')
-      .eq('id', id)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('nickname, profile_picture, status_message, join_date, role')
+        .eq('id', id)
+        .single();
 
-    if (data) setUser(data);
+      if (error) {
+        console.error('프로필 정보 조회 실패:', error);
+        return;
+      }
+
+      if (data) {
+        setUser(data);
+      }
+    } catch (error) {
+      console.error('프로필 정보 조회 중 오류:', error);
+    }
   };
 
   const fetchUserStats = async () => {
-    // 작성한 게시글
-    const { data: posts } = await supabase
-      .from('posts')
-      .select('likes, downloads')
-      .eq('user_id', id);
+    try {
+      // 작성한 게시글
+      const { data: posts } = await supabase
+        .from('posts')
+        .select('likes, downloads')
+        .eq('user_id', id);
 
-    // 저장한 게시글 수
-    const { data: bookmarks } = await supabase
-      .from('bookmarks')
-      .select('*')
-      .eq('user_id', id);
+      // 저장한 게시글 수
+      const { data: bookmarks } = await supabase
+        .from('bookmarks')
+        .select('*')
+        .eq('user_id', id);
 
-    const postCount = posts?.length || 0;
-    const totalLikes = posts?.reduce((sum, p) => sum + (p.likes || 0), 0);
-    const totalDownloads = posts?.reduce((sum, p) => sum + (p.downloads || 0), 0);
-    const bookmarkCount = bookmarks?.length || 0;
+      const postCount = posts?.length || 0;
+      const totalLikes = posts?.reduce((sum, p) => sum + (p.likes || 0), 0);
+      const totalDownloads = posts?.reduce((sum, p) => sum + (p.downloads || 0), 0);
+      const bookmarkCount = bookmarks?.length || 0;
 
-    setStats({ postCount, totalLikes, totalDownloads, bookmarkCount });
+      setStats({ postCount, totalLikes, totalDownloads, bookmarkCount });
+    } catch (error) {
+      console.error('사용자 통계 조회 중 오류:', error);
+    }
   };
 
   if (!user) return <p style={{ textAlign: 'center' }}>로딩 중...</p>;
