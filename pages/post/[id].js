@@ -246,16 +246,12 @@ const PostDetail = () => {
                           throw new Error('로그인이 필요합니다.');
                         }
 
-                        let filePath = file.file_url;
-                        if (typeof file.file_url === 'object') {
-                          filePath = file.file_url.file_url;
-                        }
-
                         console.log('다운로드 시도:', {
                           postId: post.id,
-                          filePath: filePath,
+                          filePath: file.file_url,
                           fileName: file.file_name,
-                          userRole: userRole
+                          userRole: userRole,
+                          accessToken: session.access_token.substring(0, 10) + '...'
                         });
 
                         const response = await fetch('/api/download', {
@@ -266,24 +262,24 @@ const PostDetail = () => {
                           },
                           body: JSON.stringify({
                             postId: post.id,
-                            filePath: filePath
+                            filePath: file.file_url
                           })
                         });
 
-                        if (!response.ok) {
-                          const errorData = await response.json();
-                          throw new Error(errorData.error || '다운로드 중 오류가 발생했습니다.');
-                        }
-                        
                         const data = await response.json();
+                        
+                        if (!response.ok) {
+                          throw new Error(data.error || '다운로드 중 오류가 발생했습니다.');
+                        }
+
                         if (!data.url) {
                           throw new Error('다운로드 URL이 생성되지 않았습니다.');
                         }
 
-                        console.log('다운로드 URL 생성 성공:', data.url);
+                        console.log('✅ 다운로드 URL 생성 성공');
                         window.open(data.url, '_blank');
                       } catch (error) {
-                        console.error('다운로드 오류:', error);
+                        console.error('❌ 다운로드 오류:', error);
                         alert(error.message);
                       }
                     }}

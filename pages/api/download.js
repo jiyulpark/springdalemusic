@@ -18,25 +18,41 @@ export default async function handler(req, res) {
     console.log('🔑 토큰:', token.substring(0, 10) + '...');
 
     const { data: { user }, error: userError } = await supabase.auth.getUser(token);
-    if (userError || !user) {
-      console.error('❌ 사용자 인증 실패:', userError?.message);
+    
+    if (userError) {
+      console.error('❌ 사용자 인증 실패:', userError.message);
       return res.status(401).json({ error: '유효하지 않은 세션입니다.' });
+    }
+
+    if (!user) {
+      console.error('❌ 사용자 정보 없음');
+      return res.status(401).json({ error: '사용자 정보를 찾을 수 없습니다.' });
     }
 
     console.log('✅ 사용자 인증 성공:', user.id);
 
-    const { data: userData, error: roleError } = await supabase
-      .from('users')
-      .select('role')
-      .eq('id', user.id)
-      .single();
+    const { data: userData, error: roleError } = await Promise.race([
+      supabase
+        .from('users')
+        .select('role')
+        .eq('id', user.id)
+        .single(),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('역할 조회 시간 초과')), 5000)
+      )
+    ]);
 
     if (roleError) {
       console.error('❌ 사용자 역할 조회 실패:', roleError.message);
       return res.status(500).json({ error: '사용자 정보를 가져올 수 없습니다.' });
     }
 
-    const userRole = userData?.role || 'guest';
+    if (!userData) {
+      console.error('❌ 사용자 역할 정보 없음');
+      return res.status(500).json({ error: '사용자 역할 정보를 찾을 수 없습니다.' });
+    }
+
+    const userRole = userData.role || 'guest';
     console.log('👤 사용자 역할:', userRole);
 
     const { data: post, error: postError } = await supabase
