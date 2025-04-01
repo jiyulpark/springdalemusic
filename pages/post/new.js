@@ -128,8 +128,7 @@ const NewPost = () => {
         const { error: fileInsertError } = await supabase.from('files').insert([{
           post_id: newPost.id,
           file_url: path,
-          file_name: file.name,
-          file_type: file.type,
+          file_name: file.name
         }]);
 
         if (fileInsertError) {
