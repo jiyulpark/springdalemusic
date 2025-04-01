@@ -374,10 +374,31 @@ const EditPost = () => {
             {existingFiles.map((file, index) => (
               <li key={index} style={styles.fileItem}>
                 <a 
-                  href={supabase.storage.from('uploads').getPublicUrl(file).data.publicUrl} 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
-                  style={{ color: '#0070f3' }}
+                  href="#" 
+                  onClick={async (e) => {
+                    e.preventDefault();
+                    try {
+                      const response = await fetch('/api/download', {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                          'Authorization': `Bearer ${session.access_token}`
+                        },
+                        body: JSON.stringify({
+                          postId: id,
+                          filePath: file
+                        })
+                      });
+                      const data = await response.json();
+                      if (data.url) {
+                        window.open(data.url, '_blank');
+                      }
+                    } catch (error) {
+                      console.error('다운로드 오류:', error);
+                      alert('파일 다운로드 중 오류가 발생했습니다.');
+                    }
+                  }}
+                  style={{ color: '#0070f3', cursor: 'pointer' }}
                 >
                   📥 {file.split('/').pop()}
                 </a>
