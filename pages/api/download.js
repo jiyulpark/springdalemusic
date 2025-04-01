@@ -44,23 +44,72 @@ export default async function handler(req, res) {
     }
 
     // 3. 권한 체크
-    if (post.download_permission === 'admin' && user) {
+    let hasPermission = false;
+    
+    if (post.download_permission === 'guest') {
+      // 비회원도 다운로드 가능 - 모든 사용자 허용
+      hasPermission = true;
+    } else if (post.download_permission === 'user' && user) {
+      // 유저 이상만 다운로드 가능 - 로그인한 사용자 모두 허용
+      hasPermission = true;
+    } else if (post.download_permission === 'verified_user' && user) {
+      // 인증 유저만 다운로드 가능 - verified_user 또는 admin 역할 필요
       const { data: userData } = await supabase
         .from('users')
         .select('role')
         .eq('id', user.id)
         .single();
-
-      if (!userData || userData.role !== 'admin') {
-        console.error('❌ 권한 없음: 관리자 권한이 필요합니다.');
-        return res.status(403).json({ error: '관리자만 다운로드할 수 있습니다.' });
+      
+      if (userData && (userData.role === 'verified_user' || userData.role === 'admin')) {
+        hasPermission = true;
+      }
+    } else if (post.download_permission === 'admin' && user) {
+      // admin 전용 - admin 역할 필요
+      const { data: userData } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+      
+      if (userData && userData.role === 'admin') {
+        hasPermission = true;
+      }
+    }
+    
+    if (!hasPermission) {
+      const authType = !user ? '로그인' : '적절한 권한';
+      console.error(`❌ 권한 없음: ${authType}이 필요합니다.`);
+      
+      if (!user) {
+        return res.status(401).json({ error: '로그인이 필요합니다.' });
+      } else {
+        const roleNames = {
+          'guest': '비로그인',
+          'user': '일반 회원',
+          'verified_user': '인증 회원',
+          'admin': '관리자'
+        };
+        
+        const { data: userData } = await supabase
+          .from('users')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+          
+        const currentRole = userData?.role || 'guest';
+        
+        return res.status(403).json({ 
+          error: '다운로드 권한이 없습니다.', 
+          requiredRole: post.download_permission,
+          currentRole: currentRole
+        });
       }
     }
 
     console.log('✅ 다운로드 권한 확인 완료:', {
       게시글ID: postId,
       다운로드권한: post.download_permission,
-      사용자: user ? '로그인' : '비로그인'
+      사용자: user ? `로그인 (${user.id})` : '비로그인'
     });
 
     // 5. 파일 경로 처리
@@ -229,14 +278,21 @@ export default async function handler(req, res) {
     if (publicUrlResult?.data?.publicUrl) {
       console.log('✅ 공개 URL 생성 성공:', publicUrlResult.data.publicUrl.substring(0, 50) + '...');
       
-      // 다운로드 카운트 증가
+      // 다운로드 카운트 증가 - 항상 실행
       try {
-        await supabase
+        // 다운로드 카운트 업데이트
+        const { data: updateData, error: updateError } = await supabase
           .from('posts')
           .update({ download_count: (post.download_count || 0) + 1 })
           .eq('id', postId);
-      } catch (updateError) {
-        console.error('❌ 다운로드 카운트 업데이트 실패:', updateError.message);
+          
+        if (updateError) {
+          console.error('❌ 다운로드 카운트 업데이트 실패:', updateError);
+        } else {
+          console.log('✅ 다운로드 카운트 업데이트 성공:', (post.download_count || 0) + 1);
+        }
+      } catch (countError) {
+        console.error('❌ 다운로드 카운트 업데이트 오류:', countError);
       }
       
       return res.status(200).json({ url: publicUrlResult.data.publicUrl });
@@ -332,12 +388,18 @@ export default async function handler(req, res) {
           
           // 다운로드 카운트 업데이트 시도
           try {
-            await supabase
+            const { data: updateData, error: updateError } = await supabase
               .from('posts')
               .update({ download_count: (post.download_count || 0) + 1 })
               .eq('id', postId);
-          } catch (updateError) {
-            console.error('❌ 다운로드 카운트 업데이트 실패:', updateError.message);
+              
+            if (updateError) {
+              console.error('❌ 다운로드 카운트 업데이트 실패:', updateError);
+            } else {
+              console.log('✅ 다운로드 카운트 업데이트 성공:', (post.download_count || 0) + 1);
+            }
+          } catch (countError) {
+            console.error('❌ 다운로드 카운트 업데이트 오류:', countError);
           }
           
           // 모든 URL을 반환하여 클라이언트가 시도할 수 있도록 함
