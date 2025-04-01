@@ -20,18 +20,26 @@ const PostDetail = () => {
 
   useEffect(() => {
     const fetchSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setSession(session);
+      const { data } = await supabase.auth.getSession();
+      const sessionData = data?.session;
+      
+      console.log('세션 정보 로드:', {
+        hasSession: !!sessionData,
+        hasAccessToken: !!sessionData?.access_token,
+        userId: sessionData?.user?.id
+      });
+      
+      setSession(sessionData);
 
-      if (session?.user?.id) {
+      if (sessionData?.user?.id) {
         const { data: userInfo } = await supabase
           .from('users')
           .select('role')
-          .eq('id', session.user.id)
+          .eq('id', sessionData.user.id)
           .single();
         if (userInfo) {
           setUserRole(userInfo.role);
-          session.user.role = userInfo.role;
+          sessionData.user.role = userInfo.role;
         }
       }
     };
@@ -285,8 +293,12 @@ const PostDetail = () => {
                           'Content-Type': 'application/json'
                         };
                         
+                        // 액세스 토큰이 있으면 헤더에 추가
                         if (session?.access_token) {
                           headers['Authorization'] = `Bearer ${session.access_token}`;
+                          console.log('액세스 토큰 추가됨');
+                        } else {
+                          console.log('액세스 토큰 없음, 세션 정보:', session ? '세션 있음' : '세션 없음');
                         }
 
                         const response = await fetch('/api/download', {

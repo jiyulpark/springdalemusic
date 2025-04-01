@@ -26,18 +26,17 @@ export default async function handler(req, res) {
     // 2. 사용자 인증 확인 (guest 권한일 경우 건너뜀)
     let user = null;
     if (post.download_permission !== 'guest') {
-      if (!authHeader) {
-        console.error('❌ 인증 헤더 없음');
-        return res.status(401).json({ error: '로그인이 필요합니다.' });
+      // 인증 헤더가 있는 경우 사용자 정보 확인
+      if (authHeader) {
+        const token = authHeader.replace('Bearer ', '');
+        console.log('🔑 토큰:', token.substring(0, 10) + '...');
+
+        const { data: { session } } = await supabase.auth.getSession();
+        user = session?.user;
       }
-
-      const token = authHeader.replace('Bearer ', '');
-      console.log('🔑 토큰:', token.substring(0, 10) + '...');
-
-      const { data: { session } } = await supabase.auth.getSession();
-      user = session?.user;
-
-      if (!user) {
+      
+      // guest 권한이 아닌데 로그인도 안된 경우
+      if (!user && post.download_permission !== 'guest') {
         console.error('❌ 권한 없음: 로그인이 필요합니다.');
         return res.status(401).json({ error: '로그인이 필요합니다.' });
       }
@@ -58,70 +57,66 @@ export default async function handler(req, res) {
       isAdmin = userData?.role === 'admin';
     }
     
-    // 관리자는 항상 다운로드 가능
+    // 권한 체크 로직 개선
+    // 1. 관리자는 항상 다운로드 가능
     if (isAdmin) {
       hasPermission = true;
       console.log('👑 관리자 권한으로 다운로드 승인');
     }
-    // 다른 권한 체크
+    // 2. guest 권한 게시물은 모든 사용자 다운로드 가능
     else if (post.download_permission === 'guest') {
-      // 비회원도 다운로드 가능 - 모든 사용자 허용
       hasPermission = true;
-    } else if (post.download_permission === 'user' && user) {
-      // 유저 이상만 다운로드 가능 - 로그인한 사용자 모두 허용
-      hasPermission = true;
-    } else if (post.download_permission === 'verified_user' && user) {
-      // 인증 유저만 다운로드 가능 - verified_user 또는 admin 역할 필요
-      const { data: userData } = await supabase
-        .from('users')
-        .select('role')
-        .eq('id', user.id)
-        .single();
-      
-      if (userData && userData.role === 'verified_user') {
+      console.log('✅ 게스트 허용 게시물: 모든 사용자 다운로드 가능');
+    }
+    // 3. 로그인한 사용자 권한 체크
+    else if (user) {
+      if (post.download_permission === 'user') {
+        // 일반 유저 이상 가능한 게시물
         hasPermission = true;
-      }
-    } else if (post.download_permission === 'admin' && user) {
-      // admin 전용 - admin 역할 필요
-      const { data: userData } = await supabase
-        .from('users')
-        .select('role')
-        .eq('id', user.id)
-        .single();
-      
-      if (userData && userData.role === 'admin') {
-        hasPermission = true;
+        console.log('✅ 일반 사용자 권한으로 다운로드 승인');
+      } 
+      else if (post.download_permission === 'verified_user') {
+        // 인증 유저만 가능한 게시물
+        const { data: userData } = await supabase
+          .from('users')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+        
+        if (userData && (userData.role === 'verified_user' || userData.role === 'admin')) {
+          hasPermission = true;
+          console.log('✅ 인증 사용자 권한으로 다운로드 승인');
+        }
       }
     }
     
     if (!hasPermission) {
-      const authType = !user ? '로그인' : '적절한 권한';
-      console.error(`❌ 권한 없음: ${authType}이 필요합니다.`);
+      const roleNames = {
+        'guest': '비로그인',
+        'user': '일반 회원',
+        'verified_user': '인증 회원',
+        'admin': '관리자'
+      };
       
-      if (!user) {
-        return res.status(401).json({ error: '로그인이 필요합니다.' });
-      } else {
-        const roleNames = {
-          'guest': '비로그인',
-          'user': '일반 회원',
-          'verified_user': '인증 회원',
-          'admin': '관리자'
-        };
-        
+      let currentRole = 'guest';
+      
+      if (user) {
         const { data: userData } = await supabase
           .from('users')
           .select('role')
           .eq('id', user.id)
           .single();
           
-        const currentRole = userData?.role || 'guest';
-        
-        return res.status(403).json({ 
-          error: '다운로드 권한이 없습니다.', 
-          requiredRole: post.download_permission,
-          currentRole: currentRole
-        });
+        currentRole = userData?.role || 'user';
       }
+      
+      console.error(`❌ 권한 없음: ${roleNames[post.download_permission]} 이상 권한이 필요합니다. (현재: ${roleNames[currentRole]})`);
+      
+      return res.status(403).json({ 
+        error: `${roleNames[post.download_permission]} 이상만 다운로드할 수 있습니다. (현재: ${roleNames[currentRole]})`, 
+        requiredRole: post.download_permission,
+        currentRole: currentRole
+      });
     }
 
     console.log('✅ 다운로드 권한 확인 완료:', {
