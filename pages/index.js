@@ -55,11 +55,14 @@ const Home = () => {
           return acc;
         }, {});
 
-        const updatedPosts = postsData.map(post => ({
-          ...post,
-          like_count: likesMap?.[post.id] || 0,
-          comment_count: commentsMap?.[post.id] || 0,
-        }));
+        const updatedPosts = postsData.map(post => {
+          console.log(`포스트 ID ${post.id} 다운로드 수: ${post.downloads}`, post);
+          return {
+            ...post,
+            like_count: likesMap?.[post.id] || 0,
+            comment_count: commentsMap?.[post.id] || 0,
+          };
+        });
 
         if (mounted) {
           setPosts(updatedPosts);

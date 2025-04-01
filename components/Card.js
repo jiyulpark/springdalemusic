@@ -10,6 +10,8 @@ const Card = ({ post, categories }) => {
   const router = useRouter();
   const { session } = useSession();
   const [downloadCount, setDownloadCount] = useState(post.downloads ?? 0);
+  
+  console.log(`Card 컴포넌트 ID ${post.id} 다운로드 수:`, post.downloads);
 
   const thumbnailUrl = post.thumbnail_url
     ? supabase.storage.from('thumbnails').getPublicUrl(post.thumbnail_url).data?.publicUrl
