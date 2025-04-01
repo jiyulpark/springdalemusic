@@ -11,19 +11,7 @@ export default async function handler(req, res) {
 
     console.log('📥 다운로드 요청 수신: ', { postId, filePath });
 
-    if (!authHeader) {
-      console.error('❌ 인증 헤더 없음');
-      return res.status(401).json({ error: '인증이 필요합니다.' });
-    }
-
-    const token = authHeader.replace('Bearer ', '');
-    console.log('🔑 토큰:', token.substring(0, 10) + '...');
-
-    // 1. 사용자 인증 확인
-    const { data: { session } } = await supabase.auth.getSession();
-    const user = session?.user;
-    
-    // 2. 게시글 정보 조회
+    // 1. 게시글 정보 조회
     const { data: post, error: postError } = await supabase
       .from('posts')
       .select('*')
@@ -35,14 +23,28 @@ export default async function handler(req, res) {
       return res.status(404).json({ error: '게시글을 찾을 수 없습니다.' });
     }
 
-    // 4. 다운로드 권한 확인
-    if (post.download_permission !== 'guest' && !user) {
-      console.error('❌ 권한 없음: 로그인이 필요합니다.');
-      return res.status(401).json({ error: '로그인이 필요합니다.' });
+    // 2. 사용자 인증 확인 (guest 권한일 경우 건너뜀)
+    let user = null;
+    if (post.download_permission !== 'guest') {
+      if (!authHeader) {
+        console.error('❌ 인증 헤더 없음');
+        return res.status(401).json({ error: '로그인이 필요합니다.' });
+      }
+
+      const token = authHeader.replace('Bearer ', '');
+      console.log('🔑 토큰:', token.substring(0, 10) + '...');
+
+      const { data: { session } } = await supabase.auth.getSession();
+      user = session?.user;
+
+      if (!user) {
+        console.error('❌ 권한 없음: 로그인이 필요합니다.');
+        return res.status(401).json({ error: '로그인이 필요합니다.' });
+      }
     }
 
-    // 로그인한 경우 추가 권한 체크
-    if (user && post.download_permission === 'admin') {
+    // 3. 권한 체크
+    if (post.download_permission === 'admin' && user) {
       const { data: userData } = await supabase
         .from('users')
         .select('role')
