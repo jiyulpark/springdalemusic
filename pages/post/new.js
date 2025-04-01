@@ -75,12 +75,15 @@ const NewPost = () => {
       let thumbnailUrl = null;
       if (thumbnail) {
         const thumbPath = `thumbnails/${Date.now()}_${thumbnail.name}`;
-        const { data, error } = await supabase.storage.from('thumbnails').upload(thumbPath, thumbnail);
-        if (error) {
-          console.error('❌ 썸네일 업로드 실패:', error);
+        const { data: thumbData, error: thumbError } = await supabase.storage
+          .from('thumbnails')
+          .upload(thumbPath, thumbnail);
+
+        if (thumbError) {
+          console.error('❌ 썸네일 업로드 실패:', thumbError);
           throw new Error('썸네일 업로드 중 오류가 발생했습니다.');
         }
-        thumbnailUrl = data.path;
+        thumbnailUrl = thumbData.path;
       }
 
       // 게시글 생성
@@ -89,12 +92,11 @@ const NewPost = () => {
         .insert([{
           title,
           content,
-          user_id: session.user.id,  // RLS 정책을 위해 반드시 필요
+          user_id: session.user.id,
           thumbnail_url: thumbnailUrl,
-          file_urls: [], // 나중에 업데이트
           category_ids: selectedCategories,
           download_permission: downloadPermission,
-          downloads: 0,
+          download_count: 0,
           likes: 0
         }])
         .select()
@@ -102,50 +104,56 @@ const NewPost = () => {
 
       if (postError) {
         console.error('❌ 게시글 생성 실패:', postError);
-        if (postError.code === '23505') {
-          throw new Error('이미 존재하는 게시글입니다.');
-        } else if (postError.code === '42501') {
-          throw new Error('권한이 없습니다. 다시 로그인해주세요.');
-        }
         throw new Error('게시글 생성 중 오류가 발생했습니다.');
       }
 
       console.log('✅ 게시글 생성 성공:', newPost.id);
 
-      const uploadedFileUrls = [];
+      // 파일 업로드 및 정보 저장
+      if (files.length > 0) {
+        const filePromises = files.map(async (file) => {
+          const filePath = `uploads/${Date.now()}_${file.name}`;
+          const { data: uploadData, error: uploadError } = await supabase.storage
+            .from('uploads')
+            .upload(filePath, file);
 
-      // 파일 업로드 + files 테이블 저장
-      for (const file of files) {
-        const path = `uploads/${Date.now()}_${file.name}`;
-        const { data, error } = await supabase.storage.from('uploads').upload(path, file);
-        if (error) {
-          console.error('❌ 파일 업로드 실패:', error);
-          throw new Error('파일 업로드 중 오류가 발생했습니다.');
-        }
+          if (uploadError) {
+            console.error('❌ 파일 업로드 실패:', uploadError);
+            throw new Error(`파일 업로드 실패: ${file.name}`);
+          }
 
-        uploadedFileUrls.push({ file_url: path, file_name: file.name });
+          return {
+            post_id: newPost.id,
+            file_url: uploadData.path,
+            file_name: file.name,
+            user_id: session.user.id
+          };
+        });
 
-        const { error: fileInsertError } = await supabase.from('files').insert([{
-          post_id: newPost.id,
-          file_url: path,
-          file_name: file.name
-        }]);
+        try {
+          const uploadedFiles = await Promise.all(filePromises);
+          const { error: filesError } = await supabase
+            .from('files')
+            .insert(uploadedFiles);
 
-        if (fileInsertError) {
-          console.error('❌ 파일 정보 저장 실패:', fileInsertError);
-          throw new Error('파일 정보 저장 중 오류가 발생했습니다.');
-        }
-      }
+          if (filesError) {
+            console.error('❌ 파일 정보 저장 실패:', filesError);
+            throw new Error('파일 정보 저장 중 오류가 발생했습니다.');
+          }
 
-      // 게시글에 파일 URL 업데이트
-      if (uploadedFileUrls.length > 0) {
-        const { error: updateError } = await supabase.from('posts')
-          .update({ file_urls: uploadedFileUrls })
-          .eq('id', newPost.id);
+          // 게시글의 file_urls 업데이트
+          const { error: updateError } = await supabase
+            .from('posts')
+            .update({ file_urls: uploadedFiles.map(f => f.file_url) })
+            .eq('id', newPost.id);
 
-        if (updateError) {
-          console.error('❌ 파일 URL 업데이트 실패:', updateError);
-          throw new Error('파일 URL 업데이트 중 오류가 발생했습니다.');
+          if (updateError) {
+            console.error('❌ 게시글 파일 정보 업데이트 실패:', updateError);
+            throw new Error('게시글 파일 정보 업데이트 중 오류가 발생했습니다.');
+          }
+        } catch (error) {
+          console.error('❌ 파일 처리 중 오류:', error);
+          throw error;
         }
       }
 

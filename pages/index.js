@@ -34,7 +34,7 @@ const Home = () => {
             .from('posts')
             .select(`
               id, title, content, thumbnail_url, user_id, category_ids, 
-              file_urls, downloads, created_at,
+              file_urls, download_count, created_at,
               users ( id, nickname, profile_picture )
             `)
             .order('created_at', { ascending: false }),
@@ -103,7 +103,7 @@ const Home = () => {
     } else if (sortOption === 'likes') {
       filtered.sort((a, b) => (b.like_count || 0) - (a.like_count || 0));
     } else if (sortOption === 'downloads') {
-      filtered.sort((a, b) => (b.downloads || 0) - (a.downloads || 0));
+      filtered.sort((a, b) => (b.download_count || 0) - (a.download_count || 0));
     }
 
     setFilteredPosts(filtered);
@@ -125,7 +125,7 @@ const Home = () => {
     try {
       await supabase
         .from("posts")
-        .update({ downloads: currentDownloads + 1 })
+        .update({ download_count: currentDownloads + 1 })
         .eq("id", postId);
     } catch (e) {
       console.error("다운로드 증가 실패", e.message);
