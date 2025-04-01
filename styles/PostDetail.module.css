@@ -130,6 +130,27 @@
     margin-bottom: 10px;
   }
   
+  .authorImg {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    margin-right: 8px;
+    object-fit: cover;
+  }
+  
+  .authorPlaceholder {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background-color: #0070f3;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-right: 8px;
+  }
+  
   .authorImage {
     width: 36px;
     height: 36px;
