@@ -28,7 +28,10 @@ const PostDetail = () => {
           .select('role')
           .eq('id', session.user.id)
           .single();
-        if (userInfo) setUserRole(userInfo.role);
+        if (userInfo) {
+          setUserRole(userInfo.role);
+          session.user.role = userInfo.role;
+        }
       }
     };
     fetchSession();
@@ -238,6 +241,7 @@ const PostDetail = () => {
                     onClick={async (e) => {
                       e.preventDefault();
                       try {
+                        const { data: { session } } = await supabase.auth.getSession();
                         if (!session?.access_token) {
                           throw new Error('로그인이 필요합니다.');
                         }
@@ -246,7 +250,7 @@ const PostDetail = () => {
                           postId: post.id,
                           filePath: file.file_url,
                           fileName: file.file_name,
-                          userRole: session.user.role
+                          userRole: userRole
                         });
 
                         const response = await fetch('/api/download', {
