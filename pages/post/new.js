@@ -129,7 +129,6 @@ const NewPost = () => {
           post_id: newPost.id,
           file_url: path,
           file_name: file.name,
-          file_size: file.size,
           file_type: file.type,
         }]);
 
