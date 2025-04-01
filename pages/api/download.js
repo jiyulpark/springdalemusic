@@ -174,6 +174,7 @@ export default async function handler(req, res) {
     }
 
     // 6. 파일 경로 처리
+    const bucketName = 'uploads';  // 버킷 이름 추가
     let pathWithoutBucket = finalPath;
     
     // uploads/ 접두사가 없는 경우 추가
@@ -181,7 +182,11 @@ export default async function handler(req, res) {
       pathWithoutBucket = `uploads/${pathWithoutBucket}`;
     }
     
-    console.log('📂 처리된 파일 경로:', pathWithoutBucket);
+    console.log('📂 처리된 파일 경로:', {
+      원본경로: finalPath,
+      처리된경로: pathWithoutBucket,
+      버킷: bucketName
+    });
 
     // 7. 파일 존재 확인
     try {
