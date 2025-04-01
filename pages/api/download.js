@@ -46,7 +46,25 @@ export default async function handler(req, res) {
     // 3. 권한 체크
     let hasPermission = false;
     
-    if (post.download_permission === 'guest') {
+    // 사용자가 관리자인지 확인
+    let isAdmin = false;
+    if (user) {
+      const { data: userData } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+      
+      isAdmin = userData?.role === 'admin';
+    }
+    
+    // 관리자는 항상 다운로드 가능
+    if (isAdmin) {
+      hasPermission = true;
+      console.log('👑 관리자 권한으로 다운로드 승인');
+    }
+    // 다른 권한 체크
+    else if (post.download_permission === 'guest') {
       // 비회원도 다운로드 가능 - 모든 사용자 허용
       hasPermission = true;
     } else if (post.download_permission === 'user' && user) {
@@ -60,7 +78,7 @@ export default async function handler(req, res) {
         .eq('id', user.id)
         .single();
       
-      if (userData && (userData.role === 'verified_user' || userData.role === 'admin')) {
+      if (userData && userData.role === 'verified_user') {
         hasPermission = true;
       }
     } else if (post.download_permission === 'admin' && user) {
