@@ -241,10 +241,6 @@ const PostDetail = () => {
                     onClick={async (e) => {
                       e.preventDefault();
                       try {
-                        if (!session?.access_token) {
-                          throw new Error('로그인이 필요합니다.');
-                        }
-
                         if (!file.file_url) {
                           throw new Error('파일 경로가 없습니다.');
                         }
@@ -253,16 +249,21 @@ const PostDetail = () => {
                           postId: post.id,
                           filePath: file.file_url,
                           fileName: file.file_name,
-                          userRole: userRole,
-                          accessToken: session.access_token.substring(0, 10) + '...'
+                          userRole: userRole || 'guest',
+                          hasAccessToken: !!session?.access_token
                         });
+
+                        const headers = {
+                          'Content-Type': 'application/json'
+                        };
+                        
+                        if (session?.access_token) {
+                          headers['Authorization'] = `Bearer ${session.access_token}`;
+                        }
 
                         const response = await fetch('/api/download', {
                           method: 'POST',
-                          headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${session.access_token}`
-                          },
+                          headers,
                           body: JSON.stringify({
                             postId: post.id,
                             filePath: file.file_url
@@ -289,7 +290,18 @@ const PostDetail = () => {
                         }
 
                         console.log('✅ 다운로드 URL 생성 성공');
+                        // 다운로드 URL 열기 (대체 URL이 있으면 함께 처리)
                         window.open(data.url, '_blank');
+                        
+                        // 대체 URL이 제공된 경우 백그라운드에서 미리 로드해둠
+                        if (data.alternativeUrls && Array.isArray(data.alternativeUrls)) {
+                          console.log('🔄 대체 URL 시도:', data.alternativeUrls.length);
+                          data.alternativeUrls.forEach(url => {
+                            const img = new Image();
+                            img.src = url;
+                          });
+                        }
+                        
                       } catch (error) {
                         console.error('❌ 다운로드 오류:', error);
                         alert(error.message);
