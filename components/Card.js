@@ -96,8 +96,8 @@ const Card = ({ post, categories, handleDownload, handleLike, author }) => {
   };
 
   // 프로필 이미지 URL 생성 로직 수정
-  const profileImageUrl = author?.profile_picture
-    ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/avatars/${author.profile_picture.replace(/^.*\/avatars\//, '')}`
+  const profileImageUrl = post.users?.profile_picture
+    ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/avatars/${post.users.profile_picture.replace(/^.*\/avatars\//, '')}`
     : "https://springdalemusic.vercel.app/profile-default.png";
 
   return (
@@ -129,7 +129,7 @@ const Card = ({ post, categories, handleDownload, handleLike, author }) => {
             className={styles.authorName}
             onClick={() => router.push(`/profile/${post.user_id}`)}
           >
-            {author?.nickname || '스프링데일'}
+            {post.users?.nickname || '스프링데일'}
           </span>
         </div>
 
@@ -137,7 +137,7 @@ const Card = ({ post, categories, handleDownload, handleLike, author }) => {
           <span>❤️ {post.like_count ?? 0}</span>
           <span>💬 {post.comment_count ?? 0}</span>
           <span className={styles.download} onClick={handleFileDownload}>
-            📥 {downloadCount} {downloadCount !== post.downloads && `(${post.downloads})`}
+            📥 {post.downloads ?? 0}
           </span>
 
           {post.download_permission === 'verified_user' && (
