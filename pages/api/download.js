@@ -173,28 +173,15 @@ export default async function handler(req, res) {
       console.error('❌ 파일 정보 조회 중 오류:', error.message);
     }
 
-    // 버킷 이름 처리
-    const bucketName = 'uploads';
+    // 6. 파일 경로 처리
     let pathWithoutBucket = finalPath;
-
-    // uploads/ 접두사 처리
-    if (finalPath.startsWith('uploads/uploads/')) {
-      // uploads/uploads/ 중복 패턴 처리
-      pathWithoutBucket = finalPath.substring(8); // 첫 번째 'uploads/'만 제거
-      console.log('⚠️ 중복된 uploads/ 경로 발견, 첫 번째만 제거:', pathWithoutBucket);
-    } else if (finalPath.startsWith('uploads/')) {
-      pathWithoutBucket = finalPath.substring(8); // 'uploads/'의 길이인 8을 자름
-    } else if (finalPath.startsWith('thumbnails/')) {
-      pathWithoutBucket = finalPath.substring(11); // 'thumbnails/'의 길이인 11을 자름
-    } else if (finalPath.startsWith('avatars/')) {
-      pathWithoutBucket = finalPath.substring(8); // 'avatars/'의 길이인 8을 자름
+    
+    // uploads/ 접두사가 없는 경우 추가
+    if (!pathWithoutBucket.startsWith('uploads/')) {
+      pathWithoutBucket = `uploads/${pathWithoutBucket}`;
     }
-
-    console.log('📁 처리된 파일 정보:', {
-      원본경로: finalPath,
-      버킷내경로: pathWithoutBucket,
-      버킷: bucketName
-    });
+    
+    console.log('📂 처리된 파일 경로:', pathWithoutBucket);
 
     // 7. 파일 존재 확인
     try {
@@ -212,6 +199,32 @@ export default async function handler(req, res) {
         
       if (listError) {
         console.error('❌ 폴더 내 파일 목록 조회 실패:', listError);
+        
+        // 목록 조회 실패 시 파일 직접 조회 시도
+        const { data: fileData, error: fileError } = await supabase.storage
+          .from(bucketName)
+          .download(pathWithoutBucket);
+          
+        if (fileError) {
+          console.error('❌ 파일 직접 조회 실패:', fileError);
+          
+          if (folderPath) {
+            // 상위 폴더 목록 조회 시도
+            const parentFolder = folderPath.split('/').slice(0, -1).join('/');
+            console.log('🔍 상위 폴더 조회 시도:', parentFolder);
+            
+            const { data: parentList, error: parentError } = await supabase.storage
+              .from(bucketName)
+              .list(parentFolder);
+              
+            if (!parentError && parentList.length > 0) {
+              console.log('📋 상위 폴더 내 파일 목록:', parentList.map(f => 
+                f.id ? f.name : `${f.name}/`));
+            }
+          }
+        } else {
+          console.log('✅ 파일 직접 다운로드 성공');
+        }
       } else {
         console.log('📋 폴더 내 파일 목록:', fileList.map(f => f.name));
         // 파일이 존재하는지 확인
@@ -228,6 +241,25 @@ export default async function handler(req, res) {
             pathWithoutBucket = folderPath ? `${folderPath}/${similarFiles[0].name}` : similarFiles[0].name;
           }
         }
+      }
+      
+      // 마지막으로 파일 실제 존재 확인
+      console.log('🔍 파일 존재 확인 최종 시도:', pathWithoutBucket);
+      const { data: headData, error: headError } = await supabase.storage
+        .from(bucketName)
+        .download(pathWithoutBucket, {
+          transform: {
+            size: 10 // 헤더만 가져와서 존재 여부 확인
+          }
+        });
+        
+      if (headError) {
+        console.error('❌ 파일 최종 확인 실패:', headError);
+        if (headError.message?.includes('Object not found')) {
+          console.log('⚠️ 파일을 찾을 수 없습니다. 경로:', pathWithoutBucket);
+        }
+      } else {
+        console.log('✅ 파일 존재 확인 성공');
       }
     } catch (error) {
       console.error('❌ 파일 존재 확인 중 오류:', error.message);
@@ -323,12 +355,26 @@ export default async function handler(req, res) {
         // 프로젝트 기본 URL 추출
         const projectUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
         if (projectUrl) {
+          // 첫 번째 시도: 정상 경로
           let storageUrl = `${projectUrl}/storage/v1/object/public/${bucketName}/${pathWithoutBucket}`;
           
           // URL에 이중 슬래시가 있는지 확인하고 수정
           storageUrl = storageUrl.replace(/([^:])\/\//g, '$1/');
           
-          console.log('⚠️ 직접 스토리지 URL 시도:', storageUrl);
+          console.log('⚠️ 직접 스토리지 URL 시도 (1):', storageUrl);
+          
+          // 두 번째 시도: uploads 접두사 추가 (만약 처리 과정에서 제거되었다면)
+          let alternativeUrl = `${projectUrl}/storage/v1/object/public/${bucketName}/uploads/${pathWithoutBucket}`;
+          alternativeUrl = alternativeUrl.replace(/([^:])\/\//g, '$1/');
+          
+          console.log('⚠️ 직접 스토리지 URL 시도 (2):', alternativeUrl);
+          
+          // 세 번째 시도: 파일명만 사용
+          const fileNameOnly = pathWithoutBucket.split('/').pop();
+          let fileNameUrl = `${projectUrl}/storage/v1/object/public/${bucketName}/${fileNameOnly}`;
+          fileNameUrl = fileNameUrl.replace(/([^:])\/\//g, '$1/');
+          
+          console.log('⚠️ 직접 스토리지 URL 시도 (3):', fileNameUrl);
           
           // 다운로드 카운트 업데이트 시도
           try {
@@ -340,7 +386,11 @@ export default async function handler(req, res) {
             console.error('❌ 다운로드 카운트 업데이트 실패:', updateError.message);
           }
           
-          return res.status(200).json({ url: storageUrl });
+          // 모든 URL을 반환하여 클라이언트가 시도할 수 있도록 함
+          return res.status(200).json({ 
+            url: storageUrl,
+            alternativeUrls: [alternativeUrl, fileNameUrl]
+          });
         }
       } catch (finalError) {
         console.error('❌ 최종 URL 생성 시도 실패:', finalError);
