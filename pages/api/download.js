@@ -128,102 +128,105 @@ export default async function handler(req, res) {
       }
     }
 
-    console.log('✅ 처리 전 경로:', finalPath);
+    console.log('✅ 원본 파일 경로:', finalPath);
 
-    // uploads/ 접두사 확인 및 유지
-    // Supabase Storage에서는 버킷과 함께 전체 경로를 사용해야 함
+    // 버킷 이름 처리
     const bucketName = 'uploads';
     let pathWithoutBucket = finalPath;
 
-    // uploads/ 접두사가 있는 경우 그대로 사용
+    // uploads/ 접두사 처리
     if (finalPath.startsWith('uploads/')) {
-      pathWithoutBucket = finalPath.slice(8); // 'uploads/'의 길이인 8을 자름
+      pathWithoutBucket = finalPath.substring(8); // 'uploads/'의 길이인 8을 자름
     } else if (finalPath.startsWith('thumbnails/')) {
-      pathWithoutBucket = finalPath.slice(11); // 'thumbnails/'의 길이인 11을 자름
+      pathWithoutBucket = finalPath.substring(11); // 'thumbnails/'의 길이인 11을 자름
     } else if (finalPath.startsWith('avatars/')) {
-      pathWithoutBucket = finalPath.slice(8); // 'avatars/'의 길이인 8을 자름
+      pathWithoutBucket = finalPath.substring(8); // 'avatars/'의 길이인 8을 자름
     }
 
-    console.log('📁 파일 정보:', {
-      원본경로: filePath,
-      처리된경로: pathWithoutBucket,
+    console.log('📁 처리된 파일 정보:', {
+      원본경로: finalPath,
+      버킷내경로: pathWithoutBucket,
       버킷: bucketName
     });
 
-    // 6. 파일 존재 확인 (최대 3초 대기)
-    try {
-      // 폴더 경로와 파일명 분리
-      const lastSlashIndex = pathWithoutBucket.lastIndexOf('/');
-      const folderPath = lastSlashIndex >= 0 ? pathWithoutBucket.slice(0, lastSlashIndex) : '';
-      const fileName = lastSlashIndex >= 0 ? pathWithoutBucket.slice(lastSlashIndex + 1) : pathWithoutBucket;
-
-      console.log('📂 폴더 및 파일 정보:', {
-        폴더경로: folderPath || '(루트)',
-        파일명: fileName
-      });
-
-      const { data, error } = await Promise.race([
-        supabase.storage
-          .from(bucketName)
-          .list(folderPath),
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('파일 목록 조회 시간 초과')), 3000)
-        )
-      ]);
-      
-      if (error) throw error;
-      if (!data) throw new Error('파일 목록을 조회할 수 없습니다.');
-      
-      console.log('📋 폴더 내 파일 목록:', data.map(f => f.name));
-      
-      const fileFound = data.some(file => file.name === fileName);
-      if (!fileFound) {
-        console.error('❌ 파일이 존재하지 않음:', fileName);
-        return res.status(404).json({ error: '파일을 찾을 수 없습니다.' });
-      }
-      
-      console.log('✅ 파일 확인 성공:', fileName);
-    } catch (error) {
-      console.error('❌ 파일 확인 실패:', error.message);
-      // 파일 목록 조회에 실패하더라도 URL 생성 시도
-      console.log('⚠️ 파일 확인 실패, URL 생성 시도 진행');
-    }
-
-    // 7. 다운로드 URL 생성 (최대 3초 대기)
+    // 7. 다운로드 URL 직접 생성 시도
     try {
       console.log('🔗 URL 생성 요청 경로:', pathWithoutBucket);
       
+      // 먼저 파일이 존재하는지 확인하지 않고 URL 생성 시도
       const { data, error } = await Promise.race([
         supabase.storage
           .from(bucketName)
           .createSignedUrl(pathWithoutBucket, 60),
         new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('URL 생성 시간 초과')), 3000)
+          setTimeout(() => reject(new Error('URL 생성 시간 초과')), 5000)
         )
       ]);
       
       if (error) {
         console.error('❌ URL 생성 오류:', error);
+        
+        // 파일이 없는 경우 두 번째 시도: 다른 형태의 경로 시도
+        if (error.message && error.message.includes('not found')) {
+          console.log('⚠️ 파일을 찾을 수 없음, 공개 URL 시도');
+          
+          const publicUrlResult = supabase.storage
+            .from(bucketName)
+            .getPublicUrl(pathWithoutBucket);
+          
+          if (publicUrlResult?.data?.publicUrl) {
+            console.log('✅ 공개 URL 생성 성공');
+            
+            // 다운로드 카운트 증가
+            try {
+              await supabase
+                .from('posts')
+                .update({ download_count: (post.download_count || 0) + 1 })
+                .eq('id', postId);
+            } catch (updateError) {
+              console.error('❌ 다운로드 카운트 업데이트 실패:', updateError.message);
+            }
+            
+            return res.status(200).json({ url: publicUrlResult.data.publicUrl });
+          }
+        }
+        
         throw error;
       }
       
       if (!data?.signedUrl) throw new Error('서명된 URL을 생성할 수 없습니다.');
       
-      // 다운로드 카운트 증가 (실패해도 URL 반환)
+      // 다운로드 카운트 증가
       try {
         await supabase
           .from('posts')
           .update({ download_count: (post.download_count || 0) + 1 })
           .eq('id', postId);
-      } catch (error) {
-        console.error('❌ 다운로드 카운트 업데이트 실패:', error.message);
+      } catch (updateError) {
+        console.error('❌ 다운로드 카운트 업데이트 실패:', updateError.message);
       }
 
       console.log('✅ 다운로드 URL 생성 성공:', data.signedUrl.substring(0, 50) + '...');
       return res.status(200).json({ url: data.signedUrl });
     } catch (error) {
       console.error('❌ 다운로드 URL 생성 실패:', error.message);
-      return res.status(500).json({ error: '다운로드 URL 생성에 실패했습니다.' });
+      
+      // 파일 경로가 다른 포맷일 수 있으므로 원본 경로로 다시 시도
+      try {
+        console.log('⚠️ 다시 시도: 원본 경로로 URL 생성');
+        const { data } = await supabase.storage
+          .from(bucketName)
+          .createSignedUrl(finalPath, 60);
+          
+        if (data?.signedUrl) {
+          console.log('✅ 원본 경로로 URL 생성 성공');
+          return res.status(200).json({ url: data.signedUrl });
+        }
+      } catch (retryError) {
+        console.error('❌ 원본 경로로 재시도 실패:', retryError.message);
+      }
+      
+      return res.status(404).json({ error: '파일을 찾을 수 없습니다. 경로를 확인해 주세요.' });
     }
   } catch (error) {
     console.error('❌ 다운로드 처리 중 에러:', error.message);
