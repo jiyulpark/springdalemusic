@@ -232,10 +232,6 @@ const Home = () => {
       ) : (
         <div className={styles.grid}> 
           {currentPosts.map(post => {
-            const authorInfo = {
-              name: post.users?.nickname || '작성자',
-              image: post.users?.profile_picture || null
-            };
             return (
               <Card 
                 key={post.id} 
@@ -243,7 +239,7 @@ const Home = () => {
                 categories={categories}
                 handleLike={handleLike}
                 handleDownload={handleDownload}
-                author={authorInfo}
+                author={post.users}
               />
             );
           })}
