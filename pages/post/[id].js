@@ -241,7 +241,6 @@ const PostDetail = () => {
                     onClick={async (e) => {
                       e.preventDefault();
                       try {
-                        const { data: { session } } = await supabase.auth.getSession();
                         if (!session?.access_token) {
                           throw new Error('로그인이 필요합니다.');
                         }
@@ -269,6 +268,15 @@ const PostDetail = () => {
                         const data = await response.json();
                         
                         if (!response.ok) {
+                          if (response.status === 403) {
+                            const roleNames = {
+                              'guest': '비로그인',
+                              'user': '일반 회원',
+                              'verified_user': '인증 회원',
+                              'admin': '관리자'
+                            };
+                            throw new Error(`${roleNames[data.requiredRole]} 이상만 다운로드할 수 있습니다. (현재: ${roleNames[data.currentRole]})`);
+                          }
                           throw new Error(data.error || '다운로드 중 오류가 발생했습니다.');
                         }
 
