@@ -378,12 +378,17 @@ const EditPost = () => {
                   onClick={async (e) => {
                     e.preventDefault();
                     try {
+                      const headers = {
+                        'Content-Type': 'application/json'
+                      };
+                      
+                      if (session?.access_token) {
+                        headers['Authorization'] = `Bearer ${session.access_token}`;
+                      }
+                      
                       const response = await fetch('/api/download', {
                         method: 'POST',
-                        headers: {
-                          'Content-Type': 'application/json',
-                          'Authorization': `Bearer ${session.access_token}`
-                        },
+                        headers,
                         body: JSON.stringify({
                           postId: id,
                           filePath: file
