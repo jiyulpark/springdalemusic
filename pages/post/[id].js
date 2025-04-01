@@ -321,6 +321,9 @@ const PostDetail = () => {
                         // 다운로드 URL 열기 (대체 URL이 있으면 함께 처리)
                         window.open(data.url, '_blank');
                         
+                        // 다운로드 카운트 증가
+                        setDownloadCount(prevCount => prevCount + 1);
+                        
                         // 대체 URL이 제공된 경우 백그라운드에서 미리 로드해둠
                         if (data.alternativeUrls && Array.isArray(data.alternativeUrls)) {
                           console.log('🔄 대체 URL 시도:', data.alternativeUrls.length);
