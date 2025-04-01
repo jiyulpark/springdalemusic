@@ -51,7 +51,7 @@ const PostDetail = () => {
 
         if (!postError) {
           setPost(postData);
-          setDownloadCount(postData.download_count || 0);
+          setDownloadCount(postData.downloads || 0);
 
           if (postData.category_ids?.length > 0) {
             const { data: allCategories } = await supabase.from('categories').select('id, name');

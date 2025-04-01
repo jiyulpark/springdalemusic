@@ -283,13 +283,13 @@ export default async function handler(req, res) {
         // 다운로드 카운트 업데이트
         const { data: updateData, error: updateError } = await supabase
           .from('posts')
-          .update({ download_count: (post.download_count || 0) + 1 })
+          .update({ downloads: (post.downloads || 0) + 1 })
           .eq('id', postId);
           
         if (updateError) {
           console.error('❌ 다운로드 카운트 업데이트 실패:', updateError);
         } else {
-          console.log('✅ 다운로드 카운트 업데이트 성공:', (post.download_count || 0) + 1);
+          console.log('✅ 다운로드 카운트 업데이트 성공:', (post.downloads || 0) + 1);
         }
       } catch (countError) {
         console.error('❌ 다운로드 카운트 업데이트 오류:', countError);
@@ -330,7 +330,7 @@ export default async function handler(req, res) {
           try {
             await supabase
               .from('posts')
-              .update({ download_count: (post.download_count || 0) + 1 })
+              .update({ downloads: (post.downloads || 0) + 1 })
               .eq('id', postId);
           } catch (updateError) {
             console.error('❌ 다운로드 카운트 업데이트 실패:', updateError.message);
@@ -348,7 +348,7 @@ export default async function handler(req, res) {
       try {
         await supabase
           .from('posts')
-          .update({ download_count: (post.download_count || 0) + 1 })
+          .update({ downloads: (post.downloads || 0) + 1 })
           .eq('id', postId);
       } catch (updateError) {
         console.error('❌ 다운로드 카운트 업데이트 실패:', updateError.message);
@@ -390,13 +390,13 @@ export default async function handler(req, res) {
           try {
             const { data: updateData, error: updateError } = await supabase
               .from('posts')
-              .update({ download_count: (post.download_count || 0) + 1 })
+              .update({ downloads: (post.downloads || 0) + 1 })
               .eq('id', postId);
               
             if (updateError) {
               console.error('❌ 다운로드 카운트 업데이트 실패:', updateError);
             } else {
-              console.log('✅ 다운로드 카운트 업데이트 성공:', (post.download_count || 0) + 1);
+              console.log('✅ 다운로드 카운트 업데이트 성공:', (post.downloads || 0) + 1);
             }
           } catch (countError) {
             console.error('❌ 다운로드 카운트 업데이트 오류:', countError);

@@ -35,7 +35,7 @@ const UserProfile = () => {
     // 작성한 게시글
     const { data: posts } = await supabase
       .from('posts')
-      .select('likes, download_count')
+      .select('likes, downloads')
       .eq('user_id', id);
 
     // 저장한 게시글 수
@@ -46,7 +46,7 @@ const UserProfile = () => {
 
     const postCount = posts?.length || 0;
     const totalLikes = posts?.reduce((sum, p) => sum + (p.likes || 0), 0);
-    const totalDownloads = posts?.reduce((sum, p) => sum + (p.download_count || 0), 0);
+    const totalDownloads = posts?.reduce((sum, p) => sum + (p.downloads || 0), 0);
     const bookmarkCount = bookmarks?.length || 0;
 
     setStats({ postCount, totalLikes, totalDownloads, bookmarkCount });

@@ -96,7 +96,7 @@ const NewPost = () => {
           thumbnail_url: thumbnailUrl,
           category_ids: selectedCategories,
           download_permission: downloadPermission,
-          download_count: 0,
+          downloads: 0,
           likes: 0
         }])
         .select()
