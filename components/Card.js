@@ -9,7 +9,7 @@ import styles from '../styles/Card.module.css';
 const Card = ({ post, categories }) => {
   const router = useRouter();
   const { session } = useSession();
-  const [downloadCount, setDownloadCount] = useState(post.downloads ?? 0);
+  const [downloadCount, setDownloadCount] = useState(post.download_count ?? 0);
 
   const thumbnailUrl = post.thumbnail_url
     ? supabase.storage.from('thumbnails').getPublicUrl(post.thumbnail_url).data?.publicUrl
