@@ -246,9 +246,14 @@ const PostDetail = () => {
                           throw new Error('로그인이 필요합니다.');
                         }
 
+                        let filePath = file.file_url;
+                        if (typeof file.file_url === 'object') {
+                          filePath = file.file_url.file_url;
+                        }
+
                         console.log('다운로드 시도:', {
                           postId: post.id,
-                          filePath: file.file_url,
+                          filePath: filePath,
                           fileName: file.file_name,
                           userRole: userRole
                         });
@@ -261,24 +266,16 @@ const PostDetail = () => {
                           },
                           body: JSON.stringify({
                             postId: post.id,
-                            filePath: file.file_url
+                            filePath: filePath
                           })
                         });
-                        
-                        const data = await response.json();
+
                         if (!response.ok) {
-                          if (response.status === 403) {
-                            const roleNames = {
-                              'guest': '비로그인',
-                              'user': '일반 회원',
-                              'verified_user': '인증 회원',
-                              'admin': '관리자'
-                            };
-                            throw new Error(`${roleNames[data.requiredRole]} 이상만 다운로드할 수 있습니다. (현재: ${roleNames[data.currentRole]})`);
-                          }
-                          throw new Error(data.error || '다운로드 URL 생성 실패');
+                          const errorData = await response.json();
+                          throw new Error(errorData.error || '다운로드 중 오류가 발생했습니다.');
                         }
                         
+                        const data = await response.json();
                         if (!data.url) {
                           throw new Error('다운로드 URL이 생성되지 않았습니다.');
                         }
@@ -287,7 +284,7 @@ const PostDetail = () => {
                         window.open(data.url, '_blank');
                       } catch (error) {
                         console.error('다운로드 오류:', error);
-                        alert(`다운로드 중 오류가 발생했습니다: ${error.message}`);
+                        alert(error.message);
                       }
                     }}
                     className={styles.downloadLink}
