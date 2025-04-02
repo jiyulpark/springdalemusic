@@ -463,6 +463,7 @@ const EditPost = () => {
             onClick={() => toggleCategory(category.id)}
             style={styles.categoryButton(selectedCategories.includes(category.id))}
             disabled={isSubmitting}
+            data-type="style"
           >
             {category.name}
           </button>
@@ -477,6 +478,7 @@ const EditPost = () => {
             onClick={() => toggleCategory(category.id)}
             style={styles.categoryButton(selectedCategories.includes(category.id))}
             disabled={isSubmitting}
+            data-type="type"
           >
             {category.name}
           </button>

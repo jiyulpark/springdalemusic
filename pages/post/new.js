@@ -189,28 +189,42 @@ const NewPost = () => {
       <h4>스타일 선택</h4>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: 10 }}>
         {categories.filter(c => c.type === 'style').map(c => (
-          <button key={c.id} onClick={() => toggleCategory(c.id)} style={{
-            padding: 8,
-            background: selectedCategories.includes(c.id) ? '#007bff' : '#ddd',
-            color: selectedCategories.includes(c.id) ? '#fff' : '#000',
-            border: 'none',
-            borderRadius: 5,
-            cursor: 'pointer',
-          }}>{c.name}</button>
+          <button 
+            key={c.id} 
+            onClick={() => toggleCategory(c.id)} 
+            style={{
+              padding: 8,
+              background: selectedCategories.includes(c.id) ? '#007bff' : '#ddd',
+              color: selectedCategories.includes(c.id) ? '#fff' : '#000',
+              border: 'none',
+              borderRadius: 5,
+              cursor: 'pointer',
+            }}
+            data-type="style"
+          >
+            {c.name}
+          </button>
         ))}
       </div>
 
       <h4>타입 선택</h4>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: 10 }}>
         {categories.filter(c => c.type === 'type').map(c => (
-          <button key={c.id} onClick={() => toggleCategory(c.id)} style={{
-            padding: 8,
-            background: selectedCategories.includes(c.id) ? '#007bff' : '#ddd',
-            color: selectedCategories.includes(c.id) ? '#fff' : '#000',
-            border: 'none',
-            borderRadius: 5,
-            cursor: 'pointer',
-          }}>{c.name}</button>
+          <button 
+            key={c.id} 
+            onClick={() => toggleCategory(c.id)} 
+            style={{
+              padding: 8,
+              background: selectedCategories.includes(c.id) ? '#28a745' : '#ddd',
+              color: selectedCategories.includes(c.id) ? '#fff' : '#000',
+              border: 'none',
+              borderRadius: 5,
+              cursor: 'pointer',
+            }}
+            data-type="type"
+          >
+            {c.name}
+          </button>
         ))}
       </div>
 

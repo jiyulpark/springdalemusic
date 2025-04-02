@@ -54,8 +54,25 @@
   }
   
   .categoryButton.selected {
-    background: #0070f3;
     color: white;
+  }
+  
+  /* style 타입 카테고리 버튼 */
+  .categoryButton[data-type="style"] {
+    background: #ddd;
+  }
+  
+  .categoryButton[data-type="style"].selected {
+    background: #0070f3;
+  }
+  
+  /* type 타입 카테고리 버튼 */
+  .categoryButton[data-type="type"] {
+    background: #ddd;
+  }
+  
+  .categoryButton[data-type="type"].selected {
+    background: #28a745;
   }
   
   .fileList {
