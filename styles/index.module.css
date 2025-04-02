@@ -48,29 +48,45 @@
   .categoryFilter {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
-    margin: 20px 0;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
   }
   
   .categoryFilter button {
-    padding: 6px 12px;
-    border: 1px solid #ccc;
-    border-radius: 20px;
-    background: white;
+    padding: 0.5rem 1rem;
+    border: 1px solid #eaeaea;
+    border-radius: 5px;
+    background-color: white;
     cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+  }
+  
+  .categoryFilter button:hover {
+    background-color: #f5f5f5;
+  }
+  
+  .categoryFilter button.activeCategory {
+    border-color: transparent;
   }
   
   /* style 타입 카테고리 */
   .categoryFilter button[data-type="style"].activeCategory {
-    background: #0070f3;
+    background-color: #0070f3;
     color: white;
-    border-color: #0070f3;
+  }
+  
+  .categoryFilter button[data-type="style"].activeCategory:hover {
+    background-color: #0051b3;
   }
   
   /* type 타입 카테고리 */
   .categoryFilter button[data-type="type"].activeCategory {
-    background: #28a745;
+    background-color: #28a745;
     color: white;
-    border-color: #28a745;
+  }
+  
+  .categoryFilter button[data-type="type"].activeCategory:hover {
+    background-color: #1e7e34;
   }
   
