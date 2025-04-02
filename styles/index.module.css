@@ -60,9 +60,17 @@
     cursor: pointer;
   }
   
-  .categoryFilter .activeCategory {
+  /* style 타입 카테고리 */
+  .categoryFilter button[data-type="style"].activeCategory {
     background: #0070f3;
     color: white;
     border-color: #0070f3;
+  }
+  
+  /* type 타입 카테고리 */
+  .categoryFilter button[data-type="type"].activeCategory {
+    background: #28a745;
+    color: white;
+    border-color: #28a745;
   }
   

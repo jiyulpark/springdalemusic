@@ -109,18 +109,30 @@
   }
   
   .categoryBadge {
-    background-color: #0070f3;
-    color: white;
     padding: 6px 12px;
     font-size: 14px;
     border-radius: 20px;
     font-weight: 500;
     transition: background-color 0.3s ease;
+    color: white;
   }
   
-  .categoryBadge:hover {
+  /* style 타입 카테고리 */
+  .categoryBadge[data-type="style"] {
+    background-color: #0070f3;
+  }
+  
+  .categoryBadge[data-type="style"]:hover {
     background-color: #005bb5;
-    cursor: default;
+  }
+  
+  /* type 타입 카테고리 */
+  .categoryBadge[data-type="type"] {
+    background-color: #28a745;
+  }
+  
+  .categoryBadge[data-type="type"]:hover {
+    background-color: #1c7c34;
   }
   
   .author {
