@@ -31,8 +31,11 @@ export default async function handler(req, res) {
         const token = authHeader.replace('Bearer ', '');
         console.log('🔑 토큰:', token.substring(0, 10) + '...');
 
-        const { data: { session } } = await supabase.auth.getSession();
-        user = session?.user;
+        const { data: { user: authUser } } = await supabase.auth.getUser(token);
+        if (authUser) {
+          user = authUser;
+          console.log('✅ 인증된 사용자:', user.id);
+        }
       }
       
       // guest 권한이 아닌데 로그인도 안된 경우
