@@ -17,6 +17,7 @@ const PostDetail = () => {
   const [session, setSession] = useState(null);
   const [userRole, setUserRole] = useState('');
   const [downloadCount, setDownloadCount] = useState(0);
+  const [categories, setCategories] = useState([]);
 
   useEffect(() => {
     const fetchSession = async () => {
@@ -114,6 +115,14 @@ const PostDetail = () => {
     }
   }, [id, session]);
 
+  useEffect(() => {
+    const fetchCategories = async () => {
+      const { data: categoriesData } = await supabase.from('categories').select('*');
+      setCategories(categoriesData || []);
+    };
+    fetchCategories();
+  }, []);
+
   const handleDeleteComment = async (commentId) => {
     if (!window.confirm("정말로 이 댓글을 삭제하시겠습니까?")) return;
     await supabase.from('comments').delete().eq('id', commentId);
@@ -174,14 +183,65 @@ const PostDetail = () => {
 
   const handleDelete = async () => {
     if (!window.confirm("정말로 이 게시글을 삭제하시겠습니까?")) return;
-    if (files.length > 0) {
-      await supabase.storage.from('uploads').remove(files.map(file => file.file_url));
+    
+    try {
+      // 1. 첨부파일 삭제
+      if (files.length > 0) {
+        const fileUrls = files.map(file => file.file_url);
+        console.log('삭제할 첨부파일:', fileUrls);
+        
+        const { error: storageError } = await supabase.storage
+          .from('uploads')
+          .remove(fileUrls);
+        
+        if (storageError) {
+          console.error('파일 삭제 실패:', storageError);
+          throw new Error('파일 삭제 중 오류가 발생했습니다.');
+        }
+        
+        // files 테이블에서도 삭제
+        const { error: filesError } = await supabase
+          .from('files')
+          .delete()
+          .eq('post_id', post.id);
+          
+        if (filesError) {
+          console.error('파일 정보 삭제 실패:', filesError);
+          throw new Error('파일 정보 삭제 중 오류가 발생했습니다.');
+        }
+      }
+
+      // 2. 썸네일 삭제
+      if (post.thumbnail_url) {
+        console.log('삭제할 썸네일:', post.thumbnail_url);
+        
+        const { error: thumbnailError } = await supabase.storage
+          .from('thumbnails')
+          .remove([post.thumbnail_url]);
+          
+        if (thumbnailError) {
+          console.error('썸네일 삭제 실패:', thumbnailError);
+          throw new Error('썸네일 삭제 중 오류가 발생했습니다.');
+        }
+      }
+
+      // 3. 게시글 삭제
+      const { error: postError } = await supabase
+        .from('posts')
+        .delete()
+        .eq('id', post.id);
+        
+      if (postError) {
+        console.error('게시글 삭제 실패:', postError);
+        throw new Error('게시글 삭제 중 오류가 발생했습니다.');
+      }
+
+      alert('게시글이 성공적으로 삭제되었습니다.');
+      router.push("/");
+    } catch (error) {
+      console.error('삭제 중 오류 발생:', error);
+      alert(error.message);
     }
-    if (post.thumbnail_url) {
-      await supabase.storage.from('thumbnails').remove([post.thumbnail_url]);
-    }
-    await supabase.from('posts').delete().eq('id', post.id);
-    router.push("/");
   };
 
   if (loading) return <p className={styles.loading}>로딩 중...</p>;
@@ -259,9 +319,18 @@ const PostDetail = () => {
 
       {categoryNames.length > 0 && (
         <div className={styles.categoryBadgeContainer}>
-          {categoryNames.map((name, index) => (
-            <span key={index} className={styles.categoryBadge}>{name}</span>
-          ))}
+          {categoryNames.map((name, index) => {
+            const category = categories.find(cat => cat.name === name);
+            return (
+              <span 
+                key={index} 
+                className={styles.categoryBadge}
+                data-type={category?.type}
+              >
+                {name}
+              </span>
+            );
+          })}
         </div>
       )}
 
