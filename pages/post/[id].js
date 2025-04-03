@@ -244,6 +244,21 @@ const PostDetail = () => {
     }
   };
 
+  const handleDownload = async (postId, currentDownloads) => {
+    try {
+      const { error } = await supabase
+        .from("posts")
+        .update({ downloads: currentDownloads + 1 })
+        .eq("id", postId);
+      
+      if (!error) {
+        setDownloadCount(prevCount => prevCount + 1);
+      }
+    } catch (e) {
+      console.error("다운로드 증가 실패", e.message);
+    }
+  };
+
   if (loading) return <p className={styles.loading}>로딩 중...</p>;
   if (!post) return <p className={styles.error}>게시글을 찾을 수 없습니다.</p>;
 
@@ -403,7 +418,7 @@ const PostDetail = () => {
                         window.open(data.url, '_blank');
                         
                         // 다운로드 카운트 증가
-                        setDownloadCount(prevCount => prevCount + 1);
+                        handleDownload(post.id, downloadCount);
                         
                         // 대체 URL이 제공된 경우 백그라운드에서 미리 로드해둠
                         if (data.alternativeUrls && Array.isArray(data.alternativeUrls)) {

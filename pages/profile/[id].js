@@ -10,8 +10,7 @@ const UserProfile = () => {
   const [stats, setStats] = useState({
     postCount: 0,
     totalLikes: 0,
-    totalDownloads: 0,
-    bookmarkCount: 0
+    totalDownloads: 0
   });
 
   useEffect(() => {
@@ -50,18 +49,11 @@ const UserProfile = () => {
         .select('likes, downloads')
         .eq('user_id', id);
 
-      // 저장한 게시글 수
-      const { data: bookmarks } = await supabase
-        .from('bookmarks')
-        .select('*')
-        .eq('user_id', id);
-
       const postCount = posts?.length || 0;
       const totalLikes = posts?.reduce((sum, p) => sum + (p.likes || 0), 0);
       const totalDownloads = posts?.reduce((sum, p) => sum + (p.downloads || 0), 0);
-      const bookmarkCount = bookmarks?.length || 0;
 
-      setStats({ postCount, totalLikes, totalDownloads, bookmarkCount });
+      setStats({ postCount, totalLikes, totalDownloads });
     } catch (error) {
       console.error('사용자 통계 조회 중 오류:', error);
     }
@@ -97,7 +89,6 @@ const UserProfile = () => {
       <h3>📊 활동 요약</h3>
       <p>📌 작성한 게시글: <strong>{stats.postCount}</strong></p>
       <p>👍 받은 좋아요: <strong>{stats.totalLikes}</strong></p>
-      <p>🔖 저장된 게시글: <strong>{stats.bookmarkCount}</strong></p>
       <p>⬇️ 다운로드 횟수: <strong>{stats.totalDownloads}</strong></p>
 
       <button onClick={() => router.back()} style={{ marginTop: '30px' }}>

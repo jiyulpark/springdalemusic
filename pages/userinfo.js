@@ -113,7 +113,6 @@ const UserInfo = () => {
             <ul style={{ listStyleType: 'none', padding: 0 }}>
               <li>📌 작성한 게시글: <strong>{stats?.post_count ?? 0}</strong></li>
               <li>👍 받은 좋아요: <strong>{stats?.like_count ?? 0}</strong></li>
-              <li>🔖 저장된 게시글: <strong>{stats?.collection_count ?? 0}</strong></li>
               <li>⬇️ 다운로드 횟수: <strong>{stats?.download_count ?? 0}</strong></li>
             </ul>
           )}
