@@ -1,4 +1,4 @@
-// components/Card.js
+"// components/Card.js
 import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/router';
@@ -88,7 +88,13 @@ const Card = ({ post, categories, handleDownload, handleLike, author }) => {
         handleDownload(post.id, post.downloads || 0);
       }
       
-      window.open(data.url, '_blank');
+      // 다운로드 URL을 사용하여 파일 다운로드
+      const link = document.createElement('a');
+      link.href = data.url;
+      link.download = post.file_name || 'download';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     } catch (error) {
       console.error('❌ 다운로드 에러:', error);
       alert(error.message);
@@ -114,7 +120,9 @@ const Card = ({ post, categories, handleDownload, handleLike, author }) => {
         {matchedCategories.length > 0 && (
           <div className={styles.categoryContainer}>
             {matchedCategories.map(cat => (
-              <span key={cat.id} className={styles.category}>{cat.name}</span>
+              <span key={cat.id} className={styles.category} data-type={cat.type}>
+                {cat.name}
+              </span>
             ))}
           </div>
         )}

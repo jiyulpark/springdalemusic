@@ -396,7 +396,13 @@ const EditPost = () => {
                       });
                       const data = await response.json();
                       if (data.url) {
-                        window.open(data.url, '_blank');
+                        // 다운로드 URL을 사용하여 파일 다운로드
+                        const link = document.createElement('a');
+                        link.href = data.url;
+                        link.download = file.split('/').pop() || 'download';
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
                       }
                     } catch (error) {
                       console.error('다운로드 오류:', error);

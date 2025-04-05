@@ -414,8 +414,13 @@ const PostDetail = () => {
                         }
 
                         console.log('✅ 다운로드 URL 생성 성공');
-                        // 다운로드 URL 열기 (대체 URL이 있으면 함께 처리)
-                        window.open(data.url, '_blank');
+                        // 다운로드 URL을 사용하여 파일 다운로드
+                        const link = document.createElement('a');
+                        link.href = data.url;
+                        link.download = file.file_name || 'download';
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
                         
                         // 다운로드 카운트 증가
                         handleDownload(post.id, downloadCount);
