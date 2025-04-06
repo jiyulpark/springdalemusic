@@ -321,12 +321,22 @@ export default async function handler(req, res) {
       const isWavFile = fileName.toLowerCase().endsWith('.wav');
       
       if (isWavFile) {
-        // WAV 파일의 경우 직접 다운로드 URL 생성
-        const downloadUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${bucketName}/${pathWithoutBucket}?response-content-disposition=attachment%3B%20filename%3D${encodeURIComponent(fileName)}`;
+        // WAV 파일의 경우 서버에서 직접 다운로드
+        const { data: fileData, error: downloadError } = await supabase.storage
+          .from(bucketName)
+          .download(pathWithoutBucket);
+          
+        if (downloadError) {
+          throw new Error('파일 다운로드 실패');
+        }
+        
+        // 파일 데이터를 Base64로 변환
+        const base64Data = Buffer.from(fileData).toString('base64');
         
         return res.status(200).json({ 
-          url: downloadUrl,
-          fileName: fileName
+          data: base64Data,
+          fileName: fileName,
+          contentType: 'audio/wav'
         });
       } else {
         // 다른 파일들은 기존 방식대로 처리
