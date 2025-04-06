@@ -317,8 +317,8 @@ export default async function handler(req, res) {
       // 파일명 추출
       const fileName = pathWithoutBucket.split('/').pop();
       
-      // Content-Disposition 헤더를 포함한 URL 생성
-      const downloadUrl = `${data.signedUrl}&response-content-disposition=attachment%3B%20filename%3D${encodeURIComponent(fileName)}`;
+      // Content-Disposition 헤더와 download=true 파라미터를 포함한 URL 생성
+      const downloadUrl = `${data.signedUrl}&download=true&response-content-disposition=attachment%3B%20filename%3D${encodeURIComponent(fileName)}`;
       
       return res.status(200).json({ 
         url: downloadUrl,
@@ -349,8 +349,11 @@ export default async function handler(req, res) {
         // 파일명 추출
         const fileName = pathWithoutBucket.split('/').pop();
         
+        // 공개 URL에도 download=true 파라미터 추가
+        const downloadUrl = `${publicUrlResult.data.publicUrl}?download=true&response-content-disposition=attachment%3B%20filename%3D${encodeURIComponent(fileName)}`;
+        
         return res.status(200).json({ 
-          url: publicUrlResult.data.publicUrl,
+          url: downloadUrl,
           fileName: fileName
         });
       }
