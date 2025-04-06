@@ -285,89 +285,24 @@ export default async function handler(req, res) {
     }
 
     // 8. 다운로드 URL 생성 전략
-    // 먼저 공개 URL 시도 (가장 안정적)
-    console.log('🔗 공개 URL 생성 시도:', pathWithoutBucket);
-    const publicUrlResult = supabase.storage
-      .from(bucketName)
-      .getPublicUrl(pathWithoutBucket);
-      
-    if (publicUrlResult?.data?.publicUrl) {
-      console.log('✅ 공개 URL 생성 성공:', publicUrlResult.data.publicUrl.substring(0, 50) + '...');
-      
-      // 다운로드 카운트 증가 - 항상 실행
-      try {
-        // 다운로드 카운트 업데이트
-        const { data: updateData, error: updateError } = await supabase
-          .from('posts')
-          .update({ downloads: (post.downloads || 0) + 1 })
-          .eq('id', postId);
-          
-        if (updateError) {
-          console.error('❌ 다운로드 카운트 업데이트 실패:', updateError);
-        } else {
-          console.log('✅ 다운로드 카운트 업데이트 성공:', (post.downloads || 0) + 1);
-        }
-      } catch (countError) {
-        console.error('❌ 다운로드 카운트 업데이트 오류:', countError);
-      }
-      
-      // 파일명 추출
-      const fileName = pathWithoutBucket.split('/').pop();
-      
-      // Content-Disposition 헤더를 포함한 URL 생성
-      const downloadUrl = `${publicUrlResult.data.publicUrl}?response-content-disposition=attachment%3B%20filename%3D${encodeURIComponent(fileName)}`;
-      
-      return res.status(200).json({ 
-        url: downloadUrl,
-        fileName: fileName
-      });
-    }
-
-    // 공개 URL 실패 시 서명된 URL 시도
+    // 먼저 서명된 URL 시도 (가장 안정적)
+    console.log('🔗 서명된 URL 생성 시도:', pathWithoutBucket);
+    
     try {
-      console.log('🔗 서명된 URL 생성 시도:', pathWithoutBucket);
-      
-      const { data, error } = await Promise.race([
-        supabase.storage
-          .from(bucketName)
-          .createSignedUrl(pathWithoutBucket, 60),
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('URL 생성 시간 초과')), 5000)
-        )
-      ]);
-      
+      const { data, error } = await supabase.storage
+        .from(bucketName)
+        .createSignedUrl(pathWithoutBucket, 60);
+        
       if (error) {
         console.error('❌ 서명된 URL 생성 오류:', error);
-        
-        // 다른 경로 형식으로 재시도
-        let alternativePath = pathWithoutBucket.split('/').pop(); // 파일명만 사용
-        console.log('🔄 대체 경로 시도 (파일명만):', alternativePath);
-        
-        // 파일명만으로 공개 URL 시도
-        const altResult = supabase.storage
-          .from(bucketName)
-          .getPublicUrl(alternativePath);
-          
-        if (altResult?.data?.publicUrl) {
-          console.log('✅ 대체 경로로 공개 URL 생성 성공');
-          
-          // 다운로드 카운트 증가
-          try {
-            await supabase
-              .from('posts')
-              .update({ downloads: (post.downloads || 0) + 1 })
-              .eq('id', postId);
-          } catch (updateError) {
-            console.error('❌ 다운로드 카운트 업데이트 실패:', updateError.message);
-          }
-          
-          return res.status(200).json({ url: altResult.data.publicUrl });
-        }
-        
         throw error;
       }
       
-      if (!data?.signedUrl) throw new Error('서명된 URL을 생성할 수 없습니다.');
+      if (!data?.signedUrl) {
+        throw new Error('서명된 URL을 생성할 수 없습니다.');
+      }
+
+      console.log('✅ 서명된 URL 생성 성공:', data.signedUrl.substring(0, 50) + '...');
       
       // 다운로드 카운트 증가
       try {
@@ -378,69 +313,46 @@ export default async function handler(req, res) {
       } catch (updateError) {
         console.error('❌ 다운로드 카운트 업데이트 실패:', updateError.message);
       }
-
-      console.log('✅ 다운로드 URL 생성 성공:', data.signedUrl.substring(0, 50) + '...');
-      return res.status(200).json({ url: data.signedUrl });
-    } catch (error) {
-      console.error('❌ 다운로드 URL 생성 실패:', error.message);
       
-      // 마지막 시도: 원본 저장소 직접 접근
-      // Supabase 프로젝트 호스트명을 추출하여 직접 URL 생성
-      try {
-        // 프로젝트 기본 URL 추출
-        const projectUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-        if (projectUrl) {
-          // 첫 번째 시도: 정상 경로
-          let storageUrl = `${projectUrl}/storage/v1/object/public/${bucketName}/${pathWithoutBucket}`;
-          
-          // URL에 이중 슬래시가 있는지 확인하고 수정
-          storageUrl = storageUrl.replace(/([^:])\/\//g, '$1/');
-          
-          console.log('⚠️ 직접 스토리지 URL 시도 (1):', storageUrl);
-          
-          // 두 번째 시도: uploads 접두사 추가 (만약 처리 과정에서 제거되었다면)
-          let alternativeUrl = `${projectUrl}/storage/v1/object/public/${bucketName}/uploads/${pathWithoutBucket}`;
-          alternativeUrl = alternativeUrl.replace(/([^:])\/\//g, '$1/');
-          
-          console.log('⚠️ 직접 스토리지 URL 시도 (2):', alternativeUrl);
-          
-          // 세 번째 시도: 파일명만 사용
-          const fileNameOnly = pathWithoutBucket.split('/').pop();
-          let fileNameUrl = `${projectUrl}/storage/v1/object/public/${bucketName}/${fileNameOnly}`;
-          fileNameUrl = fileNameUrl.replace(/([^:])\/\//g, '$1/');
-          
-          console.log('⚠️ 직접 스토리지 URL 시도 (3):', fileNameUrl);
-          
-          // 다운로드 카운트 업데이트 시도
-          try {
-            const { data: updateData, error: updateError } = await supabase
-              .from('posts')
-              .update({ downloads: (post.downloads || 0) + 1 })
-              .eq('id', postId);
-              
-            if (updateError) {
-              console.error('❌ 다운로드 카운트 업데이트 실패:', updateError);
-            } else {
-              console.log('✅ 다운로드 카운트 업데이트 성공:', (post.downloads || 0) + 1);
-            }
-          } catch (countError) {
-            console.error('❌ 다운로드 카운트 업데이트 오류:', countError);
-          }
-          
-          // 모든 URL을 반환하여 클라이언트가 시도할 수 있도록 함
-          return res.status(200).json({ 
-            url: storageUrl,
-            alternativeUrls: [alternativeUrl, fileNameUrl]
-          });
+      // 파일명 추출
+      const fileName = pathWithoutBucket.split('/').pop();
+      
+      return res.status(200).json({ 
+        url: data.signedUrl,
+        fileName: fileName
+      });
+    } catch (error) {
+      console.error('❌ 서명된 URL 생성 실패:', error.message);
+      
+      // 서명된 URL 실패 시 공개 URL 시도
+      console.log('🔗 공개 URL 생성 시도:', pathWithoutBucket);
+      const publicUrlResult = supabase.storage
+        .from(bucketName)
+        .getPublicUrl(pathWithoutBucket);
+        
+      if (publicUrlResult?.data?.publicUrl) {
+        console.log('✅ 공개 URL 생성 성공:', publicUrlResult.data.publicUrl.substring(0, 50) + '...');
+        
+        // 다운로드 카운트 증가
+        try {
+          await supabase
+            .from('posts')
+            .update({ downloads: (post.downloads || 0) + 1 })
+            .eq('id', postId);
+        } catch (updateError) {
+          console.error('❌ 다운로드 카운트 업데이트 실패:', updateError.message);
         }
-      } catch (finalError) {
-        console.error('❌ 최종 URL 생성 시도 실패:', finalError);
+        
+        // 파일명 추출
+        const fileName = pathWithoutBucket.split('/').pop();
+        
+        return res.status(200).json({ 
+          url: publicUrlResult.data.publicUrl,
+          fileName: fileName
+        });
       }
       
-      // 모든 시도가 실패하면 자세한 에러 메시지 반환
-      const errorMessage = `파일을 찾을 수 없습니다. 경로를 확인해 주세요. (요청 경로: ${pathWithoutBucket})`;
-      console.error('❌ 최종 오류:', errorMessage);
-      return res.status(404).json({ error: errorMessage });
+      throw new Error('다운로드 URL을 생성할 수 없습니다.');
     }
   } catch (error) {
     console.error('❌ 다운로드 처리 중 에러:', error.message);
