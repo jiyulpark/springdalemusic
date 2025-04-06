@@ -69,7 +69,7 @@ const Navbar = () => {
           rel="noopener noreferrer" 
           className={styles.subNavLink}
         >
-          📢 공지사항
+          📢 <span>공지사항</span>
         </a>
         <a 
           href="https://smartstore.naver.com/springdalem" 
@@ -77,7 +77,7 @@ const Navbar = () => {
           rel="noopener noreferrer" 
           className={styles.subNavLink}
         >
-          🛍️ 스마트스토어
+          🛍️ <span>스마트스토어</span>
         </a>
         <a 
           href="https://shop.coupang.com/springdalem" 
@@ -85,7 +85,7 @@ const Navbar = () => {
           rel="noopener noreferrer" 
           className={styles.subNavLink}
         >
-          🚀 쿠팡
+          🚀 <span>쿠팡</span>
         </a>
       </div>
     </header>
