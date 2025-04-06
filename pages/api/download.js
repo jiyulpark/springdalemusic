@@ -310,11 +310,12 @@ export default async function handler(req, res) {
         console.error('❌ 다운로드 카운트 업데이트 실패:', updateError.message);
       }
       
-      // 파일명 추출
+      // 파일명 추출 및 Content-Disposition 헤더 생성
       const fileName = pathWithoutBucket.split('/').pop();
+      const contentDisposition = `attachment; filename="${fileName}"; filename*=UTF-8''${encodeURIComponent(fileName)}`;
+      const downloadUrl = `${data.signedUrl}&response-content-disposition=${encodeURIComponent(contentDisposition)}`;
       
-      // Content-Disposition 헤더와 download=true 파라미터를 포함한 URL 생성
-      const downloadUrl = `${data.signedUrl}&download=true&response-content-disposition=attachment%3B%20filename%3D${encodeURIComponent(fileName)}`;
+      console.log('📥 생성된 다운로드 URL:', downloadUrl);
       
       return res.status(200).json({ 
         url: downloadUrl,
@@ -342,11 +343,12 @@ export default async function handler(req, res) {
           console.error('❌ 다운로드 카운트 업데이트 실패:', updateError.message);
         }
         
-        // 파일명 추출
+        // 파일명 추출 및 Content-Disposition 헤더 생성
         const fileName = pathWithoutBucket.split('/').pop();
+        const contentDisposition = `attachment; filename="${fileName}"; filename*=UTF-8''${encodeURIComponent(fileName)}`;
+        const downloadUrl = `${publicUrlResult.data.publicUrl}?response-content-disposition=${encodeURIComponent(contentDisposition)}`;
         
-        // Content-Disposition 헤더와 download=true 파라미터를 포함한 URL 생성
-        const downloadUrl = `${publicUrlResult.data.publicUrl}?download=true&response-content-disposition=attachment%3B%20filename%3D${encodeURIComponent(fileName)}`;
+        console.log('📥 생성된 다운로드 URL:', downloadUrl);
         
         return res.status(200).json({ 
           url: downloadUrl,
