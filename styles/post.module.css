@@ -1,45 +1,49 @@
 .postInfo {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
-  padding: 1rem 0;
-  border-bottom: 1px solid #eee;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   margin-bottom: 1.5rem;
-  color: #666;
-  font-size: 0.95rem;
 }
 
-.postInfo span {
+.postInfoLeft {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 1rem;
 }
 
 .author {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-weight: 500;
+  gap: 0.75rem;
+  font-weight: 600;
   color: #333;
 }
 
 .authorImg {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   object-fit: cover;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .authorPlaceholder {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
-  background-color: #f0f0f0;
+  background-color: #e0e0e0;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 500;
+  font-weight: 600;
   color: #666;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .postInfoRight {
