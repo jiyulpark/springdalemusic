@@ -1,12 +1,43 @@
 /* 🔹 네비게이션 바 전체 레이아웃 */
+.navbarContainer {
+  width: 100%;
+  background-color: white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
 .navbar {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #ffffff;
-  padding: 10px 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  flex-wrap: wrap;
+  border-bottom: 1px solid #eee;
+}
+
+.subNav {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0.5rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 2rem;
+  background-color: #ffd7e5;
+}
+
+.subNavLink {
+  color: #d4517d;
+  text-decoration: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+}
+
+.subNavLink:hover {
+  color: #fff;
+  background-color: #ff9ebb;
 }
 
 /* 🔹 왼쪽 영역 (홈, 프로필) */
