@@ -302,22 +302,17 @@ const PostDetail = () => {
         </div>
         <div className={styles.postInfoRight}>
           <span>
-            <i className="fas fa-eye"></i>
-            <span>{post.view_count || 0}</span>
+            👁️ {post.view_count || 0}
           </span>
           <span>
-            <i className="fas fa-download"></i>
-            <span>{downloadCount}</span>
+            ⬇️ {downloadCount}
           </span>
           <span>
-            <i className="far fa-calendar-alt"></i>
-            <span>
-              {new Date(post.created_at).toLocaleDateString('ko-KR', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-              })}
-            </span>
+            📅 {new Date(post.created_at).toLocaleDateString('ko-KR', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
+            })}
           </span>
         </div>
       </div>
