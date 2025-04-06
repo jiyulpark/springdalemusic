@@ -1,4 +1,4 @@
-"// components/Card.js
+// components/Card.js
 import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/router';
