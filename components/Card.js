@@ -96,6 +96,7 @@ const Card = ({ post, categories, handleDownload, handleLike, author }) => {
       link.setAttribute('rel', 'noopener noreferrer');
       link.setAttribute('type', 'application/octet-stream');
       link.setAttribute('crossorigin', 'anonymous');
+      link.setAttribute('Content-Disposition', 'attachment');
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

@@ -420,6 +420,9 @@ const PostDetail = () => {
                         link.download = data.fileName || file.file_name || 'download';
                         link.setAttribute('target', '_blank');
                         link.setAttribute('rel', 'noopener noreferrer');
+                        link.setAttribute('type', 'application/octet-stream');
+                        link.setAttribute('crossorigin', 'anonymous');
+                        link.setAttribute('Content-Disposition', 'attachment');
                         document.body.appendChild(link);
                         link.click();
                         document.body.removeChild(link);
