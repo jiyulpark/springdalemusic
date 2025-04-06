@@ -289,27 +289,20 @@ export default async function handler(req, res) {
     console.log('🔗 서명된 URL 생성 시도:', pathWithoutBucket);
     
     try {
-      // 파일 직접 다운로드
-      const { data: fileData, error: downloadError } = await supabase.storage
+      const { data, error } = await supabase.storage
         .from(bucketName)
-        .download(pathWithoutBucket);
+        .createSignedUrl(pathWithoutBucket, 60);
         
-      if (downloadError) {
-        console.error('❌ 파일 다운로드 오류:', downloadError);
-        return res.status(500).json({ 
-          error: '파일을 다운로드할 수 없습니다.',
-          details: downloadError.message 
-        });
+      if (error) {
+        console.error('❌ 서명된 URL 생성 오류:', error);
+        throw error;
       }
       
-      if (!fileData) {
-        return res.status(404).json({ 
-          error: '파일을 찾을 수 없습니다.' 
-        });
+      if (!data?.signedUrl) {
+        throw new Error('서명된 URL을 생성할 수 없습니다.');
       }
 
-      // 파일명 추출
-      const fileName = pathWithoutBucket.split('/').pop();
+      console.log('✅ 서명된 URL 생성 성공:', data.signedUrl.substring(0, 50) + '...');
       
       // 다운로드 카운트 증가
       try {
@@ -321,20 +314,45 @@ export default async function handler(req, res) {
         console.error('❌ 다운로드 카운트 업데이트 실패:', updateError.message);
       }
       
-      // 파일 데이터를 Base64로 변환
-      const base64Data = Buffer.from(fileData).toString('base64');
+      // 파일명 추출
+      const fileName = pathWithoutBucket.split('/').pop();
       
       return res.status(200).json({ 
-        data: base64Data,
-        fileName: fileName,
-        contentType: 'application/octet-stream'
+        url: data.signedUrl,
+        fileName: fileName
       });
     } catch (error) {
-      console.error('❌ 파일 다운로드 실패:', error.message);
-      return res.status(500).json({ 
-        error: '파일을 다운로드할 수 없습니다.',
-        details: error.message 
-      });
+      console.error('❌ 서명된 URL 생성 실패:', error.message);
+      
+      // 서명된 URL 실패 시 공개 URL 시도
+      console.log('🔗 공개 URL 생성 시도:', pathWithoutBucket);
+      const publicUrlResult = supabase.storage
+        .from(bucketName)
+        .getPublicUrl(pathWithoutBucket);
+        
+      if (publicUrlResult?.data?.publicUrl) {
+        console.log('✅ 공개 URL 생성 성공:', publicUrlResult.data.publicUrl.substring(0, 50) + '...');
+        
+        // 다운로드 카운트 증가
+        try {
+          await supabase
+            .from('posts')
+            .update({ downloads: (post.downloads || 0) + 1 })
+            .eq('id', postId);
+        } catch (updateError) {
+          console.error('❌ 다운로드 카운트 업데이트 실패:', updateError.message);
+        }
+        
+        // 파일명 추출
+        const fileName = pathWithoutBucket.split('/').pop();
+        
+        return res.status(200).json({ 
+          url: publicUrlResult.data.publicUrl,
+          fileName: fileName
+        });
+      }
+      
+      throw new Error('다운로드 URL을 생성할 수 없습니다.');
     }
   } catch (error) {
     console.error('❌ 다운로드 처리 중 에러:', error.message);
