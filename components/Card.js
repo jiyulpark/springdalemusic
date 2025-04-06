@@ -22,86 +22,45 @@ const Card = ({ post, categories, handleDownload, handleLike, author }) => {
     post.category_ids?.includes(cat.id)
   ) || [];
 
-  const handleFileDownload = async (e) => {
+  const handleDownload = async (e) => {
     e.preventDefault();
+    e.stopPropagation();
+    
     try {
-      if (!post.file_urls || post.file_urls.length === 0) {
-        alert('첨부파일이 없습니다.');
-        return;
-      }
-
-      const firstFile = typeof post.file_urls[0] === 'string'
-        ? post.file_urls[0]
-        : post.file_urls[0]?.file_url;
-
-      if (!firstFile) {
-        alert('유효하지 않은 파일입니다.');
-        return;
-      }
-
-      console.log('📥 다운로드 요청:', {
-        postId: post.id,
-        filePath: firstFile,
-        userRole: session?.user?.role || 'guest'
-      });
-
-      const headers = {
-        'Content-Type': 'application/json'
-      };
-      
-      if (session?.access_token) {
-        headers['Authorization'] = `Bearer ${session.access_token}`;
-      }
-
-      const response = await fetch('/api/download', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          postId: post.id,
-          filePath: firstFile
-        })
-      });
-
+      const response = await fetch(`/api/download?postId=${post.id}`);
       const data = await response.json();
       
-      if (!response.ok) {
-        if (response.status === 403) {
-          const roleNames = {
-            'guest': '비로그인',
-            'user': '일반 회원',
-            'verified_user': '인증 회원',
-            'admin': '관리자'
-          };
-          throw new Error(`${roleNames[data.requiredRole]} 이상만 다운로드할 수 있습니다. (현재: ${roleNames[data.currentRole]})`);
-        }
-        throw new Error(data.error || '다운로드에 실패했습니다.');
-      }
-
-      console.log('✅ 다운로드 URL 생성 성공');
-      
-      // 다운로드 카운트 증가시키기 (로그인/비로그인 모두)
-      const newCount = (post.downloads || 0) + 1;
-      setDownloadCount(newCount);
-      
-      // index.js의 handleDownload 함수 호출
-      if (handleDownload) {
-        handleDownload(post.id, post.downloads || 0);
+      if (!data.data || !data.fileName) {
+        throw new Error('다운로드 정보를 받아올 수 없습니다.');
       }
       
-      // 다운로드 URL을 사용하여 파일 다운로드
+      // Base64 데이터를 Blob으로 변환
+      const byteCharacters = atob(data.data);
+      const byteNumbers = new Array(byteCharacters.length);
+      
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: data.contentType });
+      
+      // Blob URL 생성
+      const blobUrl = window.URL.createObjectURL(blob);
+      
+      // 다운로드 링크 생성 및 클릭
       const link = document.createElement('a');
-      link.href = data.url;
-      link.download = data.fileName || post.file_name || 'download';
-      link.setAttribute('target', '_blank');
-      link.setAttribute('rel', 'noopener noreferrer');
-      link.setAttribute('type', 'application/octet-stream');
-      link.setAttribute('crossorigin', 'anonymous');
+      link.href = blobUrl;
+      link.download = data.fileName;
       document.body.appendChild(link);
       link.click();
+      
+      // 정리
       document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
     } catch (error) {
-      console.error('❌ 다운로드 에러:', error);
-      alert(error.message);
+      console.error('다운로드 실패:', error);
+      alert('파일을 다운로드할 수 없습니다.');
     }
   };
 
@@ -148,7 +107,7 @@ const Card = ({ post, categories, handleDownload, handleLike, author }) => {
         <div className={styles.footer}>
           <span>❤️ {post.like_count ?? 0}</span>
           <span>💬 {post.comment_count ?? 0}</span>
-          <span className={styles.download} onClick={handleFileDownload}>
+          <span className={styles.download} onClick={handleDownload}>
             📥 {post.downloads ?? 0}
           </span>
 
