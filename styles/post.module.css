@@ -1,75 +1,91 @@
 .postInfo {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
-  padding: 1rem 0;
-  border-bottom: 1px solid #eee;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  background-color: #f8f8f8;
+  border-radius: 12px;
   margin-bottom: 1.5rem;
-  color: #666;
-  font-size: 0.95rem;
 }
 
-.postInfo span {
+.postInfoLeft {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 1rem;
 }
 
 .author {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-weight: 500;
+  gap: 0.75rem;
+  font-weight: 600;
   color: #333;
-  padding: 0.5rem 1rem;
-  background-color: #f8f8f8;
-  border-radius: 20px;
-  transition: all 0.2s ease;
-}
-
-.author:hover {
-  background-color: #f0f0f0;
 }
 
 .authorImg {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   object-fit: cover;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .authorPlaceholder {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
-  background-color: #f0f0f0;
+  background-color: #e0e0e0;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 500;
+  font-weight: 600;
   color: #666;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-.postInfo span:not(.author) {
-  padding: 0.5rem 1rem;
-  background-color: #f8f8f8;
-  border-radius: 20px;
-  transition: all 0.2s ease;
+.postInfoRight {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  color: #666;
+  font-size: 0.95rem;
+}
+
+.postInfoRight span {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background-color: white;
+  border-radius: 20px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
-.postInfo span:not(.author):hover {
+.postInfoRight span:hover {
   background-color: #f0f0f0;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 
-.postInfo i {
+.postInfoRight i {
   font-size: 1rem;
   color: #666;
 }
 
-.postInfo span:not(.author) span {
-  margin-left: 0.25rem;
+.postInfoRight span span {
   font-weight: 500;
+  color: #333;
+  background: none;
+  box-shadow: none;
+  padding: 0;
+  transform: none;
+}
+
+.postInfoRight span span:hover {
+  background: none;
+  transform: none;
+  box-shadow: none;
 } 

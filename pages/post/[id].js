@@ -284,38 +284,42 @@ const PostDetail = () => {
       )}
 
       <div className={styles.postInfo}>
-        <span className={styles.author}>
-          {post.users?.profile_picture ? (
-            <img
-              src={post.users.profile_picture}
-              className={styles.authorImg}
-              alt="작성자 프로필"
-            />
-          ) : (
-            <div className={styles.authorPlaceholder}>
-              {post.users?.nickname?.[0] || 'A'}
-            </div>
-          )}
-          {post.users?.nickname || '익명'}
-        </span>
-        <span>
-          <i className="fas fa-eye"></i>
-          <span>{post.view_count || 0}</span>
-        </span>
-        <span>
-          <i className="fas fa-download"></i>
-          <span>{downloadCount}</span>
-        </span>
-        <span>
-          <i className="far fa-calendar-alt"></i>
-          <span>
-            {new Date(post.created_at).toLocaleDateString('ko-KR', {
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric'
-            })}
+        <div className={styles.postInfoLeft}>
+          <span className={styles.author}>
+            {post.users?.profile_picture ? (
+              <img
+                src={post.users.profile_picture}
+                className={styles.authorImg}
+                alt="작성자 프로필"
+              />
+            ) : (
+              <div className={styles.authorPlaceholder}>
+                {post.users?.nickname?.[0] || 'A'}
+              </div>
+            )}
+            {post.users?.nickname || '익명'}
           </span>
-        </span>
+        </div>
+        <div className={styles.postInfoRight}>
+          <span>
+            <i className="fas fa-eye"></i>
+            <span>{post.view_count || 0}</span>
+          </span>
+          <span>
+            <i className="fas fa-download"></i>
+            <span>{downloadCount}</span>
+          </span>
+          <span>
+            <i className="far fa-calendar-alt"></i>
+            <span>
+              {new Date(post.created_at).toLocaleDateString('ko-KR', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+              })}
+            </span>
+          </span>
+        </div>
       </div>
 
       <div className={styles.content}>
