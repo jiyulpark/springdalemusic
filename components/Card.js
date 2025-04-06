@@ -5,6 +5,7 @@ import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabase';
 import { useSession } from '../lib/SessionContext';
 import styles from '../styles/Card.module.css';
+import { FiPaperclip } from 'react-icons/fi';
 
 const Card = ({ post, categories, handleDownload, handleLike, author }) => {
   const router = useRouter();
@@ -152,10 +153,19 @@ const Card = ({ post, categories, handleDownload, handleLike, author }) => {
         <div className={styles.footer}>
           <span>❤️ {post.like_count ?? 0}</span>
           <span>💬 {post.comment_count ?? 0}</span>
-          <span className={styles.download} onClick={handleFileDownload}>
-            📥 {post.downloads ?? 0}
-          </span>
+          <span>📥 {post.downloads ?? 0}</span>
 
+          {/* 첨부파일 정보 */}
+          {post.file_url && (
+            <div className={styles.fileInfo}>
+              <span>
+                <FiPaperclip className={styles.icon} />
+                첨부파일 {post.file_count || 1}개
+              </span>
+            </div>
+          )}
+          
+          {/* 다운로드 권한 뱃지 */}
           {post.download_permission === 'verified_user' && (
             <span className={styles.badge}>인증회원 전용 🔒</span>
           )}
