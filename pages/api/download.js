@@ -296,11 +296,16 @@ export default async function handler(req, res) {
         
       if (downloadError) {
         console.error('❌ 파일 다운로드 오류:', downloadError);
-        throw downloadError;
+        return res.status(500).json({ 
+          error: '파일을 다운로드할 수 없습니다.',
+          details: downloadError.message 
+        });
       }
       
       if (!fileData) {
-        throw new Error('파일을 다운로드할 수 없습니다.');
+        return res.status(404).json({ 
+          error: '파일을 찾을 수 없습니다.' 
+        });
       }
 
       // 파일명 추출
@@ -326,7 +331,10 @@ export default async function handler(req, res) {
       });
     } catch (error) {
       console.error('❌ 파일 다운로드 실패:', error.message);
-      throw new Error('파일을 다운로드할 수 없습니다.');
+      return res.status(500).json({ 
+        error: '파일을 다운로드할 수 없습니다.',
+        details: error.message 
+      });
     }
   } catch (error) {
     console.error('❌ 다운로드 처리 중 에러:', error.message);

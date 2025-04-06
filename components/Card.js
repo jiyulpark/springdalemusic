@@ -30,6 +30,10 @@ const Card = ({ post, categories, handleLike, author }) => {
       const response = await fetch(`/api/download?postId=${post.id}`);
       const data = await response.json();
       
+      if (!response.ok) {
+        throw new Error(data.error || '다운로드에 실패했습니다.');
+      }
+      
       if (!data.data || !data.fileName) {
         throw new Error('다운로드 정보를 받아올 수 없습니다.');
       }
@@ -60,7 +64,7 @@ const Card = ({ post, categories, handleLike, author }) => {
       window.URL.revokeObjectURL(blobUrl);
     } catch (error) {
       console.error('다운로드 실패:', error);
-      alert('파일을 다운로드할 수 없습니다.');
+      alert(error.message || '파일을 다운로드할 수 없습니다.');
     }
   };
 
