@@ -289,15 +289,11 @@ export default async function handler(req, res) {
     console.log('🔗 서명된 URL 생성 시도:', pathWithoutBucket);
     
     try {
-      const { data, error } = await supabase.storage
+      // 서명된 URL 생성
+      const { data } = await supabase.storage
         .from(bucketName)
         .createSignedUrl(pathWithoutBucket, 60);
-        
-      if (error) {
-        console.error('❌ 서명된 URL 생성 오류:', error);
-        throw error;
-      }
-      
+
       if (!data?.signedUrl) {
         throw new Error('서명된 URL을 생성할 수 없습니다.');
       }
@@ -349,7 +345,7 @@ export default async function handler(req, res) {
         // 파일명 추출
         const fileName = pathWithoutBucket.split('/').pop();
         
-        // 공개 URL에도 download=true 파라미터 추가
+        // Content-Disposition 헤더와 download=true 파라미터를 포함한 URL 생성
         const downloadUrl = `${publicUrlResult.data.publicUrl}?download=true&response-content-disposition=attachment%3B%20filename%3D${encodeURIComponent(fileName)}`;
         
         return res.status(200).json({ 
