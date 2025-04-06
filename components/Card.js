@@ -6,7 +6,7 @@ import { supabase } from '../lib/supabase';
 import { useSession } from '../lib/SessionContext';
 import styles from '../styles/Card.module.css';
 
-const Card = ({ post, categories, handleDownload, handleLike, author }) => {
+const Card = ({ post, categories, handleLike, author }) => {
   const router = useRouter();
   const { session } = useSession();
   const [downloadCount, setDownloadCount] = useState(post.downloads ?? 0);
