@@ -91,7 +91,10 @@ const Card = ({ post, categories, handleDownload, handleLike, author }) => {
       // 다운로드 URL을 사용하여 파일 다운로드
       const link = document.createElement('a');
       link.href = data.url;
-      link.download = post.file_name || 'download';
+      link.download = data.fileName || post.file_name || 'download';
+      link.setAttribute('target', '_blank');
+      link.setAttribute('rel', 'noopener noreferrer');
+      link.setAttribute('type', 'application/octet-stream');
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
