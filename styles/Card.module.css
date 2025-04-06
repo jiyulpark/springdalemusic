@@ -44,22 +44,28 @@
   font-size: 12px;
 }
 
-.author {
+.cardAuthor {
   display: flex;
   align-items: center;
-  margin-bottom: 8px;
+  gap: 8px;
+  margin-top: 8px;
 }
 
 .authorImage {
-  width: 30px;
-  height: 30px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
-  margin-right: 8px;
+  object-fit: cover;
 }
 
 .authorName {
-  font-weight: bold;
-  color: #333;
+  color: #666;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.authorName:hover {
+  text-decoration: underline;
 }
 
 .footer {
