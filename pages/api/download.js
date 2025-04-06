@@ -317,10 +317,26 @@ export default async function handler(req, res) {
       // 파일명 추출
       const fileName = pathWithoutBucket.split('/').pop();
       
-      return res.status(200).json({ 
-        url: data.signedUrl,
-        fileName: fileName
-      });
+      // WAV 파일인지 확인
+      const isWavFile = fileName.toLowerCase().endsWith('.wav');
+      
+      if (isWavFile) {
+        // WAV 파일의 경우 직접 다운로드 URL 생성
+        const downloadUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${bucketName}/${pathWithoutBucket}?response-content-disposition=attachment%3B%20filename%3D${encodeURIComponent(fileName)}`;
+        
+        return res.status(200).json({ 
+          url: downloadUrl,
+          fileName: fileName
+        });
+      } else {
+        // 다른 파일들은 기존 방식대로 처리
+        const downloadUrl = `${data.signedUrl}&response-content-disposition=attachment%3B%20filename%3D${encodeURIComponent(fileName)}`;
+        
+        return res.status(200).json({ 
+          url: downloadUrl,
+          fileName: fileName
+        });
+      }
     } catch (error) {
       console.error('❌ 서명된 URL 생성 실패:', error.message);
       
