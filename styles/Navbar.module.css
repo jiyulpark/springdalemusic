@@ -3,6 +3,8 @@
   width: 100%;
   background-color: white;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  position: relative;
+  z-index: 1000;
 }
 
 .navbar {
@@ -16,14 +18,14 @@
 }
 
 .subNav {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0.5rem;
+  width: 100%;
+  padding: 0.75rem 0;
   display: flex;
   justify-content: center;
   align-items: center;
   gap: 2rem;
   background-color: #ffd7e5;
+  border-bottom: 1px solid #ffbdd3;
 }
 
 .subNavLink {
@@ -32,12 +34,14 @@
   padding: 0.5rem 1rem;
   border-radius: 4px;
   transition: all 0.2s ease;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
+  font-weight: 500;
 }
 
 .subNavLink:hover {
   color: #fff;
   background-color: #ff9ebb;
+  transform: translateY(-1px);
 }
 
 /* 🔹 왼쪽 영역 (홈, 프로필) */
