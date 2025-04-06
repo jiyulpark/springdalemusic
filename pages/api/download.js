@@ -311,7 +311,13 @@ export default async function handler(req, res) {
         console.error('❌ 다운로드 카운트 업데이트 오류:', countError);
       }
       
-      return res.status(200).json({ url: publicUrlResult.data.publicUrl });
+      // 파일명 추출
+      const fileName = pathWithoutBucket.split('/').pop();
+      
+      return res.status(200).json({ 
+        url: publicUrlResult.data.publicUrl,
+        fileName: fileName
+      });
     }
 
     // 공개 URL 실패 시 서명된 URL 시도

@@ -417,7 +417,9 @@ const PostDetail = () => {
                         // 다운로드 URL을 사용하여 파일 다운로드
                         const link = document.createElement('a');
                         link.href = data.url;
-                        link.download = file.file_name || 'download';
+                        link.download = data.fileName || file.file_name || 'download';
+                        link.setAttribute('target', '_blank');
+                        link.setAttribute('rel', 'noopener noreferrer');
                         document.body.appendChild(link);
                         link.click();
                         document.body.removeChild(link);
