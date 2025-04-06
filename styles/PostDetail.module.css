@@ -267,3 +267,65 @@
 .downloadLink:hover {
   text-decoration: underline;
 }
+
+.postInfo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  margin-bottom: 1.5rem;
+}
+
+.postInfoLeft {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.postInfoRight {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  color: #666;
+  font-size: 0.95rem;
+}
+
+.postInfoRight span {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background-color: white;
+  border-radius: 20px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.postInfoRight span:hover {
+  background-color: #f0f0f0;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.postInfoRight i {
+  font-size: 1rem;
+  color: #666;
+}
+
+.postInfoRight span span {
+  font-weight: 500;
+  color: #333;
+  background: none;
+  box-shadow: none;
+  padding: 0;
+  transform: none;
+}
+
+.postInfoRight span span:hover {
+  background: none;
+  transform: none;
+  box-shadow: none;
+}
