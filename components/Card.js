@@ -1,18 +1,13 @@
 // components/Card.js
 import Link from 'next/link';
-import { useState } from 'react';
 import { useRouter } from 'next/router';
-import { supabase } from '../lib/supabase';
 import { useSession } from '../lib/SessionContext';
 import styles from '../styles/Card.module.css';
 
-const Card = ({ post, categories, handleDownload, handleLike, author }) => {
+const Card = ({ post, categories, handleLike, author }) => {
   const router = useRouter();
   const { session } = useSession();
-  const [downloadCount, setDownloadCount] = useState(post.downloads ?? 0);
   
-  console.log(`Card 컴포넌트 ID ${post.id} 다운로드 수:`, post.downloads);
-
   // 썸네일 URL 생성 로직 수정
   const thumbnailUrl = post.thumbnail_url
     ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/thumbnails/${post.thumbnail_url}`
@@ -22,93 +17,6 @@ const Card = ({ post, categories, handleDownload, handleLike, author }) => {
     post.category_ids?.includes(cat.id)
   ) || [];
 
-  const handleFileDownload = async (e) => {
-    e.preventDefault();
-    try {
-      if (!post.file_urls || post.file_urls.length === 0) {
-        alert('첨부파일이 없습니다.');
-        return;
-      }
-
-      const firstFile = typeof post.file_urls[0] === 'string'
-        ? post.file_urls[0]
-        : post.file_urls[0]?.file_url;
-
-      if (!firstFile) {
-        alert('유효하지 않은 파일입니다.');
-        return;
-      }
-
-      console.log('📥 다운로드 요청:', {
-        postId: post.id,
-        filePath: firstFile,
-        userRole: session?.user?.role || 'guest'
-      });
-
-      const headers = {
-        'Content-Type': 'application/json'
-      };
-      
-      if (session?.access_token) {
-        headers['Authorization'] = `Bearer ${session.access_token}`;
-      }
-
-      const response = await fetch('/api/download', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          postId: post.id,
-          filePath: firstFile
-        })
-      });
-
-      const data = await response.json();
-      
-      if (!response.ok) {
-        if (response.status === 403) {
-          const roleNames = {
-            'guest': '비로그인',
-            'user': '일반 회원',
-            'verified_user': '인증 회원',
-            'admin': '관리자'
-          };
-          throw new Error(`${roleNames[data.requiredRole]} 이상만 다운로드할 수 있습니다. (현재: ${roleNames[data.currentRole]})`);
-        }
-        throw new Error(data.error || '다운로드에 실패했습니다.');
-      }
-      
-      console.log('✅ 다운로드 URL 생성 성공');
-      
-      // 다운로드 카운트 증가시키기 (로그인/비로그인 모두)
-      const newCount = (post.downloads || 0) + 1;
-      setDownloadCount(newCount);
-      
-      // index.js의 handleDownload 함수 호출
-      if (handleDownload) {
-        handleDownload(post.id, post.downloads || 0);
-      }
-      
-      // Blob을 사용한 파일 다운로드 처리
-      const fileResponse = await fetch(data.url);
-      if (!fileResponse.ok) throw new Error('파일 다운로드 실패');
-
-      const blob = await fileResponse.blob();
-      const blobUrl = window.URL.createObjectURL(blob);
-
-      const link = document.createElement('a');
-      link.href = blobUrl;
-      link.download = data.fileName || 'download';
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-
-      window.URL.revokeObjectURL(blobUrl); // 메모리 정리
-    } catch (error) {
-      console.error('❌ 다운로드 에러:', error);
-      alert(error.message);
-    }
-  };
-
   // 프로필 이미지 URL 생성 로직 수정
   const profileImageUrl = post.users?.profile_picture
     ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/avatars/${post.users.profile_picture.replace(/^.*\/avatars\//, '')}`
@@ -117,7 +25,17 @@ const Card = ({ post, categories, handleDownload, handleLike, author }) => {
   return (
     <div className={styles.card}>
       {thumbnailUrl && (
-        <img src={thumbnailUrl} alt="Thumbnail" className={styles.thumbnail} />
+        <>
+          <img src={thumbnailUrl} alt="Thumbnail" className={styles.thumbnail} />
+          {post.file_urls && post.file_urls.length > 0 && (
+            <div 
+              className={styles.extensionBar} 
+              data-ext={post.file_urls[0].split('.').pop().toLowerCase()}
+            >
+              {post.file_urls[0].split('.').pop().toLowerCase()}
+            </div>
+          )}
+        </>
       )}
 
       <div className={styles.content}>
@@ -152,13 +70,13 @@ const Card = ({ post, categories, handleDownload, handleLike, author }) => {
         <div className={styles.footer}>
           <span>❤️ {post.like_count ?? 0}</span>
           <span>💬 {post.comment_count ?? 0}</span>
-          <span>📥 {downloadCount}</span>
+          <span>📥 {post.downloads ?? 0}</span>
 
           {/* 첨부파일 정보 */}
-          {post.file_url && (
+          {post.file_urls && post.file_urls.length > 0 && (
             <div className={styles.fileInfo}>
               <span>
-                📎 첨부파일 {post.file_count || 1}개
+                📎 첨부파일 {post.file_count || post.file_urls.length}개
               </span>
             </div>
           )}
