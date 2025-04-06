@@ -349,11 +349,8 @@ export default async function handler(req, res) {
         // 파일명 추출
         const fileName = pathWithoutBucket.split('/').pop();
         
-        // URL에 download=true 파라미터 추가
-        const downloadUrl = `${publicUrlResult.data.publicUrl}?download=true`;
-        
         return res.status(200).json({ 
-          url: downloadUrl,
+          url: publicUrlResult.data.publicUrl,
           fileName: fileName
         });
       }
