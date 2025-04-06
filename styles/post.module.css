@@ -21,6 +21,14 @@
   gap: 0.5rem;
   font-weight: 500;
   color: #333;
+  padding: 0.5rem 1rem;
+  background-color: #f8f8f8;
+  border-radius: 20px;
+  transition: all 0.2s ease;
+}
+
+.author:hover {
+  background-color: #f0f0f0;
 }
 
 .authorImg {
@@ -47,8 +55,21 @@
   background-color: #f8f8f8;
   border-radius: 20px;
   transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .postInfo span:not(.author):hover {
   background-color: #f0f0f0;
+}
+
+.postInfo i {
+  font-size: 1rem;
+  color: #666;
+}
+
+.postInfo span:not(.author) span {
+  margin-left: 0.25rem;
+  font-weight: 500;
 } 
