@@ -298,9 +298,16 @@ const PostDetail = () => {
           )}
           {post.users?.nickname || '익명'}
         </span>
-        <span>조회 {post.view_count || 0}</span>
-        <span>다운로드 {downloadCount}</span>
         <span>
+          <i className="fas fa-eye"></i>
+          {post.view_count || 0}
+        </span>
+        <span>
+          <i className="fas fa-download"></i>
+          {downloadCount}
+        </span>
+        <span>
+          <i className="far fa-calendar-alt"></i>
           {new Date(post.created_at).toLocaleDateString('ko-KR', {
             year: 'numeric',
             month: 'long',
