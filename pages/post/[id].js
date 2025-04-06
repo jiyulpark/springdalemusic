@@ -414,38 +414,28 @@ const PostDetail = () => {
                             };
                             throw new Error(`${roleNames[data.requiredRole]} 이상만 다운로드할 수 있습니다. (현재: ${roleNames[data.currentRole]})`);
                           }
-                          throw new Error(data.error || '다운로드 중 오류가 발생했습니다.');
+                          throw new Error(data.error || '다운로드에 실패했습니다.');
                         }
 
-                        if (!data.url) {
-                          throw new Error('다운로드 URL이 생성되지 않았습니다.');
-                        }
-
-                        console.log('✅ 다운로드 URL 생성 성공');
+                        // 다운로드 카운트 증가시키기 (로그인/비로그인 모두)
+                        const newCount = (post.downloads || 0) + 1;
+                        setDownloadCount(newCount);
                         
-                        // 다운로드 URL을 사용하여 파일 다운로드
+                        // Blob을 사용한 파일 다운로드 처리
+                        const fileResponse = await fetch(data.url);
+                        if (!fileResponse.ok) throw new Error('파일 다운로드 실패');
+
+                        const blob = await fileResponse.blob();
+                        const blobUrl = window.URL.createObjectURL(blob);
+
                         const link = document.createElement('a');
-                        link.href = data.url;
-                        link.download = data.fileName || post.file_name || 'download';
-                        link.setAttribute('target', '_blank');
-                        link.setAttribute('rel', 'noopener noreferrer');
-                        link.setAttribute('type', 'application/octet-stream');
-                        link.setAttribute('crossorigin', 'anonymous');
+                        link.href = blobUrl;
+                        link.download = data.fileName || 'download';
                         document.body.appendChild(link);
                         link.click();
-                        document.body.removeChild(link);
-                        
-                        // 다운로드 카운트 증가
-                        handleDownload(post.id, downloadCount);
-                        
-                        // 대체 URL이 제공된 경우 백그라운드에서 미리 로드해둠
-                        if (data.alternativeUrls && Array.isArray(data.alternativeUrls)) {
-                          console.log('🔄 대체 URL 시도:', data.alternativeUrls.length);
-                          data.alternativeUrls.forEach(url => {
-                            const img = new Image();
-                            img.src = url;
-                          });
-                        }
+                        link.remove();
+
+                        window.URL.revokeObjectURL(blobUrl); // 메모리 정리
                         
                       } catch (error) {
                         console.error('❌ 다운로드 오류:', error);

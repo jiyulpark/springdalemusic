@@ -88,14 +88,21 @@ const Card = ({ post, categories, handleDownload, handleLike, author }) => {
         handleDownload(post.id, post.downloads || 0);
       }
       
-      // 다운로드 URL을 사용하여 파일 다운로드
+      // Blob을 사용한 파일 다운로드 처리
+      const fileResponse = await fetch(data.url);
+      if (!fileResponse.ok) throw new Error('파일 다운로드 실패');
+
+      const blob = await fileResponse.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+
       const link = document.createElement('a');
-      link.href = data.url;
-      link.setAttribute('target', '_blank');
-      link.setAttribute('rel', 'noopener noreferrer');
+      link.href = blobUrl;
+      link.download = data.fileName || 'download';
       document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
+      link.remove();
+
+      window.URL.revokeObjectURL(blobUrl); // 메모리 정리
     } catch (error) {
       console.error('❌ 다운로드 에러:', error);
       alert(error.message);
