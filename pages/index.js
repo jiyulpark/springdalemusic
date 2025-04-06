@@ -213,19 +213,17 @@ const Home = () => {
         ))}
       </div>
 
-      <div className={styles.sortFilter}>
-        <select 
-          value={sortOption} 
-          onChange={(e) => setSortOption(e.target.value)} 
+      <div className={styles.sortContainer}>
+        <select
           className={styles.sortSelect}
+          value={sortOption}
+          onChange={(e) => setSortOption(e.target.value)}
         >
           <option value="latest">최신순</option>
           <option value="likes">좋아요순</option>
           <option value="downloads">다운로드순</option>
         </select>
       </div>
-
-      <h1 className={styles.title}>게시물 목록</h1>
 
       {currentPosts.length === 0 ? (
         <p style={{ textAlign: 'center' }}>게시물이 없습니다.</p>
