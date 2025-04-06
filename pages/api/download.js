@@ -317,36 +317,13 @@ export default async function handler(req, res) {
       // 파일명 추출
       const fileName = pathWithoutBucket.split('/').pop();
       
-      // WAV 파일인지 확인
-      const isWavFile = fileName.toLowerCase().endsWith('.wav');
+      // Content-Disposition 헤더를 포함한 URL 생성
+      const downloadUrl = `${data.signedUrl}&response-content-disposition=attachment%3B%20filename%3D${encodeURIComponent(fileName)}`;
       
-      if (isWavFile) {
-        // WAV 파일의 경우 서버에서 직접 다운로드
-        const { data: fileData, error: downloadError } = await supabase.storage
-          .from(bucketName)
-          .download(pathWithoutBucket);
-          
-        if (downloadError) {
-          throw new Error('파일 다운로드 실패');
-        }
-        
-        // 파일 데이터를 Base64로 변환
-        const base64Data = Buffer.from(fileData).toString('base64');
-        
-        return res.status(200).json({ 
-          data: base64Data,
-          fileName: fileName,
-          contentType: 'audio/wav'
-        });
-      } else {
-        // 다른 파일들은 기존 방식대로 처리
-        const downloadUrl = `${data.signedUrl}&response-content-disposition=attachment%3B%20filename%3D${encodeURIComponent(fileName)}`;
-        
-        return res.status(200).json({ 
-          url: downloadUrl,
-          fileName: fileName
-        });
-      }
+      return res.status(200).json({ 
+        url: downloadUrl,
+        fileName: fileName
+      });
     } catch (error) {
       console.error('❌ 서명된 URL 생성 실패:', error.message);
       

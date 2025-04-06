@@ -415,36 +415,17 @@ const PostDetail = () => {
 
                         console.log('✅ 다운로드 URL 생성 성공');
                         
-                        // WAV 파일인 경우 Base64 데이터를 사용하여 다운로드
-                        if (data.data) {
-                          const byteCharacters = atob(data.data);
-                          const byteNumbers = new Array(byteCharacters.length);
-                          for (let i = 0; i < byteCharacters.length; i++) {
-                            byteNumbers[i] = byteCharacters.charCodeAt(i);
-                          }
-                          const byteArray = new Uint8Array(byteNumbers);
-                          const blob = new Blob([byteArray], { type: data.contentType });
-                          const url = window.URL.createObjectURL(blob);
-                          const link = document.createElement('a');
-                          link.href = url;
-                          link.download = data.fileName;
-                          document.body.appendChild(link);
-                          link.click();
-                          document.body.removeChild(link);
-                          window.URL.revokeObjectURL(url);
-                        } else {
-                          // 다른 파일들은 기존 방식대로 처리
-                          const link = document.createElement('a');
-                          link.href = data.url;
-                          link.download = data.fileName || file.file_name || 'download';
-                          link.setAttribute('target', '_blank');
-                          link.setAttribute('rel', 'noopener noreferrer');
-                          link.setAttribute('type', 'application/octet-stream');
-                          link.setAttribute('crossorigin', 'anonymous');
-                          document.body.appendChild(link);
-                          link.click();
-                          document.body.removeChild(link);
-                        }
+                        // 다운로드 URL을 사용하여 파일 다운로드
+                        const link = document.createElement('a');
+                        link.href = data.url;
+                        link.download = data.fileName || post.file_name || 'download';
+                        link.setAttribute('target', '_blank');
+                        link.setAttribute('rel', 'noopener noreferrer');
+                        link.setAttribute('type', 'application/octet-stream');
+                        link.setAttribute('crossorigin', 'anonymous');
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
                         
                         // 다운로드 카운트 증가
                         handleDownload(post.id, downloadCount);
