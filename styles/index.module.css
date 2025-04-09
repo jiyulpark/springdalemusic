@@ -53,17 +53,29 @@
   }
   
   .categoryFilter button {
-    padding: 6px 12px;
-    border: 1px solid #ccc;
-    border-radius: 20px;
-    background: white;
+    padding: 8px 16px;
+    margin: 0 4px 8px 0;
+    border: none;
+    border-radius: 5px;
     cursor: pointer;
+    background-color: #ddd;
+    color: #000;
+    transition: all 0.2s ease;
+  }
+  
+  .categoryFilter button[data-type="style"] {
+    background-color: #007bff;
+    color: white;
+  }
+  
+  .categoryFilter button[data-type="type"] {
+    background-color: #28a745;
+    color: white;
   }
   
   .categoryFilter button.activeCategory {
-    background: #0070f3;
-    color: white;
-    border-color: #0070f3;
+    opacity: 0.8;
+    transform: scale(0.95);
   }
   
   /* style 타입 카테고리 */

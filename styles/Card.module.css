@@ -41,7 +41,16 @@
   padding: 4px 10px;
   border-radius: 12px;
   font-size: 12px;
+}
+
+/* 스타일 카테고리 */
+.category[data-type="style"] {
   background-color: #007bff;
+}
+
+/* 타입 카테고리 */
+.category[data-type="type"] {
+  background-color: #28a745;
 }
 
 /* 카테고리 타입별 색상 */

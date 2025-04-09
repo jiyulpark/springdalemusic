@@ -207,6 +207,7 @@ const Home = () => {
             key={cat.id}
             className={selectedCategories.includes(cat.id) ? styles.activeCategory : ''}
             onClick={() => toggleCategory(cat.id)}
+            data-type={cat.type}
           >
             {cat.name}
           </button>
