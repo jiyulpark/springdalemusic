@@ -37,11 +37,27 @@
 }
 
 .category {
-  background: #0070f3;
   color: white;
   padding: 4px 10px;
   border-radius: 12px;
   font-size: 12px;
+}
+
+/* 카테고리 타입별 색상 */
+.category[data-type="AMP"] {
+  background: #4CAF50; /* 초록색 */
+}
+
+.category[data-type="Pedal"] {
+  background: #FF9800; /* 주황색 */
+}
+
+.category[data-type="Full-Rig"] {
+  background: #9C27B0; /* 보라색 */
+}
+
+.category[data-type="CAB-IR"] {
+  background: #2196F3; /* 파란색 */
 }
 
 .cardAuthor {
