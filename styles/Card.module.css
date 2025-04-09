@@ -37,13 +37,11 @@
 }
 
 .category {
-  display: inline-block;
-  padding: 4px 8px;
-  margin: 0 4px 4px 0;
-  border-radius: 4px;
-  font-size: 0.8rem;
-  background-color: #e0e0e0;
-  color: #333;
+  color: white;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  background-color: #007bff;
 }
 
 /* 카테고리 타입별 색상 */
