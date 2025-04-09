@@ -6,7 +6,7 @@ import { useRouter } from 'next/router';
 const AdminUsers = () => {
   const [role, setRole] = useState('guest');
   const [users, setUsers] = useState([]);
-  const [sortBy, setSortBy] = useState('role');
+  const [roleFilter, setRoleFilter] = useState('all');
   const [searchEmail, setSearchEmail] = useState('');
   const router = useRouter();
 
@@ -39,27 +39,20 @@ const AdminUsers = () => {
     }
   };
 
-  const getFilteredAndSortedUsers = () => {
+  const getFilteredUsers = () => {
     let filteredUsers = users;
+    
     if (searchEmail) {
-      filteredUsers = users.filter(user => 
+      filteredUsers = filteredUsers.filter(user => 
         user.email.toLowerCase().includes(searchEmail.toLowerCase())
       );
     }
 
-    return [...filteredUsers].sort((a, b) => {
-      if (sortBy === 'email') {
-        return a.email.localeCompare(b.email);
-      } else {
-        const roleOrder = {
-          'admin': 0,
-          'verified_user': 1,
-          'user': 2,
-          'guest': 3
-        };
-        return roleOrder[a.role] - roleOrder[b.role];
-      }
-    });
+    if (roleFilter !== 'all') {
+      filteredUsers = filteredUsers.filter(user => user.role === roleFilter);
+    }
+
+    return filteredUsers;
   };
 
   return role === 'admin' ? (
@@ -83,10 +76,10 @@ const AdminUsers = () => {
           />
         </div>
         <div>
-          <label style={{ marginRight: '10px' }}>정렬 기준: </label>
+          <label style={{ marginRight: '10px' }}>권한 필터: </label>
           <select 
-            value={sortBy} 
-            onChange={(e) => setSortBy(e.target.value)}
+            value={roleFilter} 
+            onChange={(e) => setRoleFilter(e.target.value)}
             style={{
               padding: '8px',
               borderRadius: '4px',
@@ -94,8 +87,9 @@ const AdminUsers = () => {
               backgroundColor: '#fff'
             }}
           >
-            <option value="role">권한 순</option>
-            <option value="email">이메일 순</option>
+            <option value="all">전체</option>
+            <option value="verified_user">인증 유저</option>
+            <option value="user">일반 유저</option>
           </select>
         </div>
       </div>
@@ -109,7 +103,7 @@ const AdminUsers = () => {
           </tr>
         </thead>
         <tbody>
-          {getFilteredAndSortedUsers().map(user => (
+          {getFilteredUsers().map(user => (
             <tr key={user.id}>
               <td style={{ borderBottom: '1px solid #ddd', padding: '10px' }}>{user.email}</td>
               <td style={{ borderBottom: '1px solid #ddd', padding: '10px' }}>{user.role}</td>
