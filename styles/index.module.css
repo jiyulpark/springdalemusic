@@ -60,36 +60,16 @@
     cursor: pointer;
     background-color: #ddd;
     color: #000;
-    transition: all 0.2s ease;
   }
   
-  .categoryFilter button[data-type="style"] {
+  .categoryFilter button[data-type="style"].activeCategory {
     background-color: #007bff;
     color: white;
   }
   
-  .categoryFilter button[data-type="type"] {
+  .categoryFilter button[data-type="type"].activeCategory {
     background-color: #28a745;
     color: white;
-  }
-  
-  .categoryFilter button.activeCategory {
-    opacity: 0.8;
-    transform: scale(0.95);
-  }
-  
-  /* style 타입 카테고리 */
-  .categoryFilter button[data-type="style"].activeCategory {
-    background: #0070f3;
-    color: white;
-    border-color: #0070f3;
-  }
-  
-  /* type 타입 카테고리 */
-  .categoryFilter button[data-type="type"].activeCategory {
-    background: #28a745;
-    color: white;
-    border-color: #28a745;
   }
   
   .sortContainer {
