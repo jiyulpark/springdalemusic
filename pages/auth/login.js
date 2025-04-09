@@ -63,6 +63,22 @@ export default function Login() {
           appearance={{ theme: ThemeSupa }}
           providers={['google']}
           redirectTo={`${window.location.origin}/auth/callback`}
+          view="magic_link"
+          showLinks={false}
+          localization={{
+            variables: {
+              sign_in: {
+                email_label: '',
+                password_label: '',
+                email_input_placeholder: '',
+                password_input_placeholder: '',
+                button_label: 'Google로 로그인',
+                loading_button_label: '로그인 중...',
+                social_provider_text: '',
+                link_text: '',
+              },
+            },
+          }}
         />
       ) : (
         <p>로그인 완료!</p>
