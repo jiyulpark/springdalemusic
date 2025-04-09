@@ -63,7 +63,7 @@ export default function Login() {
           appearance={{ theme: ThemeSupa }}
           providers={['google']}
           redirectTo={`${window.location.origin}/auth/callback`}
-          view="magic_link"
+          view="sign_in"
           showLinks={false}
           localization={{
             variables: {
