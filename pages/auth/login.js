@@ -65,6 +65,7 @@ export default function Login() {
           redirectTo={`${window.location.origin}/auth/callback`}
           view="sign_in"
           showLinks={false}
+          onlyThirdPartyProviders
           localization={{
             variables: {
               sign_in: {
