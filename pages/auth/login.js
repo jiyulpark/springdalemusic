@@ -24,12 +24,15 @@ const Login = () => {
         supabaseClient={supabase}
         appearance={{ theme: ThemeSupa }}
         providers={['google', 'github']}
+        view="sign_in"
+        showLinks={false}
+        onlyThirdPartyProviders
         localization={{
           variables: {
             sign_in: {
-              email_label: '이메일',
-              password_label: '비밀번호',
-              button_label: '로그인',
+              email_label: '',
+              password_label: '',
+              button_label: '소셜 로그인',
             },
           },
         }}
