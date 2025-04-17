@@ -7,20 +7,29 @@ import styles from '../styles/Card.module.css';
 const Card = ({ post, categories, handleLike, author }) => {
   const router = useRouter();
   const { session } = useSession();
-  
-  // 썸네일 URL 생성 로직 수정
+
+  // 썸네일 URL 생성
   const thumbnailUrl = post.thumbnail_url
-    ? ${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/thumbnails/${post.thumbnail_url}
+    ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/thumbnails/${post.thumbnail_url}`
     : null;
 
+  // 카테고리 매칭
   const matchedCategories = categories?.filter(cat =>
     post.category_ids?.includes(cat.id)
   ) || [];
 
-  // 프로필 이미지 URL 생성 로직 수정
+  // 프로필 이미지
   const profileImageUrl = post.users?.profile_picture
-    ? ${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/avatars/${post.users.profile_picture.replace(/^.*\/avatars\//, '')}
+    ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/avatars/${post.users.profile_picture.replace(/^.*\/avatars\//, '')}`
     : "https://springdalemusic.vercel.app/profile-default.png";
+
+  // 확장자 분석
+  const extList = post.file_urls?.map(url => {
+    const parts = url.split('.');
+    return parts.length > 1 ? parts.pop().toLowerCase() : '';
+  });
+  const isPackage = extList && new Set(extList).size > 1;
+  const fileExt = isPackage ? 'package' : extList?.[0];
 
   return (
     <div className={styles.card}>
@@ -30,16 +39,16 @@ const Card = ({ post, categories, handleLike, author }) => {
           {post.file_urls && post.file_urls.length > 0 && (
             <div 
               className={styles.extensionBar} 
-              data-ext={post.file_urls[0].split('.').pop().toLowerCase()}
+              data-ext={fileExt}
             >
-              {post.file_urls[0].split('.').pop().toLowerCase()}
+              {isPackage ? 'PACKAGE' : fileExt}
             </div>
           )}
         </>
       )}
 
       <div className={styles.content}>
-        <Link href={/post/${post.id}} className={styles.title}>
+        <Link href={`/post/${post.id}`} className={styles.title}>
           {post.title}
         </Link>
 
@@ -61,7 +70,7 @@ const Card = ({ post, categories, handleLike, author }) => {
           />
           <span
             className={styles.authorName}
-            onClick={() => router.push(/profile/${post.user_id})}
+            onClick={() => router.push(`/profile/${post.user_id}`)}
           >
             {post.users?.nickname || '스프링데일'}
           </span>
@@ -72,7 +81,6 @@ const Card = ({ post, categories, handleLike, author }) => {
           <span>💬 {post.comment_count ?? 0}</span>
           <span>📥 {post.downloads ?? 0}</span>
 
-          {/* 첨부파일 정보 */}
           {post.file_urls && post.file_urls.length > 0 && (
             <div className={styles.fileInfo}>
               <span>
@@ -80,8 +88,7 @@ const Card = ({ post, categories, handleLike, author }) => {
               </span>
             </div>
           )}
-          
-          {/* 다운로드 권한 뱃지 */}
+
           {post.download_permission === 'verified_user' && (
             <span className={styles.badge}>인증회원 전용 🔒</span>
           )}
