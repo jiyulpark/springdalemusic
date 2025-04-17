@@ -170,8 +170,8 @@
 .extensionBar:global([data-ext="am2data"]) {
   background-color: #33CC33;
 }
+
 .extensionBar:global([data-ext="package"]) {
-  background-color: #000;
+  background-color: #ffb300;
   color: #fff;
 }
-
