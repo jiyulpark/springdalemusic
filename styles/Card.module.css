@@ -185,30 +185,31 @@
 .extensionBar[data-ext="am3+ir(wave)"] {
   background: linear-gradient(
     270deg,
+    #4a148c,
     #a64bf4,
-    #d6b4fc,
+    #e1bee7,
     #a64bf4,
-    #d6b4fc,
-    #a64bf4
+    #4a148c
   );
   background-size: 400% 100%;
   animation: waveFlow 4s linear infinite;
   color: #fff;
   font-weight: bold;
-  text-shadow: 0 0 4px rgba(255, 255, 255, 0.6);
+  text-shadow: 0 0 6px rgba(255, 255, 255, 0.5);
   border-radius: 4px;
   padding: 4px 10px;
 }
+
 
 /* AM2+IR(WAVE) 네온그린 에너지 웨이브 */
 .extensionBar[data-ext="am2+ir(wave)"] {
   background: linear-gradient(
     270deg,
+    #007e33,
     #00e676,
-    #b9f6ca,
+    #ccff90,
     #00e676,
-    #b9f6ca,
-    #00e676
+    #007e33
   );
   background-size: 400% 100%;
   animation: waveFlow 4s linear infinite;
@@ -218,6 +219,7 @@
   border-radius: 4px;
   padding: 4px 10px;
 }
+
 
 /* IR(WAVE) 단독 — 고정 골드톤 */
 .extensionBar[data-ext="ir(wave)"] {
