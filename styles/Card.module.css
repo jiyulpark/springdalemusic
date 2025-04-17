@@ -221,16 +221,7 @@
 
 /* IR(WAVE) 단독 — 고정 골드톤 */
 .extensionBar[data-ext="ir(wave)"] {
-  background: linear-gradient(
-    90deg,
-    #fdd835,
-    #fbc02d,
-    #fdd835,
-    #fff59d,
-    #fdd835
-  );
-  background-size: 300% 100%;
-  animation: waveFlow 5s linear infinite;
+  background-color: #fdd835; /* 진한 골든 옐로우 */
   color: #000;
   font-weight: bold;
   text-shadow: 0 0 4px rgba(255, 255, 255, 0.4);
