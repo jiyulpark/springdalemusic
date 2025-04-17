@@ -171,7 +171,7 @@
   background-color: #33CC33;
 }
 
-.extensionBar:global([data-ext="package"]) {
-  background-color: #ffb300;
+.extensionBar[data-ext="package"] {
+  background-color: #8e6e95;
   color: #fff;
 }
