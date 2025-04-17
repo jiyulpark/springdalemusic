@@ -23,13 +23,20 @@ const Card = ({ post, categories, handleLike, author }) => {
     ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/avatars/${post.users.profile_picture.replace(/^.*\/avatars\//, '')}`
     : "https://springdalemusic.vercel.app/profile-default.png";
 
-  // 확장자 분석
-  const extList = post.file_urls?.map(url => {
-    const parts = url.split('.');
-    return parts.length > 1 ? parts.pop().toLowerCase() : '';
-  });
-  const isPackage = extList && new Set(extList).size > 1;
-  const fileExt = isPackage ? 'package' : extList?.[0];
+  // 확장자 분석 로직
+  const rawExtList = post.file_urls?.map(url => url.split('.').pop().toLowerCase()) || [];
+  const extList = rawExtList.filter(ext => ext !== 'zip');
+  const extSet = new Set(extList);
+
+  let fileExt = extList[0] ?? 'zip'; // 기본 zip 대비
+
+  if (extSet.has('wav') && extSet.has('am3data')) {
+    fileExt = 'AM3+IR(WAVE)';
+  } else if (extSet.has('wav') && extSet.has('am2data')) {
+    fileExt = 'AM2+IR(WAVE)';
+  } else if (extSet.size === 1 && extSet.has('wav')) {
+    fileExt = 'IR(WAVE)';
+  }
 
   return (
     <div className={styles.card}>
@@ -39,9 +46,9 @@ const Card = ({ post, categories, handleLike, author }) => {
           {post.file_urls && post.file_urls.length > 0 && (
             <div 
               className={styles.extensionBar} 
-              data-ext={fileExt}
+              data-ext={fileExt.toLowerCase()}
             >
-              {isPackage ? 'PACKAGE' : fileExt}
+              {fileExt}
             </div>
           )}
         </>
