@@ -171,7 +171,21 @@
   background-color: #33CC33;
 }
 
+@keyframes shineGold {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 100% 50%;
+  }
+}
+
 .extensionBar[data-ext="package"] {
-  background-color: #8e6e95;
-  color: #fff;
+  background: linear-gradient(270deg, #f7e46f, #d4af37, #f7e46f);
+  background-size: 400% 400%;
+  animation: shineGold 3s linear infinite;
+  color: #000;
+  font-weight: bold;
+  text-shadow: 0 0 2px rgba(255, 255, 255, 0.5);
+  border-radius: 4px;
 }
