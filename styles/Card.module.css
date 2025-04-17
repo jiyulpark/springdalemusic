@@ -171,37 +171,28 @@
   background-color: #33CC33;
 }
 
-/* === IR 시리즈 커스텀 스타일 === */
-@keyframes am3Wave {
+/* 공통 애니메이션 */
+@keyframes waveFlow {
   0% {
-    background-position: 0% 50%;
+    background-position: -200% 0;
   }
   100% {
-    background-position: 100% 50%;
+    background-position: 200% 0;
   }
 }
 
-@keyframes am2Wave {
-  0% {
-    background-position: 0% 50%;
-  }
-  100% {
-    background-position: 100% 50%;
-  }
-}
-
-/* AM3+IR(WAVE) - 퍼플 웨이브 */
+/* AM3+IR(WAVE) 퍼플 플라즈마 웨이브 */
 .extensionBar[data-ext="am3+ir(wave)"] {
   background: linear-gradient(
     270deg,
-    #a64bf4 0%,
-    #d6b4fc 25%,
-    #a64bf4 50%,
-    #d6b4fc 75%,
-    #a64bf4 100%
+    #a64bf4,
+    #d6b4fc,
+    #a64bf4,
+    #d6b4fc,
+    #a64bf4
   );
   background-size: 400% 100%;
-  animation: am3Wave 4s linear infinite;
+  animation: waveFlow 4s linear infinite;
   color: #fff;
   font-weight: bold;
   text-shadow: 0 0 4px rgba(255, 255, 255, 0.6);
@@ -209,21 +200,42 @@
   padding: 4px 10px;
 }
 
-/* AM2+IR(WAVE) - 네온그린 웨이브 */
+/* AM2+IR(WAVE) 네온그린 에너지 웨이브 */
 .extensionBar[data-ext="am2+ir(wave)"] {
   background: linear-gradient(
     270deg,
-    #00e676 0%,
-    #b9f6ca 25%,
-    #00e676 50%,
-    #b9f6ca 75%,
-    #00e676 100%
+    #00e676,
+    #b9f6ca,
+    #00e676,
+    #b9f6ca,
+    #00e676
   );
   background-size: 400% 100%;
-  animation: am2Wave 4s linear infinite;
+  animation: waveFlow 4s linear infinite;
   color: #000;
   font-weight: bold;
   text-shadow: 0 0 4px rgba(255, 255, 255, 0.3);
   border-radius: 4px;
   padding: 4px 10px;
 }
+
+/* IR(WAVE) 단독 — 고정 골드톤 */
+.extensionBar[data-ext="ir(wave)"] {
+  background: linear-gradient(
+    90deg,
+    #fdd835,
+    #fbc02d,
+    #fdd835,
+    #fff59d,
+    #fdd835
+  );
+  background-size: 300% 100%;
+  animation: waveFlow 5s linear infinite;
+  color: #000;
+  font-weight: bold;
+  text-shadow: 0 0 4px rgba(255, 255, 255, 0.4);
+  border-radius: 4px;
+  padding: 4px 10px;
+}
+
+
