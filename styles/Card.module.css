@@ -180,25 +180,31 @@
   transition: all 0.2s ease-in-out;
 }
 
+@keyframes goldShimmer {
+  0% {
+    background-position: 0% 0%;
+  }
+  100% {
+    background-position: 200% 0%;
+  }
+}
+
 .extensionBar[data-ext="package"] {
-  /* 기존 골드 배경 + 움직임 효과는 유지하고 */
   background: linear-gradient(
-    110deg,
-    #d4af37 10%,
-    #f9e79f 30%,
-    #fff8dc 50%,
-    #f9e79f 70%,
-    #d4af37 90%
+    120deg,
+    #d4af37,
+    #f9e79f,
+    #fff8dc,
+    #f9e79f,
+    #d4af37
   );
-  background-size: 200% 100%;
-  animation: goldShimmer 2s infinite linear;
+  background-size: 400% 100%; /* 넓게 펼쳐야 흐름 생김 */
+  animation: goldShimmer 3s linear infinite;
   color: #000;
   font-weight: bold;
-  text-shadow:
-    1px 1px 0 #fff,
-    0 1px 0 #ccc,
-    -1px -1px 0 #fff,
-    0 0 4px rgba(255, 255, 255, 0.4);
+  text-shadow: 1px 1px 0 #fff,
+               -1px -1px 0 #d4af37,
+               0 0 4px rgba(255, 255, 255, 0.4);
   border-radius: 4px;
   padding: 4px 10px;
 }
