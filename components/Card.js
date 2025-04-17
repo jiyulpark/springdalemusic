@@ -7,10 +7,10 @@ import styles from '../styles/Card.module.css';
 const Card = ({ post, categories, handleLike, author }) => {
   const router = useRouter();
   const { session } = useSession();
-
+  
   // 썸네일 URL 생성 로직 수정
   const thumbnailUrl = post.thumbnail_url
-    ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/thumbnails/${post.thumbnail_url}`
+    ? ${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/thumbnails/${post.thumbnail_url}
     : null;
 
   const matchedCategories = categories?.filter(cat =>
@@ -19,15 +19,8 @@ const Card = ({ post, categories, handleLike, author }) => {
 
   // 프로필 이미지 URL 생성 로직 수정
   const profileImageUrl = post.users?.profile_picture
-    ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/avatars/${post.users.profile_picture.replace(/^.*\/avatars\//, '')}`
+    ? ${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/avatars/${post.users.profile_picture.replace(/^.*\/avatars\//, '')}
     : "https://springdalemusic.vercel.app/profile-default.png";
-
-  // 파일 확장자가 2가지 이상일 때 PACKAGE 표시
-  const extList = post.file_urls?.map(url =>
-    url.split('.').pop().toLowerCase()
-  );
-  const isPackage = extList && new Set(extList).size > 1;
-  const fileExt = isPackage ? 'package' : extList?.[0];
 
   return (
     <div className={styles.card}>
@@ -37,16 +30,16 @@ const Card = ({ post, categories, handleLike, author }) => {
           {post.file_urls && post.file_urls.length > 0 && (
             <div 
               className={styles.extensionBar} 
-              data-ext={fileExt}
+              data-ext={post.file_urls[0].split('.').pop().toLowerCase()}
             >
-              {isPackage ? 'PACKAGE' : fileExt}
+              {post.file_urls[0].split('.').pop().toLowerCase()}
             </div>
           )}
         </>
       )}
 
       <div className={styles.content}>
-        <Link href={`/post/${post.id}`} className={styles.title}>
+        <Link href={/post/${post.id}} className={styles.title}>
           {post.title}
         </Link>
 
@@ -68,7 +61,7 @@ const Card = ({ post, categories, handleLike, author }) => {
           />
           <span
             className={styles.authorName}
-            onClick={() => router.push(`/profile/${post.user_id}`)}
+            onClick={() => router.push(/profile/${post.user_id})}
           >
             {post.users?.nickname || '스프링데일'}
           </span>
