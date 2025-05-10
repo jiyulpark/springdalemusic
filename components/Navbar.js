@@ -72,7 +72,7 @@ const Navbar = () => {
           📢 <span>공지사항</span>
         </a>
         <a 
-          href="https://smartstore.naver.com/springdalem" 
+          href="https://smartstore.naver.com/springdalem/products/11025454226" 
           target="_blank" 
           rel="noopener noreferrer" 
           className={styles.subNavLink}
@@ -80,7 +80,7 @@ const Navbar = () => {
           🛍️ <span>스마트스토어</span>
         </a>
         <a 
-          href="https://shop.coupang.com/springdalem" 
+          href="https://www.coupang.com/vp/products/8403130968?itemId=24309073604&lptag=A01002259&redirect=landing&searchId=2e94d5fa18424ac7911fc724e9d4e537&sourceType=brandstore-all_products&spec=10799999&src=1139998&storeId=95203&subSourceType=brandstore-all_products&vendorId=A01002259&vendorItemId=91402167845&wPcid=17460742563360453361055" 
           target="_blank" 
           rel="noopener noreferrer" 
           className={styles.subNavLink}
