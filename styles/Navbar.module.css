@@ -29,7 +29,7 @@
 }
 
 .subNavLink {
-  color: #5164d4;
+  color: #256dcf;
   text-decoration: none;
   padding: 0.5rem 1rem;
   border-radius: 4px;
@@ -40,7 +40,7 @@
 
 .subNavLink:hover {
   color: #fff;
-  background-color: #9ea9ff;
+  background-color: #3787f5;
   transform: translateY(-1px);
 }
 
