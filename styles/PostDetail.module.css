@@ -330,3 +330,8 @@
     max-width: 150px;
   }
 }
+
+.zipFile {
+  font-weight: bold;
+  color: #d14; /* 진한 강조 */
+}
