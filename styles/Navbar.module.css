@@ -24,12 +24,12 @@
   justify-content: center;
   align-items: center;
   gap: 2rem;
-  background-color: #ffd7e5;
+  background-color: #7eb9fb;
   border-bottom: 1px solid #bddcff;
 }
 
 .subNavLink {
-  color: #d4517d;
+  color: #5164d4;
   text-decoration: none;
   padding: 0.5rem 1rem;
   border-radius: 4px;
@@ -40,7 +40,7 @@
 
 .subNavLink:hover {
   color: #fff;
-  background-color: #ff9ebb;
+  background-color: #9ea9ff;
   transform: translateY(-1px);
 }
 
