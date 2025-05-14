@@ -102,12 +102,23 @@ const PostDetail = () => {
           setUserLiked(likesData?.some(like => like.user_id === session.user.id));
         }
 
-        const { data: filesData } = await supabase
-          .from('files')
-          .select('*')
-          .eq('post_id', id);
+       const { data: filesData } = await supabase
+  .from('files')
+  .select('*')
+  .eq('post_id', id);
 
-        setFiles(filesData || []);
+if (filesData) {
+  const sortedFiles = filesData.sort((a, b) => {
+    const isAZip = a.file_name?.toLowerCase().endsWith('.zip');
+    const isBZip = b.file_name?.toLowerCase().endsWith('.zip');
+
+    if (isAZip && !isBZip) return -1; // a가 zip이면 우선
+    if (!isAZip && isBZip) return 1;  // b가 zip이면 우선
+    return 0; // 둘 다 같거나 zip이 아님 -> 그대로
+  });
+
+  setFiles(sortedFiles);
+}
         setLoading(false);
       };
 
