@@ -453,7 +453,7 @@ if (filesData) {
                         alert(error.message);
                       }
                     }}
-                    className={styles.downloadLink}
+                    className={`${styles.downloadLink} ${file.file_name.toLowerCase().endsWith('.zip') ? styles.zipFile : ''}`}
                   >
                     📥 {file.file_name}
                   </a>
