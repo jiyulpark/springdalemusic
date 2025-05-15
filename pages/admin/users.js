@@ -48,6 +48,12 @@ const AdminUsers = () => {
           } else if (authUsers.users[0].raw_user_meta_data) {
             console.log('사용자 메타데이터 구조 (raw_user_meta_data):', authUsers.users[0].raw_user_meta_data);
           }
+          
+          // 가입일 정보 확인
+          console.log('가입일 정보:', {
+            created_at: authUsers.users[0].created_at,
+            formatted: authUsers.users[0].created_at ? new Date(authUsers.users[0].created_at).toLocaleDateString('ko-KR') : 'N/A'
+          });
         }
         
         if (authError) {
@@ -85,8 +91,8 @@ const AdminUsers = () => {
             avatarUrl: 
               authUser?.user_metadata?.avatar_url || 
               authUser?.raw_user_meta_data?.avatar_url || '',
-            // 가입일 정보 추가
-            createdAt: dbUser.created_at || authUser?.created_at || '-'
+            // 가입일 정보 추가 - Auth의 created_at 필드 우선 사용
+            createdAt: authUser?.created_at || authUser?.identities?.[0]?.created_at || dbUser.created_at || '-'
           };
         });
 
@@ -317,7 +323,9 @@ const AdminUsers = () => {
               </td>
               <td style={{ borderBottom: '1px solid #ddd', padding: '10px' }}>{user.role}</td>
               <td style={{ borderBottom: '1px solid #ddd', padding: '10px' }}>
-                {user.createdAt ? new Date(user.createdAt).toLocaleDateString('ko-KR') : '-'}
+                {user.createdAt && user.createdAt !== '-' 
+                  ? new Date(user.createdAt).toLocaleDateString('ko-KR') 
+                  : '-'}
               </td>
               <td style={{ borderBottom: '1px solid #ddd', padding: '10px' }}>
                 <select 
