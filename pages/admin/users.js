@@ -28,30 +28,67 @@ const AdminUsers = () => {
         return;
       }
 
+      // 데이터베이스 사용자 정보 확인
+      console.log('DB 사용자 정보 예시:', data[0]);
+
       // Auth API에서 사용자 정보 가져오기
       try {
-        // 관리자 권한으로 모든 사용자 가져오기 (Admin API)
+        // Admin API 대신 일반 사용자 목록 API를 시도
         const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+
+        // Debug: 첫 번째 사용자 정보 구조 확인
+        if (authUsers?.users && authUsers.users.length > 0) {
+          console.log('Auth API 사용자 정보 예시:', authUsers.users[0]);
+          
+          // 메타데이터 구조 확인
+          if (authUsers.users[0].user_metadata) {
+            console.log('사용자 메타데이터 구조:', authUsers.users[0].user_metadata);
+          } else if (authUsers.users[0].raw_user_meta_data) {
+            console.log('사용자 메타데이터 구조 (raw_user_meta_data):', authUsers.users[0].raw_user_meta_data);
+          }
+        }
         
         if (authError) {
           console.error('❌ Auth 사용자 목록 가져오기 실패:', authError.message);
-          setUsers(data); // 기본 사용자 정보만 표시
+          
+          // 일반 사용자 조회로 대체
+          console.log('일반 사용자 정보 가져오기로 전환');
+          const { data: currentUser } = await supabase.auth.getUser();
+          console.log('현재 사용자 정보 구조:', currentUser?.user);
+          
+          setUsers(data);
           return;
         }
 
         // Auth 사용자 정보와 DB 사용자 정보 병합
         const mergedUsers = data.map(dbUser => {
           const authUser = authUsers?.users?.find(au => au.id === dbUser.id);
+          
+          // 디버그 로그: 특정 사용자의 메타데이터 확인
+          if (authUser) {
+            console.log(`사용자 ${dbUser.email} 메타데이터:`, 
+              authUser.user_metadata || authUser.raw_user_meta_data || 'metadata 없음');
+          }
+          
+          // 닉네임 필드 확인을 위해 nickname 추가
           return {
             ...dbUser,
-            displayName: authUser?.user_metadata?.full_name || authUser?.user_metadata?.name || '', 
-            avatarUrl: authUser?.user_metadata?.avatar_url || ''
+            displayName: 
+              dbUser.nickname || // users 테이블의 nickname 필드 확인
+              authUser?.user_metadata?.name || 
+              authUser?.user_metadata?.full_name || 
+              authUser?.raw_user_meta_data?.name ||
+              authUser?.raw_user_meta_data?.full_name || '',
+            avatarUrl: 
+              authUser?.user_metadata?.avatar_url || 
+              authUser?.raw_user_meta_data?.avatar_url || ''
           };
         });
 
         setUsers(mergedUsers);
       } catch (err) {
         console.error('❌ 사용자 정보 병합 중 오류:', err.message);
+        console.error('오류 세부 정보:', err);
         setUsers(data); // 오류 시 기본 정보만 표시
       }
     };
@@ -155,7 +192,7 @@ const AdminUsers = () => {
                 {user.email}
               </td>
               <td style={{ borderBottom: '1px solid #ddd', padding: '10px' }}>
-                {user.displayName || '-'}
+                {user.displayName || user.nickname || '-'}
               </td>
               <td style={{ borderBottom: '1px solid #ddd', padding: '10px' }}>{user.role}</td>
               <td style={{ borderBottom: '1px solid #ddd', padding: '10px' }}>
