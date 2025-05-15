@@ -84,7 +84,9 @@ const AdminUsers = () => {
               authUser?.raw_user_meta_data?.full_name || '',
             avatarUrl: 
               authUser?.user_metadata?.avatar_url || 
-              authUser?.raw_user_meta_data?.avatar_url || ''
+              authUser?.raw_user_meta_data?.avatar_url || '',
+            // 가입일 정보 추가
+            createdAt: dbUser.created_at || authUser?.created_at || '-'
           };
         });
 
@@ -165,7 +167,8 @@ const AdminUsers = () => {
     if (searchEmail) {
       filteredUsers = filteredUsers.filter(user => 
         user.email.toLowerCase().includes(searchEmail.toLowerCase()) ||
-        (user.displayName && user.displayName.toLowerCase().includes(searchEmail.toLowerCase()))
+        (user.displayName && user.displayName.toLowerCase().includes(searchEmail.toLowerCase())) ||
+        (user.nickname && user.nickname.toLowerCase().includes(searchEmail.toLowerCase()))
       );
     }
 
@@ -221,6 +224,7 @@ const AdminUsers = () => {
             <th style={{ borderBottom: '2px solid #ddd', padding: '10px' }}>이메일</th>
             <th style={{ borderBottom: '2px solid #ddd', padding: '10px' }}>이름</th>
             <th style={{ borderBottom: '2px solid #ddd', padding: '10px' }}>권한</th>
+            <th style={{ borderBottom: '2px solid #ddd', padding: '10px' }}>가입일</th>
             <th style={{ borderBottom: '2px solid #ddd', padding: '10px' }}>변경</th>
           </tr>
         </thead>
@@ -312,6 +316,9 @@ const AdminUsers = () => {
                 )}
               </td>
               <td style={{ borderBottom: '1px solid #ddd', padding: '10px' }}>{user.role}</td>
+              <td style={{ borderBottom: '1px solid #ddd', padding: '10px' }}>
+                {user.createdAt ? new Date(user.createdAt).toLocaleDateString('ko-KR') : '-'}
+              </td>
               <td style={{ borderBottom: '1px solid #ddd', padding: '10px' }}>
                 <select 
                   value={user.role} 
