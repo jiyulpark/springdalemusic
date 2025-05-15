@@ -8,8 +8,6 @@ const AdminUsers = () => {
   const [users, setUsers] = useState([]);
   const [roleFilter, setRoleFilter] = useState('all');
   const [searchEmail, setSearchEmail] = useState('');
-  const [editingName, setEditingName] = useState(null);
-  const [newDisplayName, setNewDisplayName] = useState('');
   const router = useRouter();
 
   useEffect(() => {
@@ -118,77 +116,6 @@ const AdminUsers = () => {
     }
   };
 
-  // Supabase Admin API를 통해 사용자 표시 이름 업데이트
-  const updateUserDisplayName = async (userId) => {
-    if (!newDisplayName.trim()) {
-      alert('이름을 입력해주세요.');
-      return;
-    }
-
-    try {
-      // 현재 사용자의 세션 토큰 가져오기
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError) {
-        console.error('❌ 세션 가져오기 실패:', sessionError.message);
-        throw new Error('인증 세션을 가져올 수 없습니다.');
-      }
-      
-      if (!session) {
-        throw new Error('인증 세션이 없습니다.');
-      }
-      
-      console.log('사용자 세션 확인 완료');
-
-      // 서버 API를 통해 사용자 이름 업데이트
-      console.log(`사용자 이름 업데이트 요청: ${userId}`);
-      
-      const response = await fetch('/api/admin/update-user', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId,
-          displayName: newDisplayName,
-          userToken: session.access_token,
-        }),
-      });
-
-      // 응답 디버깅
-      console.log('응답 상태:', response.status);
-      const result = await response.json();
-      console.log('응답 내용:', result);
-
-      if (!response.ok && !result.partialSuccess) {
-        throw new Error(result.error || '업데이트 실패');
-      }
-
-      // 부분 성공 메시지 표시
-      if (result.partialSuccess) {
-        console.warn('⚠️ 부분 성공:', result.message);
-        alert(`⚠️ 일부만 업데이트되었습니다: ${result.message}`);
-      }
-
-      // 로컬 상태 업데이트
-      setUsers(users.map(user => 
-        user.id === userId 
-          ? { ...user, displayName: newDisplayName, nickname: newDisplayName } 
-          : user
-      ));
-      
-      setEditingName(null); // 편집 모드 종료
-      setNewDisplayName('');
-      
-      if (result.success) {
-        alert('✅ 사용자 이름이 업데이트되었습니다.');
-      }
-    } catch (err) {
-      console.error('❌ 사용자 이름 업데이트 실패:', err.message);
-      alert(`사용자 이름 업데이트에 실패했습니다: ${err.message}`);
-    }
-  };
-
   const getFilteredUsers = () => {
     let filteredUsers = users;
     
@@ -276,72 +203,7 @@ const AdminUsers = () => {
                 {user.email}
               </td>
               <td style={{ borderBottom: '1px solid #ddd', padding: '10px' }}>
-                {editingName === user.id ? (
-                  <div style={{ display: 'flex', gap: '5px' }}>
-                    <input
-                      type="text"
-                      value={newDisplayName}
-                      onChange={(e) => setNewDisplayName(e.target.value)}
-                      placeholder="새 이름 입력"
-                      style={{ 
-                        padding: '4px 6px',
-                        borderRadius: '4px',
-                        border: '1px solid #ddd',
-                        width: '120px'
-                      }}
-                    />
-                    <button 
-                      onClick={() => updateUserDisplayName(user.id)}
-                      style={{
-                        padding: '2px 8px',
-                        background: '#4CAF50',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      저장
-                    </button>
-                    <button 
-                      onClick={() => {
-                        setEditingName(null);
-                        setNewDisplayName('');
-                      }}
-                      style={{
-                        padding: '2px 8px',
-                        background: '#f44336',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      취소
-                    </button>
-                  </div>
-                ) : (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span>{user.displayName || user.nickname || '-'}</span>
-                    <button 
-                      onClick={() => {
-                        setEditingName(user.id);
-                        setNewDisplayName(user.displayName || user.nickname || '');
-                      }}
-                      style={{
-                        padding: '2px 5px',
-                        background: '#2196F3',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        fontSize: '0.7rem',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      수정
-                    </button>
-                  </div>
-                )}
+                <span>{user.displayName || user.nickname || '-'}</span>
               </td>
               <td style={{ borderBottom: '1px solid #ddd', padding: '10px' }}>{user.role}</td>
               <td style={{ borderBottom: '1px solid #ddd', padding: '10px' }}>
