@@ -7,9 +7,11 @@ const supabaseAdmin = createClient(
 );
 
 export default async function handler(req, res) {
+  console.log('API 호출 시작: /api/account/delete, 메서드:', req.method);
+  
   // CORS 헤더 설정
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   // OPTIONS 요청 처리 (CORS preflight)
@@ -17,20 +19,22 @@ export default async function handler(req, res) {
     return res.status(200).json({ success: true });
   }
 
-  // ✅ POST와 DELETE만 허용하도록 명시
-  if (req.method !== 'POST' && req.method !== 'DELETE') {
+  // POST 메서드만 허용
+  if (req.method !== 'POST') {
+    console.log('허용되지 않은 메서드:', req.method);
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
-
-  console.log('API 호출 시작: /api/account/delete');
 
   try {
     // 요청 데이터 검증
     if (!req.body) {
+      console.log('요청 본문이 비어 있음');
       return res.status(400).json({ error: '요청 본문이 비어 있습니다.' });
     }
 
     const { userId, userToken } = req.body;
+    console.log('요청 데이터:', { userId, hasToken: !!userToken });
+    
     if (!userId) {
       return res.status(400).json({ error: 'Missing userId' });
     }

@@ -76,6 +76,8 @@ const DeleteAccount = () => {
       try {
         // 응답이 비어있거나 JSON이 아닌 경우 예외 처리
         const text = await response.text();
+        console.log('API 응답 텍스트:', text);
+        
         if (!text) {
           console.warn('빈 응답이 반환되었습니다.');
           if (response.ok) {
