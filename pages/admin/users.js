@@ -127,12 +127,22 @@ const AdminUsers = () => {
 
     try {
       // 현재 사용자의 세션 토큰 가져오기
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error('❌ 세션 가져오기 실패:', sessionError.message);
+        throw new Error('인증 세션을 가져올 수 없습니다.');
+      }
+      
       if (!session) {
         throw new Error('인증 세션이 없습니다.');
       }
+      
+      console.log('사용자 세션 확인 완료');
 
       // 서버 API를 통해 사용자 이름 업데이트
+      console.log(`사용자 이름 업데이트 요청: ${userId}`);
+      
       const response = await fetch('/api/admin/update-user', {
         method: 'POST',
         headers: {
@@ -145,10 +155,19 @@ const AdminUsers = () => {
         }),
       });
 
+      // 응답 디버깅
+      console.log('응답 상태:', response.status);
       const result = await response.json();
+      console.log('응답 내용:', result);
 
-      if (!response.ok) {
+      if (!response.ok && !result.partialSuccess) {
         throw new Error(result.error || '업데이트 실패');
+      }
+
+      // 부분 성공 메시지 표시
+      if (result.partialSuccess) {
+        console.warn('⚠️ 부분 성공:', result.message);
+        alert(`⚠️ 일부만 업데이트되었습니다: ${result.message}`);
       }
 
       // 로컬 상태 업데이트
@@ -160,10 +179,13 @@ const AdminUsers = () => {
       
       setEditingName(null); // 편집 모드 종료
       setNewDisplayName('');
-      alert('✅ 사용자 이름이 업데이트되었습니다.');
+      
+      if (result.success) {
+        alert('✅ 사용자 이름이 업데이트되었습니다.');
+      }
     } catch (err) {
       console.error('❌ 사용자 이름 업데이트 실패:', err.message);
-      alert('사용자 이름 업데이트에 실패했습니다.');
+      alert(`사용자 이름 업데이트에 실패했습니다: ${err.message}`);
     }
   };
 
