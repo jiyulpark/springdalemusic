@@ -235,9 +235,24 @@ const UserInfo = () => {
               color: '#fff',
               borderRadius: '5px',
               border: 'none',
-              cursor: 'pointer'
+              cursor: 'pointer',
+              marginRight: '10px'
             }}>
             프로필 수정
+          </button>
+
+          <button 
+            onClick={() => router.push('/profile/delete-account')} 
+            style={{
+              padding: '10px 20px',
+              marginTop: '20px',
+              background: '#f44336',
+              color: '#fff',
+              borderRadius: '5px',
+              border: 'none',
+              cursor: 'pointer'
+            }}>
+            회원 탈퇴
           </button>
         </>
       )}
