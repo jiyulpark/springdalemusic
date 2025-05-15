@@ -223,6 +223,19 @@ const ProfileSetup = () => {
           </button>
         </div>
       </form>
+
+      <div style={{ marginTop: '40px', textAlign: 'center', borderTop: '1px solid #eee', paddingTop: '20px' }}>
+        <Link href="/profile/delete-account" passHref>
+          <span style={{ 
+            color: '#f44336', 
+            textDecoration: 'none', 
+            fontSize: '14px',
+            cursor: 'pointer' 
+          }}>
+            회원 탈퇴
+          </span>
+        </Link>
+      </div>
     </div>
   );
 };
