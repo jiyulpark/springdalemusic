@@ -70,8 +70,26 @@ const Profile = () => {
     if (profilePicture) {
       const filePath = `${user.id}-${Date.now()}`;
       
-      // ✅ 기존 파일 삭제 후 새 파일 업로드
-      await supabase.storage.from('avatars').remove([filePath]);
+      // ✅ 기존 프로필 사진이 있는 경우에만 삭제 시도
+      if (user.profile_picture) {
+        try {
+          // 기존 파일 경로 추출 (URL에서 파일 이름 추출)
+          const existingFilePath = user.profile_picture.split('/').pop();
+          if (existingFilePath) {
+            const { error: removeError } = await supabase.storage
+              .from('avatars')
+              .remove([existingFilePath]);
+            
+            if (removeError) {
+              console.warn("⚠️ 기존 프로필 사진 삭제 실패:", removeError.message);
+              // 삭제 실패해도 계속 진행
+            }
+          }
+        } catch (err) {
+          console.warn("⚠️ 기존 프로필 사진 삭제 중 오류:", err.message);
+          // 오류가 발생해도 새 업로드는 계속 진행
+        }
+      }
   
       const { data, error } = await supabase.storage
         .from('avatars')
@@ -99,6 +117,7 @@ const Profile = () => {
   
     if (updateError) {
       console.error("❌ 프로필 업데이트 실패:", updateError.message);
+      alert("프로필 업데이트에 실패했습니다. 다시 시도해주세요.");
     } else {
       console.log("✅ 프로필 업데이트 성공!");
       router.push('/userinfo');
