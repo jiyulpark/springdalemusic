@@ -118,26 +118,29 @@ const AdminUsers = () => {
     }
 
     try {
-      // 1. Auth API를 통한 사용자 메타데이터 업데이트
-      const { error: authError } = await supabase.auth.admin.updateUserById(
-        userId,
-        { user_metadata: { name: newDisplayName } }
-      );
-
-      if (authError) {
-        console.error('❌ 인증 서비스 사용자 이름 업데이트 실패:', authError.message);
-        throw authError;
+      // 현재 사용자의 세션 토큰 가져오기
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('인증 세션이 없습니다.');
       }
 
-      // 2. 데이터베이스 nickname 필드도 업데이트
-      const { error: dbError } = await supabase
-        .from('users')
-        .update({ nickname: newDisplayName })
-        .eq('id', userId);
+      // 서버 API를 통해 사용자 이름 업데이트
+      const response = await fetch('/api/admin/update-user', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId,
+          displayName: newDisplayName,
+          userToken: session.access_token,
+        }),
+      });
 
-      if (dbError) {
-        console.error('❌ DB 사용자 이름 업데이트 실패:', dbError.message);
-        // 계속 진행 (Auth 서비스 업데이트는 성공했으므로)
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || '업데이트 실패');
       }
 
       // 로컬 상태 업데이트
