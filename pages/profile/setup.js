@@ -87,8 +87,7 @@ const ProfileSetup = () => {
           id: user.id,
           nickname: displayName,
           hobby: hobby,
-          status_message: statusMessage,
-          updated_at: new Date().toISOString()
+          status_message: statusMessage
         }, { onConflict: 'id' });
       
       if (dbError) {
