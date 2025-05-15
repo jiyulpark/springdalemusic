@@ -21,8 +21,39 @@ const AdminUsers = () => {
         return;
       }
 
+      // 사용자 데이터 가져오기
       const { data, error } = await supabase.from('users').select('*');
-      if (!error) setUsers(data);
+      if (error) {
+        console.error('❌ 사용자 목록 가져오기 실패:', error.message);
+        return;
+      }
+
+      // Auth API에서 사용자 정보 가져오기
+      try {
+        // 관리자 권한으로 모든 사용자 가져오기 (Admin API)
+        const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+        
+        if (authError) {
+          console.error('❌ Auth 사용자 목록 가져오기 실패:', authError.message);
+          setUsers(data); // 기본 사용자 정보만 표시
+          return;
+        }
+
+        // Auth 사용자 정보와 DB 사용자 정보 병합
+        const mergedUsers = data.map(dbUser => {
+          const authUser = authUsers?.users?.find(au => au.id === dbUser.id);
+          return {
+            ...dbUser,
+            displayName: authUser?.user_metadata?.full_name || authUser?.user_metadata?.name || '', 
+            avatarUrl: authUser?.user_metadata?.avatar_url || ''
+          };
+        });
+
+        setUsers(mergedUsers);
+      } catch (err) {
+        console.error('❌ 사용자 정보 병합 중 오류:', err.message);
+        setUsers(data); // 오류 시 기본 정보만 표시
+      }
     };
 
     fetchUsers();
@@ -44,7 +75,8 @@ const AdminUsers = () => {
     
     if (searchEmail) {
       filteredUsers = filteredUsers.filter(user => 
-        user.email.toLowerCase().includes(searchEmail.toLowerCase())
+        user.email.toLowerCase().includes(searchEmail.toLowerCase()) ||
+        (user.displayName && user.displayName.toLowerCase().includes(searchEmail.toLowerCase()))
       );
     }
 
@@ -61,12 +93,12 @@ const AdminUsers = () => {
       
       <div style={{ marginBottom: '20px', display: 'flex', gap: '20px', alignItems: 'center' }}>
         <div style={{ flex: 1 }}>
-          <label style={{ marginRight: '10px' }}>이메일 검색: </label>
+          <label style={{ marginRight: '10px' }}>검색: </label>
           <input
             type="text"
             value={searchEmail}
             onChange={(e) => setSearchEmail(e.target.value)}
-            placeholder="이메일 주소 입력"
+            placeholder="이메일 또는 이름 입력"
             style={{
               padding: '8px',
               borderRadius: '4px',
@@ -98,6 +130,7 @@ const AdminUsers = () => {
         <thead>
           <tr>
             <th style={{ borderBottom: '2px solid #ddd', padding: '10px' }}>이메일</th>
+            <th style={{ borderBottom: '2px solid #ddd', padding: '10px' }}>이름</th>
             <th style={{ borderBottom: '2px solid #ddd', padding: '10px' }}>권한</th>
             <th style={{ borderBottom: '2px solid #ddd', padding: '10px' }}>변경</th>
           </tr>
@@ -105,7 +138,25 @@ const AdminUsers = () => {
         <tbody>
           {getFilteredUsers().map(user => (
             <tr key={user.id}>
-              <td style={{ borderBottom: '1px solid #ddd', padding: '10px' }}>{user.email}</td>
+              <td style={{ borderBottom: '1px solid #ddd', padding: '10px' }}>
+                {user.avatarUrl && (
+                  <img 
+                    src={user.avatarUrl} 
+                    alt="Profile" 
+                    style={{ 
+                      width: '24px', 
+                      height: '24px', 
+                      borderRadius: '50%', 
+                      marginRight: '8px',
+                      verticalAlign: 'middle'
+                    }} 
+                  />
+                )}
+                {user.email}
+              </td>
+              <td style={{ borderBottom: '1px solid #ddd', padding: '10px' }}>
+                {user.displayName || '-'}
+              </td>
               <td style={{ borderBottom: '1px solid #ddd', padding: '10px' }}>{user.role}</td>
               <td style={{ borderBottom: '1px solid #ddd', padding: '10px' }}>
                 <select 
