@@ -14,7 +14,7 @@ export default async function handler(req, res) {
 
   // OPTIONS 요청 처리 (CORS preflight)
   if (req.method === 'OPTIONS') {
-    return res.status(200).end();
+    return res.status(200).json({ success: true });
   }
 
   // POST 요청만 처리
@@ -25,6 +25,11 @@ export default async function handler(req, res) {
   console.log('API 호출 시작: /api/account/delete');
 
   try {
+    // 요청 데이터 검증
+    if (!req.body) {
+      return res.status(400).json({ error: '요청 본문이 비어 있습니다.' });
+    }
+
     // 요청 본문에서 필요한 데이터 추출
     const { userId, userToken } = req.body;
 
@@ -34,9 +39,22 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'userId가 필요합니다.' });
     }
 
+    if (!userToken) {
+      return res.status(400).json({ error: '인증 토큰이 필요합니다.' });
+    }
+
     // 사용자 인증 확인
     console.log('사용자 인증 확인 시작');
-    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(userToken);
+    
+    let authResponse;
+    try {
+      authResponse = await supabaseAdmin.auth.getUser(userToken);
+    } catch (authApiError) {
+      console.error('Auth API 호출 오류:', authApiError);
+      return res.status(500).json({ error: `인증 API 오류: ${authApiError.message}` });
+    }
+    
+    const { data: { user }, error: authError } = authResponse;
     
     if (authError) {
       console.error('인증 오류:', authError);
@@ -57,10 +75,18 @@ export default async function handler(req, res) {
     console.log('인증된 사용자:', user.id);
 
     // 1. 데이터베이스에서 사용자 데이터 삭제
-    const { error: dbError } = await supabaseAdmin
-      .from('users')
-      .delete()
-      .eq('id', userId);
+    let dbResponse;
+    try {
+      dbResponse = await supabaseAdmin
+        .from('users')
+        .delete()
+        .eq('id', userId);
+    } catch (dbApiError) {
+      console.error('DB API 호출 오류:', dbApiError);
+      return res.status(500).json({ error: `데이터베이스 API 오류: ${dbApiError.message}` });
+    }
+    
+    const { error: dbError } = dbResponse;
     
     if (dbError) {
       console.error('DB 사용자 삭제 실패:', dbError);
@@ -71,7 +97,25 @@ export default async function handler(req, res) {
 
     // 2. Auth에서 사용자 계정 삭제
     console.log('Auth 사용자 삭제 시작');
-    const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId);
+    
+    let deleteResponse;
+    try {
+      deleteResponse = await supabaseAdmin.auth.admin.deleteUser(userId);
+    } catch (deleteApiError) {
+      console.error('Auth 삭제 API 호출 오류:', deleteApiError);
+      
+      // DB는 삭제되었지만 Auth API 호출 실패
+      if (!dbError) {
+        return res.status(500).json({
+          partialSuccess: true,
+          error: `Auth API 호출 오류: ${deleteApiError.message}`
+        });
+      }
+      
+      return res.status(500).json({ error: `Auth API 호출 오류: ${deleteApiError.message}` });
+    }
+    
+    const { error: deleteError } = deleteResponse;
 
     if (deleteError) {
       console.error('Auth 사용자 삭제 실패:', deleteError);
@@ -88,9 +132,9 @@ export default async function handler(req, res) {
     }
 
     console.log('계정 삭제 완료:', userId);
-    return res.status(200).json({ success: true });
+    return res.status(200).json({ success: true, message: '계정이 성공적으로 삭제되었습니다.' });
   } catch (error) {
     console.error('계정 삭제 중 예외 발생:', error);
-    return res.status(500).json({ error: `서버 오류: ${error.message}` });
+    return res.status(500).json({ error: `서버 오류: ${error.message || '알 수 없는 오류'}` });
   }
 } 

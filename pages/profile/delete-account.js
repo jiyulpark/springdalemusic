@@ -71,15 +71,40 @@ const DeleteAccount = () => {
         }),
       });
       
-      // 응답 처리
-      const result = await response.json();
+      // 응답 처리 개선
+      let result;
+      try {
+        // 응답이 비어있거나 JSON이 아닌 경우 예외 처리
+        const text = await response.text();
+        if (!text) {
+          console.warn('빈 응답이 반환되었습니다.');
+          if (response.ok) {
+            // 응답이 성공인데 내용이 비었으면 성공으로 간주
+            result = { success: true };
+          } else {
+            throw new Error(`API 요청 실패: ${response.status} ${response.statusText}`);
+          }
+        } else {
+          // 텍스트 응답을 JSON으로 파싱
+          try {
+            result = JSON.parse(text);
+          } catch (parseError) {
+            console.error('응답 파싱 오류:', parseError);
+            console.log('파싱할 수 없는 응답:', text);
+            throw new Error('서버 응답을 처리할 수 없습니다. 관리자에게 문의하세요.');
+          }
+        }
+      } catch (responseError) {
+        console.error('응답 처리 오류:', responseError);
+        throw new Error(`응답 처리 오류: ${responseError.message}`);
+      }
       
-      if (!response.ok && !result.partialSuccess) {
-        throw new Error(result.error || '계정 삭제에 실패했습니다.');
+      if (!response.ok && !result?.partialSuccess) {
+        throw new Error(result?.error || '계정 삭제에 실패했습니다.');
       }
       
       // 부분 성공 메시지 표시
-      if (result.partialSuccess) {
+      if (result?.partialSuccess) {
         console.warn('⚠️ 부분 성공:', result.error);
       }
       
