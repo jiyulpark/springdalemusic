@@ -34,7 +34,7 @@ const DeleteAccount = () => {
   }, []);
   
   const handleDeleteAccount = async () => {
-    if (confirmation !== user?.email) {
+    if (confirmation !== user?.email.trim()) {
       setError('이메일 주소가 일치하지 않습니다.');
       return;
     }
@@ -47,39 +47,33 @@ const DeleteAccount = () => {
     setError(null);
     
     try {
-      // 현재 사용자의 세션 토큰 가져오기
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError) {
-        console.error('❌ 세션 가져오기 실패:', sessionError.message);
-        throw new Error('인증 세션을 가져올 수 없습니다.');
-      }
-      
-      if (!session) {
-        throw new Error('인증 세션이 없습니다.');
-      }
-      
       // 서버 API를 통해 계정 삭제 요청
       const response = await fetch('/api/account/delete', {
-        method: 'POST',
+        method: 'DELETE',  // POST에서 DELETE로 변경
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           userId: user.id,
-          userToken: session.access_token,
+          // userToken 제거 - 서버 측에서 service_role 키로 처리
         }),
       });
       
-      // 응답 처리 개선
+      // 204 No Content 응답 처리
+      if (response.status === 204) {
+        // 서버가 내용 없이 204를 돌려준 경우 성공으로 처리
+        await supabase.auth.signOut().catch(console.error);
+        alert('계정이 성공적으로 삭제되었습니다.');
+        router.replace('/'); // replace로 변경하여 뒤로가기에 안전하게
+        return;
+      }
+      
+      // 기존 응답 처리 로직
       let result;
       try {
-        // 응답이 비어있거나 JSON이 아닌 경우 예외 처리
         const text = await response.text();
-        console.log('API 응답 텍스트:', text);
         
         if (!text) {
-          console.warn('빈 응답이 반환되었습니다.');
           if (response.ok) {
             // 응답이 성공인데 내용이 비었으면 성공으로 간주
             result = { success: true };
@@ -92,8 +86,7 @@ const DeleteAccount = () => {
             result = JSON.parse(text);
           } catch (parseError) {
             console.error('응답 파싱 오류:', parseError);
-            console.log('파싱할 수 없는 응답:', text);
-            throw new Error('서버 응답을 처리할 수 없습니다. 관리자에게 문의하세요.');
+            throw new Error('서버 응답을 처리할 수 없습니다.');
           }
         }
       } catch (responseError) {
@@ -101,21 +94,16 @@ const DeleteAccount = () => {
         throw new Error(`응답 처리 오류: ${responseError.message}`);
       }
       
-      if (!response.ok && !result?.partialSuccess) {
+      if (!response.ok) {
         throw new Error(result?.error || '계정 삭제에 실패했습니다.');
       }
       
-      // 부분 성공 메시지 표시
-      if (result?.partialSuccess) {
-        console.warn('⚠️ 부분 성공:', result.error);
-      }
-      
       // 로그아웃
-      await supabase.auth.signOut();
+      await supabase.auth.signOut().catch(console.error);
       
       // 성공 메시지 표시 및 리디렉션
       alert('계정이 성공적으로 삭제되었습니다.');
-      router.push('/');
+      router.replace('/');
     } catch (err) {
       console.error('계정 삭제 중 오류 발생:', err.message);
       setError(`계정 삭제 중 오류가 발생했습니다: ${err.message}`);
@@ -214,16 +202,16 @@ const DeleteAccount = () => {
         
         <button
           onClick={handleDeleteAccount}
-          disabled={loading || confirmation !== user.email}
+          disabled={loading}
           style={{
             padding: '12px 40px',
             background: '#f44336',
             color: 'white',
             border: 'none',
             borderRadius: '5px',
-            cursor: (loading || confirmation !== user.email) ? 'not-allowed' : 'pointer',
+            cursor: loading ? 'not-allowed' : 'pointer',
             fontSize: '16px',
-            opacity: (loading || confirmation !== user.email) ? 0.7 : 1
+            opacity: loading ? 0.7 : 1
           }}
         >
           {loading ? '처리 중...' : '계정 삭제'}
