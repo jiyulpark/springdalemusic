@@ -8,6 +8,8 @@ const AdminUsers = () => {
   const [users, setUsers] = useState([]);
   const [roleFilter, setRoleFilter] = useState('all');
   const [searchEmail, setSearchEmail] = useState('');
+  const [editingName, setEditingName] = useState(null);
+  const [newDisplayName, setNewDisplayName] = useState('');
   const router = useRouter();
 
   useEffect(() => {
@@ -73,6 +75,7 @@ const AdminUsers = () => {
           // 닉네임 필드 확인을 위해 nickname 추가
           return {
             ...dbUser,
+            rawAuthUser: authUser, // Auth 사용자 원본 데이터 저장
             displayName: 
               dbUser.nickname || // users 테이블의 nickname 필드 확인
               authUser?.user_metadata?.name || 
@@ -104,6 +107,52 @@ const AdminUsers = () => {
     } else {
       setUsers(users.map(user => (user.id === userId ? { ...user, role: newRole } : user)));
       alert('✅ 유저 권한이 변경되었습니다.');
+    }
+  };
+
+  // Supabase Admin API를 통해 사용자 표시 이름 업데이트
+  const updateUserDisplayName = async (userId) => {
+    if (!newDisplayName.trim()) {
+      alert('이름을 입력해주세요.');
+      return;
+    }
+
+    try {
+      // 1. Auth API를 통한 사용자 메타데이터 업데이트
+      const { error: authError } = await supabase.auth.admin.updateUserById(
+        userId,
+        { user_metadata: { name: newDisplayName } }
+      );
+
+      if (authError) {
+        console.error('❌ 인증 서비스 사용자 이름 업데이트 실패:', authError.message);
+        throw authError;
+      }
+
+      // 2. 데이터베이스 nickname 필드도 업데이트
+      const { error: dbError } = await supabase
+        .from('users')
+        .update({ nickname: newDisplayName })
+        .eq('id', userId);
+
+      if (dbError) {
+        console.error('❌ DB 사용자 이름 업데이트 실패:', dbError.message);
+        // 계속 진행 (Auth 서비스 업데이트는 성공했으므로)
+      }
+
+      // 로컬 상태 업데이트
+      setUsers(users.map(user => 
+        user.id === userId 
+          ? { ...user, displayName: newDisplayName, nickname: newDisplayName } 
+          : user
+      ));
+      
+      setEditingName(null); // 편집 모드 종료
+      setNewDisplayName('');
+      alert('✅ 사용자 이름이 업데이트되었습니다.');
+    } catch (err) {
+      console.error('❌ 사용자 이름 업데이트 실패:', err.message);
+      alert('사용자 이름 업데이트에 실패했습니다.');
     }
   };
 
@@ -192,7 +241,72 @@ const AdminUsers = () => {
                 {user.email}
               </td>
               <td style={{ borderBottom: '1px solid #ddd', padding: '10px' }}>
-                {user.displayName || user.nickname || '-'}
+                {editingName === user.id ? (
+                  <div style={{ display: 'flex', gap: '5px' }}>
+                    <input
+                      type="text"
+                      value={newDisplayName}
+                      onChange={(e) => setNewDisplayName(e.target.value)}
+                      placeholder="새 이름 입력"
+                      style={{ 
+                        padding: '4px 6px',
+                        borderRadius: '4px',
+                        border: '1px solid #ddd',
+                        width: '120px'
+                      }}
+                    />
+                    <button 
+                      onClick={() => updateUserDisplayName(user.id)}
+                      style={{
+                        padding: '2px 8px',
+                        background: '#4CAF50',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      저장
+                    </button>
+                    <button 
+                      onClick={() => {
+                        setEditingName(null);
+                        setNewDisplayName('');
+                      }}
+                      style={{
+                        padding: '2px 8px',
+                        background: '#f44336',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      취소
+                    </button>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span>{user.displayName || user.nickname || '-'}</span>
+                    <button 
+                      onClick={() => {
+                        setEditingName(user.id);
+                        setNewDisplayName(user.displayName || user.nickname || '');
+                      }}
+                      style={{
+                        padding: '2px 5px',
+                        background: '#2196F3',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        fontSize: '0.7rem',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      수정
+                    </button>
+                  </div>
+                )}
               </td>
               <td style={{ borderBottom: '1px solid #ddd', padding: '10px' }}>{user.role}</td>
               <td style={{ borderBottom: '1px solid #ddd', padding: '10px' }}>
