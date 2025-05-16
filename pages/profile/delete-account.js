@@ -49,7 +49,7 @@ const DeleteAccount = () => {
     try {
       // 서버 API를 통해 계정 삭제 요청
       const response = await fetch('/api/account/delete', {
-        method: 'DELETE',  // POST에서 DELETE로 변경
+        method: 'POST',  // DELETE에서 POST로 변경
         headers: {
           'Content-Type': 'application/json',
         },
