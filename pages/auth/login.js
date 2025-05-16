@@ -1,8 +1,6 @@
 // pages/auth/login.js
 import { useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { Auth } from '@supabase/auth-ui-react';
-import { ThemeSupa } from '@supabase/auth-ui-shared';
 import { supabase } from '../../lib/supabase';
 
 const Login = () => {
@@ -41,6 +39,24 @@ const Login = () => {
     return () => subscription.unsubscribe();
   }, [router]);
 
+  const handleGoogleLogin = async () => {
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`
+      }
+    });
+  };
+
+  const handleGithubLogin = async () => {
+    await supabase.auth.signInWithOAuth({
+      provider: 'github',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`
+      }
+    });
+  };
+
   return (
     <div style={{
       maxWidth: 500,
@@ -58,78 +74,79 @@ const Login = () => {
       <div
         style={{
           display: 'flex',
+          flexDirection: 'column',
           gap: 12,
-          flexWrap: 'wrap',
-          justifyContent: 'center',
-          flexDirection: 'row',
           marginBottom: 10
         }}
       >
-        <div style={{ minWidth: 220, flex: 1 }}>
-          <Auth
-            supabaseClient={supabase}
-            appearance={{
-              theme: ThemeSupa,
-              variables: {
-                default: {
-                  colors: {
-                    brand: '#404040',
-                    brandAccent: '#525252',
-                  },
-                },
-              },
-              className: {
-                container: 'auth-container',
-                button: 'auth-button',
-                input: 'auth-input',
-              },
-            }}
-            providers={['google', 'github']}
-            view="sign_in"
-            showLinks={false}
-            onlyThirdPartyProviders
-            localization={{
-              variables: {
-                sign_in: {
-                  email_label: '',
-                  password_label: '',
-                  button_label: '소셜 로그인',
-                },
-                providers: {
-                  google: '구글로 로그인하기',
-                  github: '깃허브로 로그인하기',
-                },
-              },
-            }}
+        <button
+          onClick={handleGoogleLogin}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 10,
+            padding: '12px 24px',
+            backgroundColor: '#fff',
+            border: '1px solid #ddd',
+            borderRadius: '8px',
+            fontSize: '16px',
+            fontWeight: 500,
+            color: '#333',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+            width: '100%'
+          }}
+          onMouseOver={(e) => {
+            e.currentTarget.style.backgroundColor = '#f5f5f5';
+            e.currentTarget.style.borderColor = '#ccc';
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.backgroundColor = '#fff';
+            e.currentTarget.style.borderColor = '#ddd';
+          }}
+        >
+          <img
+            src="https://www.google.com/favicon.ico"
+            alt="Google"
+            style={{ width: 20, height: 20 }}
           />
-        </div>
+          구글로 로그인하기
+        </button>
+
+        <button
+          onClick={handleGithubLogin}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 10,
+            padding: '12px 24px',
+            backgroundColor: '#24292e',
+            border: 'none',
+            borderRadius: '8px',
+            fontSize: '16px',
+            fontWeight: 500,
+            color: '#fff',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+            width: '100%'
+          }}
+          onMouseOver={(e) => {
+            e.currentTarget.style.backgroundColor = '#2c3238';
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.backgroundColor = '#24292e';
+          }}
+        >
+          <img
+            src="https://github.com/favicon.ico"
+            alt="GitHub"
+            style={{ width: 20, height: 20 }}
+          />
+          깃허브로 로그인하기
+        </button>
       </div>
-      <style jsx global>{`
-        .auth-button[data-provider="google"] {
-          position: relative;
-        }
-        .auth-button[data-provider="google"]::after {
-          content: "구글로 로그인하기";
-          position: absolute;
-          left: 50%;
-          transform: translateX(-50%);
-        }
-        .auth-button[data-provider="google"] span {
-          visibility: hidden;
-        }
-        .auth-button[data-provider="github"] {
-          position: relative;
-        }
-        .auth-button[data-provider="github"]::after {
-          content: "깃허브로 로그인하기";
-          position: absolute;
-          left: 50%;
-          transform: translateX(-50%);
-        }
-        .auth-button[data-provider="github"] span {
-          visibility: hidden;
-        }
-      `}</style>
     </div>
   );
 };
