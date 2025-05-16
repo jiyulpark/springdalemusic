@@ -192,7 +192,7 @@ const NewPost = () => {
         )}
         <button
           type="button"
-          onClick={() => thumbnailInputRef.current.click()}
+          onClick={() => thumbnailInputRef.current && thumbnailInputRef.current.click()}
           style={{ padding: '8px 16px', background: '#0070f3', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 500 }}
         >
           썸네일 선택
@@ -204,7 +204,7 @@ const NewPost = () => {
           onChange={handleThumbnailChange}
           style={{ display: 'none' }}
         />
-        {thumbnail && (
+        {thumbnail && typeof thumbnail === 'object' && (
           <button
             type="button"
             onClick={() => setThumbnail(null)}
@@ -219,7 +219,7 @@ const NewPost = () => {
       <div style={{ marginBottom: '10px' }}>
         <button
           type="button"
-          onClick={() => fileInputRef.current.click()}
+          onClick={() => fileInputRef.current && fileInputRef.current.click()}
           style={{ padding: '8px 16px', background: '#0070f3', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 500 }}
         >
           파일 선택
