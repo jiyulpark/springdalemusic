@@ -80,6 +80,10 @@ const Login = () => {
                   password_label: '',
                   button_label: '소셜 로그인',
                 },
+                providers: {
+                  google: '구글로 로그인하기',
+                  github: '깃허브로 로그인하기',
+                },
               },
             }}
           />
