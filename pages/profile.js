@@ -265,6 +265,8 @@ const Profile = () => {
       
       <input type="file" accept="image/*" onChange={handleFileChange} style={{ marginBottom: '10px' }} />
 
+      {/* 닉네임 입력 */}
+      <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500', textAlign: 'left' }}>닉네임</label>
       <input 
         type="text" 
         value={nickname} 
@@ -273,6 +275,8 @@ const Profile = () => {
         style={{ width: '100%', padding: '10px', marginBottom: '10px' }}
       />
 
+      {/* 취미 입력 */}
+      <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500', textAlign: 'left' }}>취미</label>
       <input 
         type="text" 
         value={hobby} 
@@ -281,6 +285,8 @@ const Profile = () => {
         style={{ width: '100%', padding: '10px', marginBottom: '10px' }}
       />
 
+      {/* 상태 메시지 입력 */}
+      <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500', textAlign: 'left' }}>상태 메시지</label>
       <textarea 
         value={statusMessage} 
         onChange={(e) => setStatusMessage(e.target.value)} 
