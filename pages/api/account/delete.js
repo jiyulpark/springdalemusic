@@ -11,7 +11,7 @@ export default async function handler(req, res) {
   
   // CORS 헤더 설정
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   // OPTIONS 요청 처리 (CORS preflight)
@@ -19,8 +19,8 @@ export default async function handler(req, res) {
     return res.status(200).json({ success: true });
   }
 
-  // POST 메서드만 허용
-  if (req.method !== 'POST') {
+  // DELETE 메서드만 허용
+  if (req.method !== 'DELETE') {
     console.log('허용되지 않은 메서드:', req.method);
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
