@@ -21,8 +21,14 @@ const Login = () => {
           .eq('id', user.id)
           .single();
         
-        // 프로필 정보가 없거나 기본 정보가 없으면 프로필 설정 페이지로 리디렉션
-        if (error || !profile || !profile.nickname) {
+        // 프로필 정보가 없거나 nickname, hobby, status_message 중 하나라도 없으면 프로필 설정 페이지로 리디렉션
+        if (
+          error ||
+          !profile ||
+          !profile.nickname ||
+          !profile.hobby ||
+          !profile.status_message
+        ) {
           console.log('신규 사용자 또는 프로필 미설정: 프로필 설정 페이지로 이동');
           router.push('/profile/setup');
         } else {
