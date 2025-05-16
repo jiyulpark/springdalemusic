@@ -59,15 +59,30 @@ const Login = () => {
 
   return (
     <div style={{
-      maxWidth: 500,
+      width: '90%',
+      maxWidth: 800,
+      minWidth: 320,
       margin: '40px auto',
-      padding: 24,
+      padding: 'clamp(20px, 5vw, 32px)',
       background: '#fff',
       borderRadius: 12,
       boxShadow: '0 4px 12px rgba(0,0,0,0.08)'
     }}>
-      <h1 style={{ textAlign: 'center', marginBottom: 20 }}>로그인 / 회원가입</h1>
-      <p style={{ textAlign: 'center', marginBottom: 20, color: '#666', fontSize: 16 }}>
+      <h1 style={{ 
+        textAlign: 'center', 
+        marginBottom: 'clamp(16px, 3vw, 24px)', 
+        fontSize: 'clamp(1.5rem, 4vw, 2rem)',
+        fontWeight: 600
+      }}>
+        로그인 / 회원가입
+      </h1>
+      <p style={{ 
+        textAlign: 'center', 
+        marginBottom: 'clamp(20px, 4vw, 32px)', 
+        color: '#666', 
+        fontSize: 'clamp(14px, 3vw, 18px)',
+        lineHeight: 1.6
+      }}>
         소셜 계정으로 간편하게 로그인하고 서비스를 이용하세요.<br />
         <span style={{ color: '#d32f2f', fontWeight: 600 }}>※ 가입 후 반드시 프로필을 수정해 주세요!</span>
       </p>
@@ -75,8 +90,11 @@ const Login = () => {
         style={{
           display: 'flex',
           flexDirection: 'column',
-          gap: 12,
-          marginBottom: 10
+          gap: 'clamp(12px, 2vw, 16px)',
+          marginBottom: 10,
+          width: '100%',
+          maxWidth: 500,
+          margin: '0 auto'
         }}
       >
         <button
@@ -86,11 +104,11 @@ const Login = () => {
             alignItems: 'center',
             justifyContent: 'center',
             gap: 10,
-            padding: '12px 24px',
+            padding: 'clamp(10px, 2vw, 12px) clamp(16px, 3vw, 24px)',
             backgroundColor: '#fff',
             border: '1px solid #ddd',
             borderRadius: '8px',
-            fontSize: '16px',
+            fontSize: 'clamp(14px, 2.5vw, 16px)',
             fontWeight: 500,
             color: '#333',
             cursor: 'pointer',
@@ -109,7 +127,7 @@ const Login = () => {
           <img
             src="https://www.google.com/favicon.ico"
             alt="Google"
-            style={{ width: 20, height: 20 }}
+            style={{ width: 'clamp(16px, 2.5vw, 20px)', height: 'clamp(16px, 2.5vw, 20px)' }}
           />
           구글로 로그인하기
         </button>
@@ -121,11 +139,11 @@ const Login = () => {
             alignItems: 'center',
             justifyContent: 'center',
             gap: 10,
-            padding: '12px 24px',
+            padding: 'clamp(10px, 2vw, 12px) clamp(16px, 3vw, 24px)',
             backgroundColor: '#24292e',
             border: 'none',
             borderRadius: '8px',
-            fontSize: '16px',
+            fontSize: 'clamp(14px, 2.5vw, 16px)',
             fontWeight: 500,
             color: '#fff',
             cursor: 'pointer',
@@ -142,7 +160,7 @@ const Login = () => {
           <img
             src="https://github.com/favicon.ico"
             alt="GitHub"
-            style={{ width: 20, height: 20 }}
+            style={{ width: 'clamp(16px, 2.5vw, 20px)', height: 'clamp(16px, 2.5vw, 20px)' }}
           />
           깃허브로 로그인하기
         </button>
