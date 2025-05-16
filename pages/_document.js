@@ -6,6 +6,8 @@ export default function Document() {
     <Html lang="ko">
       <Head>
         {/* ✅ GA 코드 완전 제거됨 */}
+        <meta name="color-scheme" content="light" />
+        <style>{`html { color-scheme: light only; }`}</style>
       </Head>
       <body>
         <Main />
