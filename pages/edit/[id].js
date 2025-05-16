@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../../lib/supabase';
+import React from 'react';
 
 const EditPost = () => {
   const router = useRouter();
@@ -23,6 +24,9 @@ const EditPost = () => {
   const [uploadProgress, setUploadProgress] = useState(0);
 
   const allowedExtensions = ['wav', 'am2data', 'am3data', 'am2', 'zip'];
+
+  const thumbnailInputRef = React.useRef(null);
+  const fileInputRef = React.useRef(null);
 
   useEffect(() => {
     const fetchSession = async () => {
@@ -359,107 +363,65 @@ const EditPost = () => {
           />
         </div>
       )}
+      <button
+        type="button"
+        onClick={() => thumbnailInputRef.current.click()}
+        style={{ padding: '8px 16px', background: '#0070f3', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 500, marginBottom: 8 }}
+      >
+        썸네일 선택
+      </button>
       <input 
         type="file" 
         onChange={handleThumbnailChange} 
         disabled={isSubmitting}
         accept="image/*"
+        ref={thumbnailInputRef}
+        style={{ display: 'none' }}
       />
+      {thumbnail && (
+        <button
+          type="button"
+          onClick={() => { setThumbnail(null); setThumbnailUrl(null); }}
+          style={{ marginLeft: 8, padding: '8px 16px', background: '#fff', color: '#f44336', border: '1px solid #f44336', borderRadius: '5px', cursor: 'pointer', fontWeight: 500 }}
+        >
+          삭제
+        </button>
+      )}
 
       <h3 style={styles.subheading}>파일 관리</h3>
-      {existingFiles.length > 0 && (
-        <div style={{ marginBottom: '15px' }}>
-          <h4>기존 파일</h4>
-          <ul style={styles.fileList}>
-            {existingFiles.map((file, index) => (
-              <li key={index} style={styles.fileItem}>
-                <a 
-                  href="#" 
-                  onClick={async (e) => {
-                    e.preventDefault();
-                    try {
-                      const headers = {
-                        'Content-Type': 'application/json'
-                      };
-                      
-                      if (session?.access_token) {
-                        headers['Authorization'] = `Bearer ${session.access_token}`;
-                      }
-                      
-                      const response = await fetch('/api/download', {
-                        method: 'POST',
-                        headers,
-                        body: JSON.stringify({
-                          postId: id,
-                          filePath: file
-                        })
-                      });
-                      const data = await response.json();
-                      if (data.url) {
-                        // 다운로드 URL을 사용하여 파일 다운로드
-                        const link = document.createElement('a');
-                        link.href = data.url;
-                        link.download = file.split('/').pop() || 'download';
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                      }
-                    } catch (error) {
-                      console.error('다운로드 오류:', error);
-                      alert('파일 다운로드 중 오류가 발생했습니다.');
-                    }
-                  }}
-                  style={{ color: '#0070f3', cursor: 'pointer' }}
-                >
-                  📥 {file.split('/').pop()}
-                </a>
-                <button 
-                  onClick={() => handleDeleteFile(file)} 
-                  style={styles.deleteButton}
-                  disabled={isSubmitting}
+      <div style={{ marginBottom: '15px' }}>
+        <button
+          type="button"
+          onClick={() => fileInputRef.current.click()}
+          style={{ padding: '8px 16px', background: '#0070f3', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 500, marginBottom: 8 }}
+        >
+          파일 선택
+        </button>
+        <input
+          type="file"
+          multiple
+          onChange={handleFileChange}
+          disabled={isSubmitting}
+          ref={fileInputRef}
+          style={{ display: 'none' }}
+        />
+        {files.length > 0 && (
+          <ul style={{ marginTop: 10 }}>
+            {files.map((file, idx) => (
+              <li key={idx} style={{ marginBottom: 4 }}>
+                {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                <button
+                  type="button"
+                  onClick={() => setFiles(files.filter((_, i) => i !== idx))}
+                  style={{ marginLeft: 8, color: '#f44336', background: 'none', border: 'none', cursor: 'pointer' }}
                 >
                   삭제
                 </button>
               </li>
             ))}
           </ul>
-        </div>
-      )}
-
-      <div style={{ marginBottom: '15px' }}>
-        <h4>새 파일 업로드</h4>
-        <input 
-          type="file" 
-          multiple 
-          onChange={handleFileChange} 
-          disabled={isSubmitting}
-        />
-        <p style={{ fontSize: '0.8rem', color: '#666', marginTop: '5px' }}>
-          허용된 파일 형식: {allowedExtensions.join(', ')}
-        </p>
-        
-        {files.length > 0 && (
-          <div style={{ marginTop: '10px' }}>
-            <p>업로드할 파일 {files.length}개 선택됨</p>
-            <ul style={styles.fileList}>
-              {files.map((file, index) => (
-                <li key={index} style={{ marginBottom: '5px' }}>
-                  {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
-                </li>
-              ))}
-            </ul>
-          </div>
         )}
       </div>
-
-      {isSubmitting && uploadProgress > 0 && (
-        <div>
-          <p>파일 업로드 중... {uploadProgress}%</p>
-          <div style={styles.progressBar}>
-            <div style={styles.progressFill(uploadProgress)}></div>
-          </div>
-        </div>
-      )}
 
       <h3 style={styles.subheading}>스타일 선택</h3>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', marginBottom: '15px' }}>
