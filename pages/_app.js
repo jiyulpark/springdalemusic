@@ -1,4 +1,6 @@
 // pages/_app.js
+import 'core-js/stable';
+import 'regenerator-runtime/runtime';
 import '../styles/globals.css';
 import Navbar from '../components/Navbar';
 import { SessionProvider } from '../lib/SessionContext';
