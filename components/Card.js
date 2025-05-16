@@ -38,6 +38,36 @@ const Card = ({ post, categories, handleLike, author }) => {
     fileExt = 'IR(WAVE)';
   }
 
+  // 첨부파일 클릭 핸들러
+  const handleAttachmentClick = async (e) => {
+    e.preventDefault();
+    if (!post.file_urls || post.file_urls.length === 0) return;
+    const zipUrl = post.file_urls.find(url => url.toLowerCase().endsWith('.zip'));
+    const singleUrl = !zipUrl && post.file_urls.length === 1 ? post.file_urls[0] : null;
+    const fileUrl = zipUrl || singleUrl;
+    if (!fileUrl) return;
+    try {
+      const headers = { 'Content-Type': 'application/json' };
+      if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`;
+      const response = await fetch('/api/download', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          postId: post.id,
+          filePath: fileUrl
+        })
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        alert(data.error || '다운로드 권한이 없습니다.');
+        return;
+      }
+      window.open(data.url, '_blank');
+    } catch (err) {
+      alert('다운로드 중 오류가 발생했습니다.');
+    }
+  };
+
   return (
     <div className={styles.card}>
       {thumbnailUrl && (
@@ -90,9 +120,25 @@ const Card = ({ post, categories, handleLike, author }) => {
 
           {post.file_urls && post.file_urls.length > 0 && (
             <div className={styles.fileInfo}>
-              <span>
-                📎 첨부파일 {post.file_count || post.file_urls.length}개
-              </span>
+              {(() => {
+                const zipUrl = post.file_urls.find(url => url.toLowerCase().endsWith('.zip'));
+                const singleUrl = !zipUrl && post.file_urls.length === 1 ? post.file_urls[0] : null;
+                if (zipUrl || singleUrl) {
+                  return (
+                    <span
+                      className={styles.download}
+                      style={{ cursor: 'pointer', color: '#0070f3', fontWeight: 'bold' }}
+                      onClick={handleAttachmentClick}
+                      title="첨부파일 다운로드"
+                    >
+                      📎 첨부파일
+                    </span>
+                  );
+                } else {
+                  return <span>📎 첨부파일</span>;
+                }
+              })()}
+              <span style={{ marginLeft: 4 }}>{post.file_count || post.file_urls.length}개</span>
             </div>
           )}
 
