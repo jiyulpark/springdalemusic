@@ -212,21 +212,25 @@ const AdminUsers = () => {
                   : '-'}
               </td>
               <td style={{ borderBottom: '1px solid #ddd', padding: '10px' }}>
-                <select 
-                  value={user.role} 
-                  onChange={(e) => updateUserRole(user.id, e.target.value)}
-                  style={{
-                    padding: '6px',
-                    borderRadius: '4px',
-                    border: '1px solid #ddd',
-                    backgroundColor: '#fff'
-                  }}
-                >
-                  <option value="guest">비회원</option>
-                  <option value="user">일반 유저</option>
-                  <option value="verified_user">인증 유저</option>
-                  <option value="admin">관리자</option>
-                </select>
+                {/* 관리자 계정이면 select를 숨김 */}
+                {user.role === 'admin' ? (
+                  <span style={{ color: '#d32f2f', fontWeight: 600 }}>관리자</span>
+                ) : (
+                  <select 
+                    value={user.role} 
+                    onChange={(e) => updateUserRole(user.id, e.target.value)}
+                    style={{
+                      padding: '6px',
+                      borderRadius: '4px',
+                      border: '1px solid #ddd',
+                      backgroundColor: '#fff'
+                    }}
+                  >
+                    <option value="guest">비회원</option>
+                    <option value="user">일반 유저</option>
+                    <option value="verified_user">인증 유저</option>
+                  </select>
+                )}
               </td>
             </tr>
           ))}
