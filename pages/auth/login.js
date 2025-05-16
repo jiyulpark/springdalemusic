@@ -68,7 +68,22 @@ const Login = () => {
         <div style={{ minWidth: 220, flex: 1 }}>
           <Auth
             supabaseClient={supabase}
-            appearance={{ theme: ThemeSupa }}
+            appearance={{
+              theme: ThemeSupa,
+              variables: {
+                default: {
+                  colors: {
+                    brand: '#404040',
+                    brandAccent: '#525252',
+                  },
+                },
+              },
+              className: {
+                container: 'auth-container',
+                button: 'auth-button',
+                input: 'auth-input',
+              },
+            }}
             providers={['google', 'github']}
             view="sign_in"
             showLinks={false}
@@ -89,6 +104,32 @@ const Login = () => {
           />
         </div>
       </div>
+      <style jsx global>{`
+        .auth-button[data-provider="google"] {
+          position: relative;
+        }
+        .auth-button[data-provider="google"]::after {
+          content: "구글로 로그인하기";
+          position: absolute;
+          left: 50%;
+          transform: translateX(-50%);
+        }
+        .auth-button[data-provider="google"] span {
+          visibility: hidden;
+        }
+        .auth-button[data-provider="github"] {
+          position: relative;
+        }
+        .auth-button[data-provider="github"]::after {
+          content: "깃허브로 로그인하기";
+          position: absolute;
+          left: 50%;
+          transform: translateX(-50%);
+        }
+        .auth-button[data-provider="github"] span {
+          visibility: hidden;
+        }
+      `}</style>
     </div>
   );
 };
