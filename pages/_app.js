@@ -25,6 +25,7 @@ function MyApp({ Component, pageProps }) {
         <meta name="twitter:image" content="https://springdalemusic.vercel.app/thumbnail.jpg" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="google-site-verification" content="hz9vLqmiLCGMAY0-pEIqB56CEKlUXgWWtve2NDxF9p0" />
+        <meta name="naver-site-verification" content="7da60c544101659e30489ba169feac38076b9313" />
       </Head>
       <SessionProvider>
         <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
