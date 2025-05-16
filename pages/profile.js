@@ -59,7 +59,7 @@ const Profile = () => {
                   email: userEmail,
                   role: 'user', // 기본 역할
                   join_date: new Date(),
-                  nickname: userEmail, // 이메일을 기본 닉네임으로 사용
+                  nickname: '', // 이메일이 아닌 빈 값으로
                   hobby: '',
                   status_message: ''
                 }

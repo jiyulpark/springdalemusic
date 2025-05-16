@@ -47,6 +47,9 @@ const Login = () => {
       <p style={{ textAlign: 'center', marginBottom: '30px', color: '#666' }}>
         소셜 계정으로 간편하게 로그인하고 서비스를 이용하세요.
       </p>
+      <p style={{ textAlign: 'center', marginBottom: '10px', color: '#d32f2f', fontWeight: 'bold' }}>
+        ※ 가입 후 반드시 프로필을 수정해 주세요!
+      </p>
       <Auth
         supabaseClient={supabase}
         appearance={{ theme: ThemeSupa }}
