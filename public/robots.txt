@@ -1,0 +1,10 @@
+# *
+User-agent: *
+Allow: /
+Disallow: /admin/*
+
+# Host
+Host: https://springdalemusic.vercel.app
+
+# Sitemaps
+Sitemap: https://springdalemusic.vercel.app/sitemap.xml
