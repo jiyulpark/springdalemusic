@@ -231,4 +231,8 @@
   padding: 4px 10px;
 }
 
+.extensionBar:global([data-ext="am2"]) {
+  background-color: #00b894; /* 밝은 청록색(민트) */
+}
+
 
