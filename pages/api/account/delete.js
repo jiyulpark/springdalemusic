@@ -6,6 +6,8 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
+export const config = { api: { bodyParser: true } };
+
 export default async function handler(req, res) {
   console.log('API 호출 시작: /api/account/delete, 메서드:', req.method);
   
@@ -25,14 +27,24 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
+  let body = req.body;
+  if (!body || Object.keys(body).length === 0) {
+    // 수동 파싱
+    const buffers = [];
+    for await (const chunk of req) {
+      buffers.push(chunk);
+    }
+    const data = Buffer.concat(buffers).toString();
+    try {
+      body = JSON.parse(data);
+    } catch {
+      body = {};
+    }
+  }
+
   try {
     // 요청 데이터 검증
-    if (!req.body) {
-      console.log('요청 본문이 비어 있음');
-      return res.status(400).json({ error: '요청 본문이 비어 있습니다.' });
-    }
-
-    const { userId, userToken } = req.body;
+    const { userId, userToken } = body;
     console.log('요청 데이터:', { userId, hasToken: !!userToken });
     
     if (!userId) {
