@@ -42,31 +42,49 @@ const Login = () => {
   }, [router]);
 
   return (
-    <div style={{ maxWidth: '400px', margin: '40px auto', padding: '20px' }}>
-      <h1 style={{ textAlign: 'center', marginBottom: '20px' }}>로그인 / 회원가입</h1>
-      <p style={{ textAlign: 'center', marginBottom: '30px', color: '#666' }}>
-        소셜 계정으로 간편하게 로그인하고 서비스를 이용하세요.
+    <div style={{
+      maxWidth: 500,
+      margin: '40px auto',
+      padding: 24,
+      background: '#fff',
+      borderRadius: 12,
+      boxShadow: '0 4px 12px rgba(0,0,0,0.08)'
+    }}>
+      <h1 style={{ textAlign: 'center', marginBottom: 20 }}>로그인 / 회원가입</h1>
+      <p style={{ textAlign: 'center', marginBottom: 20, color: '#666', fontSize: 16 }}>
+        소셜 계정으로 간편하게 로그인하고 서비스를 이용하세요.<br />
+        <span style={{ color: '#d32f2f', fontWeight: 600 }}>※ 가입 후 반드시 프로필을 수정해 주세요!</span>
       </p>
-      <p style={{ textAlign: 'center', marginBottom: '10px', color: '#d32f2f', fontWeight: 'bold' }}>
-        ※ 가입 후 반드시 프로필을 수정해 주세요!
-      </p>
-      <Auth
-        supabaseClient={supabase}
-        appearance={{ theme: ThemeSupa }}
-        providers={['google', 'github']}
-        view="sign_in"
-        showLinks={false}
-        onlyThirdPartyProviders
-        localization={{
-          variables: {
-            sign_in: {
-              email_label: '',
-              password_label: '',
-              button_label: '소셜 로그인',
-            },
-          },
+      <div
+        style={{
+          display: 'flex',
+          gap: 12,
+          flexWrap: 'wrap',
+          justifyContent: 'center',
+          flexDirection: 'row',
+          marginBottom: 10
         }}
-      />
+      >
+        <div style={{ minWidth: 220, flex: 1 }}>
+          <Auth
+            supabaseClient={supabase}
+            appearance={{ theme: ThemeSupa }}
+            providers={['google', 'github']}
+            view="sign_in"
+            showLinks={false}
+            onlyThirdPartyProviders
+            localization={{
+              variables: {
+                sign_in: {
+                  email_label: '',
+                  password_label: '',
+                  button_label: '소셜 로그인',
+                },
+              },
+            }}
+          />
+        </div>
+      </div>
     </div>
   );
 };
