@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { useRouter } from 'next/router';
 
@@ -12,6 +12,7 @@ const Profile = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const router = useRouter();
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -229,42 +230,98 @@ const Profile = () => {
         </div>
       )}
 
-      <div style={{ textAlign: 'center' }}>
+      <div style={{ position: 'relative', width: 120, height: 120, margin: '0 auto 10px' }}>
         {previewUrl ? (
-          <img 
-            src={previewUrl} 
-            alt="Profile Preview" 
+          <img
+            src={previewUrl}
+            alt="프로필"
             style={{
-              width: '120px', 
-              height: '120px', 
+              width: 120,
+              height: 120,
               borderRadius: '50%',
-              objectFit: 'cover', 
-              display: 'block',
-              margin: '0 auto',
-              marginBottom: '10px'
-            }} 
+              objectFit: 'cover',
+              border: '2px solid #eee',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+            }}
           />
         ) : (
           <div style={{
-            width: '120px',
-            height: '120px',
+            width: 120,
+            height: 120,
             borderRadius: '50%',
             backgroundColor: '#e0e0e0',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            margin: '0 auto',
-            marginBottom: '10px',
             fontSize: '36px',
-            color: '#757575'
+            color: '#757575',
+            border: '2px solid #eee',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
           }}>
             {nickname ? nickname.charAt(0).toUpperCase() : '?'}
           </div>
         )}
+        <div
+          onClick={() => fileInputRef.current.click()}
+          style={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            width: '100%',
+            height: '40%',
+            background: 'rgba(0,0,0,0.4)',
+            color: '#fff',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderRadius: '0 0 60px 60px',
+            cursor: 'pointer',
+            fontWeight: 500,
+            fontSize: 16,
+            transition: 'background 0.2s'
+          }}
+        >
+          <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20"><path d="M4 16a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h1.172a2 2 0 0 0 1.414-.586l.828-.828A2 2 0 0 1 10.828 4h2.344a2 2 0 0 1 1.414.586l.828.828A2 2 0 0 0 17.828 6H18a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H4zm6-7a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/></svg>
+            사진 변경
+          </span>
+        </div>
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleFileChange}
+          accept="image/*"
+          style={{ display: 'none' }}
+        />
+        {previewUrl && (
+          <button
+            type="button"
+            onClick={() => {
+              setProfilePicture(null);
+              setPreviewUrl(null);
+            }}
+            style={{
+              position: 'absolute',
+              top: 4,
+              right: 4,
+              background: '#fff',
+              border: '1px solid #ddd',
+              borderRadius: '50%',
+              width: 28,
+              height: 28,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              boxShadow: '0 1px 4px rgba(0,0,0,0.08)'
+            }}
+            title="사진 삭제"
+          >
+            <svg width="16" height="16" fill="#f44336" viewBox="0 0 16 16"><line x1="2" y1="2" x2="14" y2="14" stroke="#f44336" strokeWidth="2"/><line x1="2" y1="14" x2="14" y2="2" stroke="#f44336" strokeWidth="2"/></svg>
+          </button>
+        )}
       </div>
       
-      <input type="file" accept="image/*" onChange={handleFileChange} style={{ marginBottom: '10px' }} />
-
       {/* 닉네임 입력 */}
       <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500', textAlign: 'left' }}>닉네임</label>
       <input 
