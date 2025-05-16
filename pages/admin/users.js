@@ -208,7 +208,7 @@ const AdminUsers = () => {
               <td style={{ borderBottom: '1px solid #ddd', padding: '10px' }}>{user.role}</td>
               <td style={{ borderBottom: '1px solid #ddd', padding: '10px' }}>
                 {user.createdAt && user.createdAt !== '-' 
-                  ? new Date(user.createdAt).toLocaleDateString('ko-KR') 
+                  ? new Date(user.createdAt).toLocaleString('ko-KR') 
                   : '-'}
               </td>
               <td style={{ borderBottom: '1px solid #ddd', padding: '10px' }}>
