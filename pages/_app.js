@@ -24,6 +24,7 @@ function MyApp({ Component, pageProps }) {
         <meta name="twitter:description" content="스퀘어문 사용자들을 위한 공유 플랫폼" />
         <meta name="twitter:image" content="https://springdalemusic.vercel.app/thumbnail.jpg" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="google-site-verification" content="hz9vLqmiLCGMAY0-pEIqB56CEKlUXgWWtve2NDxF9p0" />
       </Head>
       <SessionProvider>
         <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
