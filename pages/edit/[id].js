@@ -390,12 +390,53 @@ const EditPost = () => {
 
       <h3 style={styles.subheading}>파일 관리</h3>
       <div style={{ marginBottom: '15px' }}>
+        {/* 기존 파일 목록 */}
+        {existingFiles.length > 0 && (
+          <div style={{ marginBottom: '15px' }}>
+            <h4 style={{ marginBottom: '8px' }}>기존 첨부파일</h4>
+            <ul style={{ listStyle: 'none', padding: 0 }}>
+              {existingFiles.map((fileUrl, idx) => {
+                const fileName = fileUrl.split('/').pop();
+                return (
+                  <li key={idx} style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    marginBottom: '8px',
+                    padding: '8px',
+                    background: '#f5f5f5',
+                    borderRadius: '4px'
+                  }}>
+                    <span style={{ flex: 1 }}>📎 {fileName}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteFile(fileUrl)}
+                      style={{ 
+                        marginLeft: '8px',
+                        padding: '4px 8px',
+                        background: '#fff',
+                        color: '#f44336',
+                        border: '1px solid #f44336',
+                        borderRadius: '4px',
+                        cursor: 'pointer'
+                      }}
+                      disabled={isSubmitting}
+                    >
+                      삭제
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
+
+        {/* 새 파일 업로드 */}
         <button
           type="button"
           onClick={() => fileInputRef.current.click()}
           style={{ padding: '8px 16px', background: '#0070f3', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 500, marginBottom: 8 }}
         >
-          파일 선택
+          새 파일 추가
         </button>
         <input
           type="file"
