@@ -62,7 +62,19 @@ const Card = ({ post, categories, handleLike, author }) => {
         alert(data.error || '다운로드 권한이 없습니다.');
         return;
       }
-      window.open(data.url, '_blank');
+      // Blob 다운로드 처리 (상세페이지와 동일)
+      const fileResponse = await fetch(data.url);
+      if (!fileResponse.ok) throw new Error('파일 다운로드 실패');
+      const blob = await fileResponse.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const fileName = data.fileName || 'download';
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(blobUrl);
     } catch (err) {
       alert('다운로드 중 오류가 발생했습니다.');
     }
