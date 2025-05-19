@@ -149,6 +149,26 @@
   padding: 1rem;
   border-bottom: 1px solid #eee;
   background: #f8f9fa;
+  position: relative;
+}
+
+.mobileMenuCloseButton {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #666;
+  cursor: pointer;
+  padding: 0.5rem;
+  line-height: 1;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.mobileMenuCloseButton:hover {
+  background-color: #e0e0e0;
 }
 
 .mobileMenuContent {
@@ -183,6 +203,10 @@
 
   .mobileMenu {
     display: block;
+  }
+
+  .mobileMenuHeader {
+    padding-top: 2.5rem; /* 닫기 버튼을 위한 공간 확보 */
   }
 
   .navLeft, .navRight {
@@ -263,5 +287,10 @@
   .mobileMenuLink {
     font-size: 0.9rem;
     padding: 0.6rem;
+  }
+
+  .mobileMenuCloseButton {
+    font-size: 1.2rem;
+    padding: 0.4rem;
   }
 }

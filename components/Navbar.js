@@ -4,7 +4,7 @@ import Link from 'next/link';
 import styles from '../styles/Navbar.module.css';
 import { useSession } from '../lib/SessionContext';
 import { supabase } from '../lib/supabase';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const Navbar = () => {
   const { session, role, loading } = useSession();
@@ -16,6 +16,21 @@ const Navbar = () => {
     localStorage.removeItem('userRole');
     router.push('/');
   };
+
+  // 메뉴 외부 클릭 시 닫기
+  const handleOutsideClick = (e) => {
+    if (isMenuOpen && !e.target.closest(`.${styles.mobileMenu}`) && !e.target.closest(`.${styles.mobileMenuButton}`)) {
+      setIsMenuOpen(false);
+    }
+  };
+
+  // 컴포넌트 마운트 시 이벤트 리스너 추가
+  useEffect(() => {
+    document.addEventListener('click', handleOutsideClick);
+    return () => {
+      document.removeEventListener('click', handleOutsideClick);
+    };
+  }, [isMenuOpen]);
 
   // ✅ 세션 로딩 중엔 렌더링 하지 않음 (깜빡임 방지)
   if (loading) return null;
@@ -105,6 +120,12 @@ const Navbar = () => {
       {/* 모바일 메뉴 */}
       <div className={`${styles.mobileMenu} ${isMenuOpen ? styles.mobileMenuOpen : ''}`}>
         <div className={styles.mobileMenuHeader}>
+          <button 
+            className={styles.mobileMenuCloseButton}
+            onClick={() => setIsMenuOpen(false)}
+          >
+            ✕
+          </button>
           <Link href="/" className={styles.mobileMenuLink}>
             🏠 홈으로 가기
           </Link>
