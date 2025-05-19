@@ -4,10 +4,12 @@ import Link from 'next/link';
 import styles from '../styles/Navbar.module.css';
 import { useSession } from '../lib/SessionContext';
 import { supabase } from '../lib/supabase';
+import { useState } from 'react';
 
 const Navbar = () => {
   const { session, role, loading } = useSession();
   const router = useRouter();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -25,8 +27,16 @@ const Navbar = () => {
   return (
     <header className={styles.navbarContainer}>
       <nav className={styles.navbar}>
+        {/* 모바일 메뉴 버튼 */}
+        <button 
+          className={styles.mobileMenuButton}
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
+        >
+          {isMenuOpen ? '✕' : '☰'}
+        </button>
+
         {/* 왼쪽 메뉴 */}
-        <div className={styles.navLeft}>
+        <div className={`${styles.navLeft} ${isMenuOpen ? styles.mobileMenuOpen : ''}`}>
           <Link href="/" className={styles.navLink}>홈</Link>
           {isLoggedIn && (
             <Link href="/userinfo" className={styles.navLink}>프로필</Link>
@@ -39,17 +49,17 @@ const Navbar = () => {
         </div>
 
         {/* 오른쪽 메뉴 */}
-        <div className={styles.navRight}>
+        <div className={`${styles.navRight} ${isMenuOpen ? styles.mobileMenuOpen : ''}`}>
           {isLoggedIn ? (
             <>
               {isVerified && (
                 <Link href="/post/new" className={styles.writeButton}>✏️ 게시글 작성</Link>
               )}
               {isAdmin && (
-                <>
+                <div className={styles.adminButtons}>
                   <Link href="/admin/users" className={styles.adminButton}>🔧 관리자</Link>
                   <Link href="/admin/posts" className={styles.adminButton}>📝 게시글 관리</Link>
-                </>
+                </div>
               )}
               <button onClick={handleLogout} className={styles.logoutButton}>로그아웃</button>
             </>
