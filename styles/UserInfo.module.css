@@ -1,0 +1,171 @@
+.container {
+  max-width: 800px;
+  margin: 40px auto;
+  padding: 20px;
+}
+
+.errorContainer {
+  max-width: 800px;
+  margin: 40px auto;
+  padding: 20px;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.errorMessage {
+  padding: 10px;
+  margin-bottom: 20px;
+  background-color: #ffebee;
+  color: #c62828;
+  border-radius: 5px;
+}
+
+.userInfoCard, .likedPostsCard {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.userInfoCard h1, .likedPostsCard h2 {
+  color: #333;
+  margin-bottom: 20px;
+  font-size: 1.5rem;
+}
+
+.infoSection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.infoSection p {
+  margin: 0;
+  color: #666;
+}
+
+.infoSection strong {
+  color: #333;
+  margin-right: 10px;
+}
+
+.buttonGroup {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.editButton, .deleteButton {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.editButton {
+  background: #0070f3;
+  color: white;
+}
+
+.editButton:hover {
+  background: #0051a8;
+}
+
+.deleteButton {
+  background: #f44336;
+  color: white;
+}
+
+.deleteButton:hover {
+  background: #d32f2f;
+}
+
+.likedPostsList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.likedPostItem {
+  border: 1px solid #eee;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.likedPostItem:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.postLink {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.postTitle {
+  font-weight: 500;
+  color: #333;
+  flex: 1;
+}
+
+.postCategory {
+  background: #f0f0f0;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  color: #666;
+  margin-left: 10px;
+}
+
+.loading {
+  text-align: center;
+  color: #666;
+  padding: 20px;
+}
+
+.noPosts {
+  text-align: center;
+  color: #666;
+  padding: 20px;
+  background: #f9f9f9;
+  border-radius: 8px;
+}
+
+/* 모바일 반응형 스타일 */
+@media (max-width: 768px) {
+  .container {
+    margin: 20px auto;
+    padding: 10px;
+  }
+
+  .userInfoCard, .likedPostsCard {
+    padding: 15px;
+  }
+
+  .buttonGroup {
+    flex-direction: column;
+  }
+
+  .editButton, .deleteButton {
+    width: 100%;
+  }
+
+  .postLink {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .postCategory {
+    margin-left: 0;
+  }
+} 
