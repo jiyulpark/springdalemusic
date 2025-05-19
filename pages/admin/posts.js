@@ -10,6 +10,7 @@ const AdminPosts = () => {
   const [error, setError] = useState('');
   const [pageSize, setPageSize] = useState(20);
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [session, setSession] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -17,6 +18,15 @@ const AdminPosts = () => {
   const [selectedPost, setSelectedPost] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [downloadPermissionFilter, setDownloadPermissionFilter] = useState('all');
+
+  // 디바운스 효과
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500); // 500ms 딜레이
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   useEffect(() => {
     const fetchSession = async () => {
@@ -51,8 +61,8 @@ const AdminPosts = () => {
         .from('posts')
         .select('*', { count: 'exact', head: true });
 
-      if (searchTerm) {
-        countQuery = countQuery.ilike('title', `%${searchTerm}%`);
+      if (debouncedSearchTerm) {
+        countQuery = countQuery.ilike('title', `%${debouncedSearchTerm}%`);
       }
 
       if (downloadPermissionFilter !== 'all') {
@@ -69,8 +79,8 @@ const AdminPosts = () => {
         .order('created_at', { ascending: false })
         .range((currentPage - 1) * pageSize, currentPage * pageSize - 1);
 
-      if (searchTerm) {
-        query = query.ilike('title', `%${searchTerm}%`);
+      if (debouncedSearchTerm) {
+        query = query.ilike('title', `%${debouncedSearchTerm}%`);
       }
 
       if (downloadPermissionFilter !== 'all') {
@@ -91,7 +101,7 @@ const AdminPosts = () => {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, pageSize, searchTerm, downloadPermissionFilter]);
+  }, [currentPage, pageSize, debouncedSearchTerm, downloadPermissionFilter]);
 
   useEffect(() => {
     if (session) {
