@@ -166,71 +166,93 @@ const AdminPosts = () => {
   if (error) return <div style={{ color: 'red' }}>{error}</div>;
 
   return (
-    <div className={styles.container}>
-      <h1 className={styles.title}>게시글 관리</h1>
-      
-      {/* 검색 및 페이지네이션 컨트롤 */}
-      <div className={styles.controls}>
-        <div className={styles.searchBox}>
+    <div style={styles.container}>
+      <div style={styles.header}>
+        <h1>게시글 관리</h1>
+        <div style={styles.controls}>
           <input
             type="text"
+            placeholder="게시글 검색..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="제목으로 검색..."
-            className={styles.searchInput}
+            style={styles.searchInput}
           />
-        </div>
-        <div className={styles.pageSizeControl}>
-          <label htmlFor="pageSize">페이지당 게시글 수:</label>
           <select
-            id="pageSize"
             value={pageSize}
-            onChange={(e) => setPageSize(Number(e.target.value))}
-            className={styles.pageSizeSelect}
+            onChange={(e) => {
+              setPageSize(Number(e.target.value));
+              setCurrentPage(1);
+            }}
+            style={styles.pageSizeSelect}
           >
-            <option value="10">10개</option>
-            <option value="20">20개</option>
-            <option value="50">50개</option>
+            <option value={20}>20개씩 보기</option>
+            <option value={30}>30개씩 보기</option>
+            <option value={50}>50개씩 보기</option>
+            <option value={100}>100개씩 보기</option>
           </select>
         </div>
       </div>
 
-      {/* 게시글 목록 */}
-      <div className={styles.tableContainer}>
-        <table className={styles.table}>
+      <div style={styles.tableContainer}>
+        <table style={styles.table}>
           <thead>
             <tr>
-              <th>제목</th>
-              <th>작성자</th>
-              <th>작성일</th>
-              <th>다운로드 권한</th>
+              <th style={styles.th}>번호</th>
+              <th style={styles.th}>제목</th>
+              <th style={styles.th}>작성일</th>
+              <th style={styles.th}>다운로드 권한</th>
             </tr>
           </thead>
           <tbody>
-            {posts.map((post) => (
+            {posts.map((post, index) => (
               <tr key={post.id}>
-                <td className={styles.titleCell}>
-                  <a 
-                    href={`/post/${post.id}`} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className={styles.postLink}
+                <td style={styles.td}>
+                  {totalPosts - ((currentPage - 1) * pageSize + index)}
+                </td>
+                <td style={styles.td}>
+                  <button
+                    onClick={() => handlePostClick(post.id)}
+                    style={styles.linkButton}
                   >
                     {post.title}
-                  </a>
+                  </button>
                 </td>
-                <td>{post.author_name}</td>
-                <td>{new Date(post.created_at).toLocaleDateString()}</td>
-                <td>
-                  <select
-                    value={post.download_permission}
-                    onChange={(e) => handlePermissionChange(post.id, e.target.value)}
-                    className={styles.permissionSelect}
-                  >
-                    <option value="all">모든 사용자</option>
-                    <option value="verified">인증된 사용자</option>
-                    <option value="admin">관리자만</option>
-                  </select>
+                <td style={styles.td}>
+                  {new Date(post.created_at).toLocaleDateString()}
+                </td>
+                <td style={styles.td}>
+                  <div style={styles.radioGroup}>
+                    <label style={styles.radioLabel}>
+                      <input
+                        type="radio"
+                        name={`permission-${post.id}`}
+                        value="verified_user"
+                        checked={post.download_permission === 'verified_user'}
+                        onChange={() => handlePermissionChange(post.id, 'verified_user')}
+                      />
+                      인증회원
+                    </label>
+                    <label style={styles.radioLabel}>
+                      <input
+                        type="radio"
+                        name={`permission-${post.id}`}
+                        value="user"
+                        checked={post.download_permission === 'user'}
+                        onChange={() => handlePermissionChange(post.id, 'user')}
+                      />
+                      일반회원
+                    </label>
+                    <label style={styles.radioLabel}>
+                      <input
+                        type="radio"
+                        name={`permission-${post.id}`}
+                        value="guest"
+                        checked={post.download_permission === 'guest'}
+                        onChange={() => handlePermissionChange(post.id, 'guest')}
+                      />
+                      모두
+                    </label>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -238,44 +260,74 @@ const AdminPosts = () => {
         </table>
       </div>
 
-      {/* 페이지네이션 */}
-      <div className={styles.pagination}>
-        <button
-          onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-          disabled={currentPage === 1}
-          className={styles.pageButton}
-        >
-          이전
-        </button>
-        <span className={styles.pageInfo}>
-          {currentPage} / {Math.ceil(totalPosts / pageSize)}
-        </span>
-        <button
-          onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(totalPosts / pageSize)))}
-          disabled={currentPage >= Math.ceil(totalPosts / pageSize)}
-          className={styles.pageButton}
-        >
-          다음
-        </button>
+      <div style={styles.pagination}>
+        {currentPage > 1 && (
+          <button
+            onClick={() => setCurrentPage(currentPage - 1)}
+            style={styles.pageButton}
+          >
+            이전
+          </button>
+        )}
+        {Array.from({ length: totalPages }, (_, i) => i + 1)
+          .filter(page => {
+            // 현재 페이지 주변 2페이지와 처음/끝 페이지만 표시
+            return (
+              page === 1 ||
+              page === totalPages ||
+              (page >= currentPage - 2 && page <= currentPage + 2)
+            );
+          })
+          .map((page, index, array) => {
+            // 페이지 번호 사이에 ... 표시
+            if (index > 0 && page - array[index - 1] > 1) {
+              return (
+                <React.Fragment key={`ellipsis-${page}`}>
+                  <span style={styles.ellipsis}>...</span>
+                  <button
+                    onClick={() => setCurrentPage(page)}
+                    style={{
+                      ...styles.pageButton,
+                      backgroundColor: currentPage === page ? '#0070f3' : '#fff',
+                      color: currentPage === page ? '#fff' : '#000',
+                    }}
+                  >
+                    {page}
+                  </button>
+                </React.Fragment>
+              );
+            }
+            return (
+              <button
+                key={page}
+                onClick={() => setCurrentPage(page)}
+                style={{
+                  ...styles.pageButton,
+                  backgroundColor: currentPage === page ? '#0070f3' : '#fff',
+                  color: currentPage === page ? '#fff' : '#000',
+                }}
+              >
+                {page}
+              </button>
+            );
+          })}
+        {currentPage < totalPages && (
+          <button
+            onClick={() => setCurrentPage(currentPage + 1)}
+            style={styles.pageButton}
+          >
+            다음
+          </button>
+        )}
       </div>
 
-      {/* 저장 버튼 */}
-      <div className={styles.saveSection}>
-        <button
-          onClick={handleSave}
-          disabled={isSubmitting}
-          className={styles.saveButton}
-        >
-          {isSubmitting ? '저장 중...' : '변경사항 저장'}
-        </button>
-      </div>
-
-      {/* 에러 메시지 */}
-      {error && (
-        <div className={styles.errorMessage}>
-          {error}
-        </div>
-      )}
+      <button
+        onClick={handleSave}
+        disabled={isSubmitting}
+        style={styles.saveButton}
+      >
+        {isSubmitting ? '저장 중...' : '변경사항 저장'}
+      </button>
 
       {showModal && selectedPost && (
         <div style={styles.modalOverlay}>
@@ -311,28 +363,21 @@ const styles = {
     margin: '40px auto',
     padding: '20px',
   },
-  title: {
-    fontSize: '24px',
-    fontWeight: 'bold',
-    marginBottom: '20px',
-  },
-  controls: {
+  header: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: '20px',
   },
-  searchBox: {
-    flex: 1,
+  controls: {
+    display: 'flex',
+    gap: '10px',
   },
   searchInput: {
     padding: '8px 12px',
     borderRadius: '4px',
     border: '1px solid #ddd',
-    width: '100%',
-  },
-  pageSizeControl: {
-    flex: 1,
+    width: '200px',
   },
   pageSizeSelect: {
     padding: '8px 12px',
@@ -349,13 +394,17 @@ const styles = {
     backgroundColor: '#fff',
     boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
   },
-  titleCell: {
+  th: {
     padding: '12px',
     textAlign: 'left',
     backgroundColor: '#f5f5f5',
     borderBottom: '2px solid #ddd',
   },
-  postLink: {
+  td: {
+    padding: '12px',
+    borderBottom: '1px solid #ddd',
+  },
+  linkButton: {
     background: 'none',
     border: 'none',
     color: '#0070f3',
@@ -364,10 +413,24 @@ const styles = {
     fontSize: 'inherit',
     textAlign: 'left',
   },
-  permissionSelect: {
-    padding: '8px 12px',
+  radioGroup: {
+    display: 'flex',
+    gap: '15px',
+  },
+  radioLabel: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '5px',
+    cursor: 'pointer',
+  },
+  saveButton: {
+    padding: '10px 20px',
+    backgroundColor: '#0070f3',
+    color: '#fff',
+    border: 'none',
     borderRadius: '4px',
-    border: '1px solid #ddd',
+    cursor: 'pointer',
+    fontSize: '16px',
   },
   pagination: {
     display: 'flex',
@@ -385,27 +448,9 @@ const styles = {
     backgroundColor: '#fff',
     transition: 'all 0.2s ease',
   },
-  pageInfo: {
-    padding: '0 10px',
+  ellipsis: {
+    padding: '0 8px',
     color: '#666',
-  },
-  saveSection: {
-    display: 'flex',
-    justifyContent: 'center',
-    marginBottom: '20px',
-  },
-  saveButton: {
-    padding: '10px 20px',
-    backgroundColor: '#0070f3',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    fontSize: '16px',
-  },
-  errorMessage: {
-    color: 'red',
-    marginBottom: '20px',
   },
   modalOverlay: {
     position: 'fixed',
