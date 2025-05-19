@@ -159,11 +159,26 @@ const UserInfo = () => {
   return (
     <div className={styles.container}>
       <div className={styles.userInfoCard}>
-        <h1>내 정보</h1>
+        <div className={styles.profileSection}>
+          {userInfo.profile_picture ? (
+            <img 
+              src={userInfo.profile_picture} 
+              alt="Profile" 
+              className={styles.profileImage}
+            />
+          ) : (
+            <div className={styles.profilePlaceholder}>
+              {userInfo.nickname ? userInfo.nickname.charAt(0).toUpperCase() : '?'}
+            </div>
+          )}
+          <h1>{userInfo.nickname || "Unknown User"}</h1>
+        </div>
         <div className={styles.infoSection}>
           <p><strong>이메일:</strong> {userInfo.email}</p>
           <p><strong>역할:</strong> {role === 'admin' ? '관리자' : '일반 사용자'}</p>
           <p><strong>가입일:</strong> {new Date(userInfo.join_date).toLocaleDateString()}</p>
+          {userInfo.hobby && <p><strong>취미:</strong> {userInfo.hobby}</p>}
+          {userInfo.status_message && <p><strong>상태 메시지:</strong> {userInfo.status_message}</p>}
         </div>
         <div className={styles.buttonGroup}>
           <button 
