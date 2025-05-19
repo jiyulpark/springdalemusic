@@ -101,6 +101,51 @@ const Navbar = () => {
           🚀 <span>쿠팡</span>
         </a>
       </div>
+
+      {/* 모바일 메뉴 */}
+      <div className={`${styles.mobileMenu} ${isMenuOpen ? styles.mobileMenuOpen : ''}`}>
+        <div className={styles.mobileMenuHeader}>
+          <Link href="/" className={styles.mobileMenuLink}>
+            🏠 홈으로 가기
+          </Link>
+          {isLoggedIn && (
+            <Link href="/userinfo" className={styles.mobileMenuLink}>
+              👤 내 프로필
+            </Link>
+          )}
+        </div>
+        <div className={styles.mobileMenuContent}>
+          {isLoggedIn ? (
+            <>
+              {isVerified && (
+                <Link href="/post/new" className={styles.mobileMenuLink}>
+                  ✏️ 게시글 작성
+                </Link>
+              )}
+              {isAdmin && (
+                <>
+                  <Link href="/admin/users" className={styles.mobileMenuLink}>
+                    🔧 관리자
+                  </Link>
+                  <Link href="/admin/posts" className={styles.mobileMenuLink}>
+                    📝 게시글 관리
+                  </Link>
+                </>
+              )}
+              <button onClick={handleLogout} className={styles.mobileMenuLink}>
+                🔒 로그아웃
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={() => router.push('/auth/login')}
+              className={styles.mobileMenuLink}
+            >
+              🔑 로그인
+            </button>
+          )}
+        </div>
+      </div>
     </header>
   );
 };

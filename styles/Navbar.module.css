@@ -127,27 +127,66 @@
   color: #333;
 }
 
+.mobileMenu {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 250px;
+  height: 100vh;
+  background: white;
+  box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+  z-index: 1001;
+  transform: translateX(-100%);
+  transition: transform 0.3s ease;
+}
+
+.mobileMenuOpen {
+  transform: translateX(0);
+}
+
+.mobileMenuHeader {
+  padding: 1rem;
+  border-bottom: 1px solid #eee;
+  background: #f8f9fa;
+}
+
+.mobileMenuContent {
+  padding: 1rem;
+}
+
+.mobileMenuLink {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem;
+  color: #333;
+  text-decoration: none;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+  font-size: 1rem;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.mobileMenuLink:hover {
+  background-color: #f5f5f5;
+}
+
 /* 모바일 반응형 스타일 */
 @media (max-width: 768px) {
   .mobileMenuButton {
     display: block;
   }
 
-  .navLeft, .navRight {
-    display: none;
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    background: white;
-    flex-direction: column;
-    padding: 1rem;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    z-index: 1000;
+  .mobileMenu {
+    display: block;
   }
 
-  .mobileMenuOpen {
-    display: flex;
+  .navLeft, .navRight {
+    display: none;
   }
 
   .navCenter {
@@ -215,5 +254,14 @@
 
   .subNavLink span {
     font-size: 0.65rem;
+  }
+
+  .mobileMenu {
+    width: 200px;
+  }
+
+  .mobileMenuLink {
+    font-size: 0.9rem;
+    padding: 0.6rem;
   }
 }
