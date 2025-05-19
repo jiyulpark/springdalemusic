@@ -48,6 +48,14 @@ const Navbar = () => {
               {isAdmin && (
                 <Link href="/admin/users" className={styles.adminButton}>🔧 관리자</Link>
               )}
+              <Link href="/mypage" style={styles.navLink}>
+                마이페이지
+              </Link>
+              {session.user.user_metadata.role === 'admin' && (
+                <Link href="/admin/posts" style={styles.navLink}>
+                  게시글 관리
+                </Link>
+              )}
               <button onClick={handleLogout} className={styles.logoutButton}>로그아웃</button>
             </>
           ) : (
