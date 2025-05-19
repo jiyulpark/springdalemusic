@@ -98,7 +98,7 @@ const Home = () => {
 
     if (selectedCategories.length > 0) {
       filtered = filtered.filter(post =>
-        selectedCategories.some(catId => post.category_ids?.includes(catId))
+        selectedCategories.every(catId => post.category_ids?.includes(catId))
       );
     }
 
