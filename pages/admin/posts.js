@@ -43,6 +43,8 @@ const AdminPosts = () => {
   const fetchPosts = useCallback(async () => {
     try {
       setLoading(true);
+      setError('');
+
       // 전체 게시글 수 조회
       let countQuery = supabase
         .from('posts')
@@ -68,7 +70,12 @@ const AdminPosts = () => {
 
       const { data, error } = await query;
       if (error) throw error;
-      setPosts(data);
+
+      // 원본 권한 정보 추가
+      setPosts(data.map(post => ({
+        ...post,
+        original_permission: post.download_permission
+      })));
     } catch (error) {
       console.error('게시글 불러오기 실패:', error);
       setError('게시글을 불러오는 중 오류가 발생했습니다.');
@@ -94,20 +101,43 @@ const AdminPosts = () => {
   const handleSave = async () => {
     try {
       setIsSubmitting(true);
-      const updates = posts.map(post => ({
-        id: post.id,
-        download_permission: post.download_permission
-      }));
+      setError('');
 
-      const { error } = await supabase
-        .from('posts')
-        .upsert(updates);
+      // 변경된 게시글만 필터링
+      const updates = posts
+        .filter(post => post.download_permission !== post.original_permission)
+        .map(post => ({
+          id: post.id,
+          download_permission: post.download_permission
+        }));
 
-      if (error) throw error;
+      if (updates.length === 0) {
+        alert('변경된 내용이 없습니다.');
+        return;
+      }
+
+      // 각 게시글을 개별적으로 업데이트
+      for (const update of updates) {
+        const { error } = await supabase
+          .from('posts')
+          .update({ download_permission: update.download_permission })
+          .eq('id', update.id);
+
+        if (error) {
+          throw new Error(`게시글 ID ${update.id} 업데이트 실패: ${error.message}`);
+        }
+      }
+
+      // 업데이트 성공 후 원본 권한 업데이트
+      setPosts(posts.map(post => ({
+        ...post,
+        original_permission: post.download_permission
+      })));
+
       alert('변경사항이 저장되었습니다.');
     } catch (error) {
       console.error('저장 실패:', error);
-      setError('변경사항 저장 중 오류가 발생했습니다.');
+      setError(error.message || '변경사항 저장 중 오류가 발생했습니다.');
     } finally {
       setIsSubmitting(false);
     }
