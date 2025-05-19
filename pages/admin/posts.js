@@ -11,6 +11,10 @@ const AdminPosts = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [session, setSession] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPosts, setTotalPosts] = useState(0);
+  const [selectedPost, setSelectedPost] = useState(null);
+  const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
     const fetchSession = async () => {
@@ -39,16 +43,29 @@ const AdminPosts = () => {
     if (session) {
       fetchPosts();
     }
-  }, [session, pageSize, searchTerm]);
+  }, [session, pageSize, searchTerm, currentPage]);
 
   const fetchPosts = async () => {
     try {
       setLoading(true);
+      // 전체 게시글 수 조회
+      let countQuery = supabase
+        .from('posts')
+        .select('*', { count: 'exact', head: true });
+
+      if (searchTerm) {
+        countQuery = countQuery.ilike('title', `%${searchTerm}%`);
+      }
+
+      const { count } = await countQuery;
+      setTotalPosts(count);
+
+      // 페이지네이션된 게시글 조회
       let query = supabase
         .from('posts')
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(pageSize);
+        .range((currentPage - 1) * pageSize, currentPage * pageSize - 1);
 
       if (searchTerm) {
         query = query.ilike('title', `%${searchTerm}%`);
@@ -95,6 +112,25 @@ const AdminPosts = () => {
     }
   };
 
+  const handlePostClick = async (postId) => {
+    try {
+      const { data, error } = await supabase
+        .from('posts')
+        .select('*')
+        .eq('id', postId)
+        .single();
+
+      if (error) throw error;
+      setSelectedPost(data);
+      setShowModal(true);
+    } catch (error) {
+      console.error('게시글 불러오기 실패:', error);
+      setError('게시글을 불러오는 중 오류가 발생했습니다.');
+    }
+  };
+
+  const totalPages = Math.ceil(totalPosts / pageSize);
+
   if (loading) return <div>로딩 중...</div>;
   if (error) return <div style={{ color: 'red' }}>{error}</div>;
 
@@ -112,7 +148,10 @@ const AdminPosts = () => {
           />
           <select 
             value={pageSize} 
-            onChange={(e) => setPageSize(Number(e.target.value))}
+            onChange={(e) => {
+              setPageSize(Number(e.target.value));
+              setCurrentPage(1);
+            }}
             style={styles.pageSizeSelect}
           >
             <option value={20}>20개씩 보기</option>
@@ -136,14 +175,12 @@ const AdminPosts = () => {
             {posts.map((post) => (
               <tr key={post.id}>
                 <td style={styles.td}>
-                  <a 
-                    href={`/post/${post.id}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={styles.link}
+                  <button
+                    onClick={() => handlePostClick(post.id)}
+                    style={styles.linkButton}
                   >
                     {post.title}
-                  </a>
+                  </button>
                 </td>
                 <td style={styles.td}>
                   {new Date(post.created_at).toLocaleDateString()}
@@ -188,6 +225,22 @@ const AdminPosts = () => {
         </table>
       </div>
 
+      <div style={styles.pagination}>
+        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+          <button
+            key={page}
+            onClick={() => setCurrentPage(page)}
+            style={{
+              ...styles.pageButton,
+              backgroundColor: currentPage === page ? '#0070f3' : '#fff',
+              color: currentPage === page ? '#fff' : '#000',
+            }}
+          >
+            {page}
+          </button>
+        ))}
+      </div>
+
       <button
         onClick={handleSave}
         disabled={isSubmitting}
@@ -195,6 +248,31 @@ const AdminPosts = () => {
       >
         {isSubmitting ? '저장 중...' : '변경사항 저장'}
       </button>
+
+      {showModal && selectedPost && (
+        <div style={styles.modalOverlay}>
+          <div style={styles.modal}>
+            <div style={styles.modalHeader}>
+              <h2>{selectedPost.title}</h2>
+              <button
+                onClick={() => setShowModal(false)}
+                style={styles.closeButton}
+              >
+                ×
+              </button>
+            </div>
+            <div style={styles.modalContent}>
+              <div style={styles.postInfo}>
+                <p>작성자: {selectedPost.author_name}</p>
+                <p>작성일: {new Date(selectedPost.created_at).toLocaleString()}</p>
+              </div>
+              <div style={styles.postContent}>
+                {selectedPost.content}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -246,9 +324,14 @@ const styles = {
     padding: '12px',
     borderBottom: '1px solid #ddd',
   },
-  link: {
+  linkButton: {
+    background: 'none',
+    border: 'none',
     color: '#0070f3',
-    textDecoration: 'none',
+    cursor: 'pointer',
+    padding: 0,
+    fontSize: 'inherit',
+    textAlign: 'left',
   },
   radioGroup: {
     display: 'flex',
@@ -268,6 +351,64 @@ const styles = {
     borderRadius: '4px',
     cursor: 'pointer',
     fontSize: '16px',
+  },
+  pagination: {
+    display: 'flex',
+    justifyContent: 'center',
+    gap: '5px',
+    marginBottom: '20px',
+  },
+  pageButton: {
+    padding: '8px 12px',
+    border: '1px solid #ddd',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    minWidth: '40px',
+  },
+  modalOverlay: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  modal: {
+    backgroundColor: '#fff',
+    borderRadius: '8px',
+    width: '80%',
+    maxWidth: '800px',
+    maxHeight: '80vh',
+    overflow: 'auto',
+  },
+  modalHeader: {
+    padding: '20px',
+    borderBottom: '1px solid #ddd',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  closeButton: {
+    background: 'none',
+    border: 'none',
+    fontSize: '24px',
+    cursor: 'pointer',
+    padding: '0 10px',
+  },
+  modalContent: {
+    padding: '20px',
+  },
+  postInfo: {
+    marginBottom: '20px',
+    color: '#666',
+  },
+  postContent: {
+    whiteSpace: 'pre-wrap',
+    lineHeight: '1.6',
   },
 };
 
