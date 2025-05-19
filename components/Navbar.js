@@ -51,9 +51,6 @@ const Navbar = () => {
                   <Link href="/admin/posts" className={styles.adminButton}>📝 게시글 관리</Link>
                 </>
               )}
-              <Link href="/mypage" className={styles.navLink}>
-                마이페이지
-              </Link>
               <button onClick={handleLogout} className={styles.logoutButton}>로그아웃</button>
             </>
           ) : (

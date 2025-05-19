@@ -166,14 +166,18 @@ const AdminPosts = () => {
         <table style={styles.table}>
           <thead>
             <tr>
+              <th style={styles.th}>번호</th>
               <th style={styles.th}>제목</th>
               <th style={styles.th}>작성일</th>
               <th style={styles.th}>다운로드 권한</th>
             </tr>
           </thead>
           <tbody>
-            {posts.map((post) => (
+            {posts.map((post, index) => (
               <tr key={post.id}>
+                <td style={styles.td}>
+                  {totalPosts - ((currentPage - 1) * pageSize + index)}
+                </td>
                 <td style={styles.td}>
                   <button
                     onClick={() => handlePostClick(post.id)}
@@ -226,19 +230,64 @@ const AdminPosts = () => {
       </div>
 
       <div style={styles.pagination}>
-        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+        {currentPage > 1 && (
           <button
-            key={page}
-            onClick={() => setCurrentPage(page)}
-            style={{
-              ...styles.pageButton,
-              backgroundColor: currentPage === page ? '#0070f3' : '#fff',
-              color: currentPage === page ? '#fff' : '#000',
-            }}
+            onClick={() => setCurrentPage(currentPage - 1)}
+            style={styles.pageButton}
           >
-            {page}
+            이전
           </button>
-        ))}
+        )}
+        {Array.from({ length: totalPages }, (_, i) => i + 1)
+          .filter(page => {
+            // 현재 페이지 주변 2페이지와 처음/끝 페이지만 표시
+            return (
+              page === 1 ||
+              page === totalPages ||
+              (page >= currentPage - 2 && page <= currentPage + 2)
+            );
+          })
+          .map((page, index, array) => {
+            // 페이지 번호 사이에 ... 표시
+            if (index > 0 && page - array[index - 1] > 1) {
+              return (
+                <React.Fragment key={`ellipsis-${page}`}>
+                  <span style={styles.ellipsis}>...</span>
+                  <button
+                    onClick={() => setCurrentPage(page)}
+                    style={{
+                      ...styles.pageButton,
+                      backgroundColor: currentPage === page ? '#0070f3' : '#fff',
+                      color: currentPage === page ? '#fff' : '#000',
+                    }}
+                  >
+                    {page}
+                  </button>
+                </React.Fragment>
+              );
+            }
+            return (
+              <button
+                key={page}
+                onClick={() => setCurrentPage(page)}
+                style={{
+                  ...styles.pageButton,
+                  backgroundColor: currentPage === page ? '#0070f3' : '#fff',
+                  color: currentPage === page ? '#fff' : '#000',
+                }}
+              >
+                {page}
+              </button>
+            );
+          })}
+        {currentPage < totalPages && (
+          <button
+            onClick={() => setCurrentPage(currentPage + 1)}
+            style={styles.pageButton}
+          >
+            다음
+          </button>
+        )}
       </div>
 
       <button
@@ -355,6 +404,7 @@ const styles = {
   pagination: {
     display: 'flex',
     justifyContent: 'center',
+    alignItems: 'center',
     gap: '5px',
     marginBottom: '20px',
   },
@@ -364,6 +414,12 @@ const styles = {
     borderRadius: '4px',
     cursor: 'pointer',
     minWidth: '40px',
+    backgroundColor: '#fff',
+    transition: 'all 0.2s ease',
+  },
+  ellipsis: {
+    padding: '0 8px',
+    color: '#666',
   },
   modalOverlay: {
     position: 'fixed',
