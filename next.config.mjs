@@ -20,6 +20,9 @@ const nextConfig = {
     }
     return config;
   },
+  images: {
+    domains: ['springdalemusic.s3.ap-northeast-2.amazonaws.com'],
+  },
 };
 
 export default nextConfig;

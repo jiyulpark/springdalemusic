@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import React from 'react';
 import { supabase } from '../../lib/supabase';
 import { useRouter } from 'next/router';
 
@@ -37,13 +38,7 @@ const AdminPosts = () => {
       }
     };
     fetchSession();
-  }, []);
-
-  useEffect(() => {
-    if (session) {
-      fetchPosts();
-    }
-  }, [session, pageSize, searchTerm, currentPage]);
+  }, [router]);
 
   const fetchPosts = async () => {
     try {
@@ -81,6 +76,12 @@ const AdminPosts = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (session) {
+      fetchPosts();
+    }
+  }, [session, pageSize, searchTerm, currentPage, fetchPosts]);
 
   const handlePermissionChange = (postId, newPermission) => {
     setPosts(posts.map(post => 
