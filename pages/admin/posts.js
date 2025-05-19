@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import React from 'react';
 import { supabase } from '../../lib/supabase';
 import { useRouter } from 'next/router';
@@ -40,7 +40,7 @@ const AdminPosts = () => {
     fetchSession();
   }, [router]);
 
-  const fetchPosts = async () => {
+  const fetchPosts = useCallback(async () => {
     try {
       setLoading(true);
       // 전체 게시글 수 조회
@@ -75,13 +75,13 @@ const AdminPosts = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, pageSize, searchTerm]);
 
   useEffect(() => {
     if (session) {
       fetchPosts();
     }
-  }, [session, pageSize, searchTerm, currentPage, fetchPosts]);
+  }, [session, fetchPosts]);
 
   const handlePermissionChange = (postId, newPermission) => {
     setPosts(posts.map(post => 
