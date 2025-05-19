@@ -192,49 +192,43 @@ const Home = () => {
 
   return (
     <div className={styles.container}>
-      <div className={styles.filters}>
-        <input
-          type="text"
-          placeholder="검색어를 입력하세요..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className={styles.searchInput}
-        />
-        
-        <div className={styles.filterGroup}>
-          <select 
-            value={sortOption} 
-            onChange={(e) => setSortOption(e.target.value)}
-            className={styles.select}
-          >
-            <option value="latest">최신순</option>
-            <option value="likes">좋아요순</option>
-            <option value="downloads">다운로드순</option>
-          </select>
+      <input
+        type="text"
+        placeholder="게시글 검색..."
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        className={styles.searchInput}
+      />
 
-          <select 
-            value={downloadPermissionFilter} 
-            onChange={(e) => setDownloadPermissionFilter(e.target.value)}
-            className={styles.select}
+      <div className={styles.categoryFilter}>
+        <button
+          className={selectedCategories.length === 0 ? styles.activeCategory : ''}
+          onClick={() => setSelectedCategories([])}
+        >
+          전체
+        </button>
+        {categories.map(cat => (
+          <button
+            key={cat.id}
+            className={selectedCategories.includes(cat.id) ? styles.activeCategory : ''}
+            onClick={() => toggleCategory(cat.id)}
+            data-type={cat.type}
           >
-            <option value="all">모든 권한</option>
-            <option value="guest">모두 가능</option>
-            <option value="user">일반 유저 이상</option>
-            <option value="verified_user">인증 유저만</option>
-          </select>
-        </div>
+            {cat.name}
+          </button>
+        ))}
+      </div>
 
-        <div className={styles.categories}>
-          {categories.filter(c => c.type === 'type').map(c => (
-            <button 
-              key={c.id} 
-              onClick={() => toggleCategory(c.id)} 
-              className={`${styles.categoryButton} ${selectedCategories.includes(c.id) ? styles.selected : ''}`}
-            >
-              {c.name}
-            </button>
-          ))}
-        </div>
+      <div className={styles.sortContainer}>
+        <select
+          className={styles.sortSelect}
+          value={sortOption}
+          onChange={(e) => setSortOption(e.target.value)}
+        >
+          <option value="latest">최신순</option>
+          <option value="likes">좋아요순</option>
+          <option value="downloads">다운로드순</option>
+        </select>
       </div>
 
       {currentPosts.length === 0 ? (

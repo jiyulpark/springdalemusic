@@ -16,6 +16,7 @@ const AdminPosts = () => {
   const [totalPosts, setTotalPosts] = useState(0);
   const [selectedPost, setSelectedPost] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [downloadPermissionFilter, setDownloadPermissionFilter] = useState('all');
 
   useEffect(() => {
     const fetchSession = async () => {
@@ -54,6 +55,10 @@ const AdminPosts = () => {
         countQuery = countQuery.ilike('title', `%${searchTerm}%`);
       }
 
+      if (downloadPermissionFilter !== 'all') {
+        countQuery = countQuery.eq('download_permission', downloadPermissionFilter);
+      }
+
       const { count } = await countQuery;
       setTotalPosts(count);
 
@@ -66,6 +71,10 @@ const AdminPosts = () => {
 
       if (searchTerm) {
         query = query.ilike('title', `%${searchTerm}%`);
+      }
+
+      if (downloadPermissionFilter !== 'all') {
+        query = query.eq('download_permission', downloadPermissionFilter);
       }
 
       const { data, error } = await query;
@@ -82,7 +91,7 @@ const AdminPosts = () => {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, pageSize, searchTerm]);
+  }, [currentPage, pageSize, searchTerm, downloadPermissionFilter]);
 
   useEffect(() => {
     if (session) {
@@ -177,6 +186,16 @@ const AdminPosts = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
             style={styles.searchInput}
           />
+          <select
+            value={downloadPermissionFilter}
+            onChange={(e) => setDownloadPermissionFilter(e.target.value)}
+            style={styles.select}
+          >
+            <option value="all">모든 권한</option>
+            <option value="guest">모두 가능</option>
+            <option value="user">일반 유저 이상</option>
+            <option value="verified_user">인증 유저만</option>
+          </select>
           <select
             value={pageSize}
             onChange={(e) => {
@@ -378,6 +397,11 @@ const styles = {
     borderRadius: '4px',
     border: '1px solid #ddd',
     width: '200px',
+  },
+  select: {
+    padding: '8px 12px',
+    borderRadius: '4px',
+    border: '1px solid #ddd',
   },
   pageSizeSelect: {
     padding: '8px 12px',
