@@ -6,11 +6,11 @@
   
   .searchInput {
     width: 100%;
-    padding: 12px;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
     font-size: 16px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    margin-bottom: 20px;
   }
   
   .grid {
@@ -104,5 +104,60 @@
   .sortSelect:focus {
     border-color: #333;
     box-shadow: 0 0 0 2px rgba(0,0,0,0.1);
+  }
+  
+  .filters {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
+  
+  .filterGroup {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+  }
+  
+  .select {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: white;
+    font-size: 14px;
+    cursor: pointer;
+    flex: 1;
+  }
+  
+  .select:hover {
+    border-color: #0070f3;
+  }
+  
+  .categories {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  
+  .categoryButton {
+    padding: 6px 12px;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    background: white;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s ease;
+  }
+  
+  .categoryButton:hover {
+    border-color: #0070f3;
+    color: #0070f3;
+  }
+  
+  .categoryButton.selected {
+    background: #0070f3;
+    color: white;
+    border-color: #0070f3;
   }
   
