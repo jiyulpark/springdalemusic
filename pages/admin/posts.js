@@ -18,6 +18,8 @@ const AdminPosts = () => {
   const [selectedPost, setSelectedPost] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [downloadPermissionFilter, setDownloadPermissionFilter] = useState('all');
+  const [selectedPosts, setSelectedPosts] = useState(new Set());
+  const [bulkPermission, setBulkPermission] = useState('guest');
 
   // 디바운스 효과
   useEffect(() => {
@@ -179,6 +181,58 @@ const AdminPosts = () => {
     }
   };
 
+  const handleSelectAll = (checked) => {
+    if (checked) {
+      setSelectedPosts(new Set(posts.map(post => post.id)));
+    } else {
+      setSelectedPosts(new Set());
+    }
+  };
+
+  const handleSelectPost = (postId, checked) => {
+    const newSelectedPosts = new Set(selectedPosts);
+    if (checked) {
+      newSelectedPosts.add(postId);
+    } else {
+      newSelectedPosts.delete(postId);
+    }
+    setSelectedPosts(newSelectedPosts);
+  };
+
+  const handleBulkPermissionChange = async () => {
+    if (selectedPosts.size === 0) {
+      alert('선택된 게시글이 없습니다.');
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      setError('');
+
+      const { error } = await supabase
+        .from('posts')
+        .update({ download_permission: bulkPermission })
+        .in('id', Array.from(selectedPosts));
+
+      if (error) throw error;
+
+      // 로컬 상태 업데이트
+      setPosts(posts.map(post => 
+        selectedPosts.has(post.id)
+          ? { ...post, download_permission: bulkPermission, original_permission: bulkPermission }
+          : post
+      ));
+
+      setSelectedPosts(new Set());
+      alert('선택된 게시글들의 권한이 변경되었습니다.');
+    } catch (error) {
+      console.error('일괄 변경 실패:', error);
+      setError('권한 변경 중 오류가 발생했습니다.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const totalPages = Math.ceil(totalPosts / pageSize);
 
   if (loading) return <div>로딩 중...</div>;
@@ -189,6 +243,24 @@ const AdminPosts = () => {
       <div style={styles.header}>
         <h1>게시글 관리</h1>
         <div style={styles.controls}>
+          <div style={styles.bulkControls}>
+            <select
+              value={bulkPermission}
+              onChange={(e) => setBulkPermission(e.target.value)}
+              style={styles.select}
+            >
+              <option value="guest">모두 가능</option>
+              <option value="user">일반 유저 이상</option>
+              <option value="verified_user">인증 유저만</option>
+            </select>
+            <button
+              onClick={handleBulkPermissionChange}
+              disabled={isSubmitting || selectedPosts.size === 0}
+              style={styles.bulkButton}
+            >
+              선택된 게시글 일괄 적용
+            </button>
+          </div>
           <input
             type="text"
             placeholder="게시글 검색..."
@@ -226,6 +298,13 @@ const AdminPosts = () => {
         <table style={styles.table}>
           <thead>
             <tr>
+              <th style={styles.th}>
+                <input
+                  type="checkbox"
+                  checked={selectedPosts.size === posts.length}
+                  onChange={(e) => handleSelectAll(e.target.checked)}
+                />
+              </th>
               <th style={styles.th}>번호</th>
               <th style={styles.th}>제목</th>
               <th style={styles.th}>작성일</th>
@@ -235,6 +314,13 @@ const AdminPosts = () => {
           <tbody>
             {posts.map((post, index) => (
               <tr key={post.id}>
+                <td style={styles.td}>
+                  <input
+                    type="checkbox"
+                    checked={selectedPosts.has(post.id)}
+                    onChange={(e) => handleSelectPost(post.id, e.target.checked)}
+                  />
+                </td>
                 <td style={styles.td}>
                   {totalPosts - ((currentPage - 1) * pageSize + index)}
                 </td>
@@ -530,6 +616,24 @@ const styles = {
   postContent: {
     whiteSpace: 'pre-wrap',
     lineHeight: '1.6',
+  },
+  bulkControls: {
+    display: 'flex',
+    gap: '10px',
+    alignItems: 'center',
+    marginBottom: '10px',
+  },
+  bulkButton: {
+    padding: '8px 16px',
+    backgroundColor: '#4CAF50',
+    color: 'white',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    ':disabled': {
+      backgroundColor: '#cccccc',
+      cursor: 'not-allowed',
+    },
   },
 };
 
