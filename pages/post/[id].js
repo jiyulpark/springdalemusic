@@ -300,13 +300,13 @@ if (filesData) {
     const lastPage = parseInt(localStorage.getItem('lastViewedPage')) || 1;
     console.log('목록으로 돌아가기 - 저장된 페이지:', lastPage);
     
-    // 브라우저의 뒤로가기 히스토리에 현재 페이지 추가
-    window.history.pushState({ page: lastPage }, '');
+    // 로딩 상태를 false로 설정
+    setLoading(false);
     
     router.push({
       pathname: '/',
       query: { page: lastPage }
-    }, undefined, { shallow: true });
+    });
   };
 
   // 브라우저의 뒤로가기 버튼 처리

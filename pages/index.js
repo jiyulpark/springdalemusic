@@ -21,7 +21,7 @@ const Home = () => {
   const [downloadPermissionFilter, setDownloadPermissionFilter] = useState('all');
   const postsPerPage = 20;
 
-  // 초기 페이지 로드 시 URL 쿼리 파라미터 확인
+  // URL 쿼리 파라미터에서 페이지 번호 가져오기
   useEffect(() => {
     if (router.isReady) {
       const page = parseInt(router.query.page) || 1;
@@ -126,6 +126,7 @@ const Home = () => {
     return () => { mounted = false; };
   }, [sessionLoading, session]);
 
+  // 검색 및 필터링 로직
   useEffect(() => {
     let filtered = [...posts];
 
@@ -155,7 +156,6 @@ const Home = () => {
     }
 
     setFilteredPosts(filtered);
-    setCurrentPage(1);
   }, [searchQuery, selectedCategories, sortOption, downloadPermissionFilter, posts]);
 
   const toggleCategory = (catId) => {
