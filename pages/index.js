@@ -21,24 +21,25 @@ const Home = () => {
   const [downloadPermissionFilter, setDownloadPermissionFilter] = useState('all');
   const postsPerPage = 20;
 
-  // URL 쿼리 파라미터에서 페이지 번호 가져오기
+  // 초기 페이지 로드 시 URL 쿼리 파라미터 확인
   useEffect(() => {
     if (router.isReady) {
       const page = parseInt(router.query.page) || 1;
       setCurrentPage(page);
+      localStorage.setItem('lastViewedPage', page);
     }
   }, [router.isReady, router.query.page]);
 
-  // 페이지 변경 시 URL 업데이트
-  useEffect(() => {
-    if (router.isReady) {
-      const query = { ...router.query, page: currentPage };
-      router.push({
-        pathname: router.pathname,
-        query: query
-      }, undefined, { shallow: true });
-    }
-  }, [currentPage, router.isReady]);
+  // 페이지 변경 시 URL과 localStorage 업데이트
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    localStorage.setItem('lastViewedPage', page);
+    router.push({
+      pathname: router.pathname,
+      query: { ...router.query, page }
+    }, undefined, { shallow: true });
+    window.scrollTo(0, 0);
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -138,12 +139,6 @@ const Home = () => {
     setFilteredPosts(filtered);
     setCurrentPage(1);
   }, [searchQuery, selectedCategories, sortOption, downloadPermissionFilter, posts]);
-
-  useEffect(() => {
-    if (currentPage) {
-      localStorage.setItem('lastViewedPage', currentPage);
-    }
-  }, [currentPage]);
 
   const toggleCategory = (catId) => {
     setSelectedCategories(prev =>
@@ -283,10 +278,7 @@ const Home = () => {
             <button
               key={index + 1}
               className={`${styles.pageButton} ${currentPage === index + 1 ? styles.activePage : ''}`}
-              onClick={() => {
-                setCurrentPage(index + 1);
-                window.scrollTo(0, 0);
-              }}
+              onClick={() => handlePageChange(index + 1)}
             >
               {index + 1}
             </button>

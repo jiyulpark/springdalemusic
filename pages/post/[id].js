@@ -297,7 +297,7 @@ if (filesData) {
   };
 
   const handleBackToList = () => {
-    const lastPage = localStorage.getItem('lastViewedPage') || 1;
+    const lastPage = parseInt(localStorage.getItem('lastViewedPage')) || 1;
     router.push({
       pathname: '/',
       query: { page: lastPage }
