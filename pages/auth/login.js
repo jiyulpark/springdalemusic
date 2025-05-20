@@ -57,6 +57,15 @@ const Login = () => {
     });
   };
 
+  const handleKakaoLogin = async () => {
+    await supabase.auth.signInWithOAuth({
+      provider: 'kakao',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`
+      }
+    });
+  };
+
   return (
     <div style={{
       width: '90%',
@@ -163,6 +172,39 @@ const Login = () => {
             style={{ width: 'clamp(16px, 2.5vw, 20px)', height: 'clamp(16px, 2.5vw, 20px)' }}
           />
           깃허브로 로그인하기
+        </button>
+
+        <button
+          onClick={handleKakaoLogin}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 10,
+            padding: 'clamp(10px, 2vw, 12px) clamp(16px, 3vw, 24px)',
+            backgroundColor: '#FEE500',
+            border: 'none',
+            borderRadius: '8px',
+            fontSize: 'clamp(14px, 2.5vw, 16px)',
+            fontWeight: 500,
+            color: '#000000',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+            width: '100%'
+          }}
+          onMouseOver={(e) => {
+            e.currentTarget.style.backgroundColor = '#F4DC00';
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.backgroundColor = '#FEE500';
+          }}
+        >
+          <img
+            src="https://developers.kakao.com/assets/img/about/logos/kakaotalksharing/kakaotalk_sharing_btn_medium.png"
+            alt="Kakao"
+            style={{ width: 'clamp(16px, 2.5vw, 20px)', height: 'clamp(16px, 2.5vw, 20px)' }}
+          />
+          카카오로 로그인하기
         </button>
       </div>
     </div>
