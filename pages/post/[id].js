@@ -270,6 +270,32 @@ if (filesData) {
     }
   };
 
+  // URL을 링크로 변환하는 함수
+  const convertUrlsToLinks = (text) => {
+    if (!text) return '';
+    
+    // URL 패턴 매칭 (http://, https://, www. 로 시작하는 URL)
+    const urlPattern = /(https?:\/\/[^\s]+)|(www\.[^\s]+)/g;
+    
+    return text.split(urlPattern).map((part, index) => {
+      if (part && (part.startsWith('http://') || part.startsWith('https://') || part.startsWith('www.'))) {
+        const url = part.startsWith('www.') ? `https://${part}` : part;
+        return (
+          <a
+            key={index}
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: '#0070f3', textDecoration: 'underline' }}
+          >
+            {part}
+          </a>
+        );
+      }
+      return part;
+    });
+  };
+
   if (loading) return <p className={styles.loading}>로딩 중...</p>;
   if (!post) return <p className={styles.error}>게시글을 찾을 수 없습니다.</p>;
 
@@ -329,26 +355,7 @@ if (filesData) {
       </div>
 
       <div className={styles.content}>
-        {post.content.split('\n').map((line, i) => (
-          <div key={i}>
-            {line.split(' ').map((word, j) => {
-              const isLink = word.startsWith('http://') || word.startsWith('https://');
-              return isLink ? (
-                <a
-                  key={j}
-                  href={word}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ color: '#0070f3', textDecoration: 'underline', wordBreak: 'break-word' }}
-                >
-                  {word + ' '}
-                </a>
-              ) : (
-                <span key={j}>{word + ' '}</span>
-              );
-            })}
-          </div>
-        ))}
+        {convertUrlsToLinks(post.content)}
       </div>
 
       {categoryNames.length > 0 && (
