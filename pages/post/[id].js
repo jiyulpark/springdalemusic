@@ -298,11 +298,32 @@ if (filesData) {
 
   const handleBackToList = () => {
     const lastPage = parseInt(localStorage.getItem('lastViewedPage')) || 1;
+    console.log('목록으로 돌아가기 - 저장된 페이지:', lastPage);
+    
+    // 브라우저의 뒤로가기 히스토리에 현재 페이지 추가
+    window.history.pushState({ page: lastPage }, '');
+    
     router.push({
       pathname: '/',
       query: { page: lastPage }
-    });
+    }, undefined, { shallow: true });
   };
+
+  // 브라우저의 뒤로가기 버튼 처리
+  useEffect(() => {
+    const handlePopState = (event) => {
+      const lastPage = parseInt(localStorage.getItem('lastViewedPage')) || 1;
+      console.log('뒤로가기 감지 - 저장된 페이지:', lastPage);
+      
+      router.push({
+        pathname: '/',
+        query: { page: lastPage }
+      }, undefined, { shallow: true });
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [router]);
 
   if (loading) return <p className={styles.loading}>로딩 중...</p>;
   if (!post) return <p className={styles.error}>게시글을 찾을 수 없습니다.</p>;
@@ -413,149 +434,4 @@ if (filesData) {
                         
                         // 액세스 토큰이 있으면 헤더에 추가
                         if (session?.access_token) {
-                          headers['Authorization'] = `Bearer ${session.access_token}`;
-                          console.log('액세스 토큰 추가됨');
-                        } else {
-                          console.log('액세스 토큰 없음, 세션 정보:', session ? '세션 있음' : '세션 없음');
-                        }
-
-                        const response = await fetch('/api/download', {
-                          method: 'POST',
-                          headers,
-                          body: JSON.stringify({
-                            postId: post.id,
-                            filePath: file.file_url
-                          })
-                        });
-
-                        const data = await response.json();
-                        
-                        if (!response.ok) {
-                          if (response.status === 403) {
-                            const roleNames = {
-                              'guest': '비로그인',
-                              'user': '일반 회원',
-                              'verified_user': '인증 회원',
-                              'admin': '관리자'
-                            };
-                            throw new Error(`${roleNames[data.requiredRole]} 이상만 다운로드할 수 있습니다. (현재: ${roleNames[data.currentRole]})`);
-                          }
-                          throw new Error(data.error || '다운로드에 실패했습니다.');
-                        }
-
-                        // 다운로드 카운트 증가시키기 (로그인/비로그인 모두)
-                        const newCount = (post.downloads || 0) + 1;
-                        setDownloadCount(newCount);
-                        
-                        // Blob을 사용한 파일 다운로드 처리
-                        const fileResponse = await fetch(data.url);
-                        if (!fileResponse.ok) throw new Error('파일 다운로드 실패');
-
-                        const blob = await fileResponse.blob();
-                        const blobUrl = window.URL.createObjectURL(blob);
-
-                        const link = document.createElement('a');
-                        link.href = blobUrl;
-                        link.download = data.fileName || 'download';
-                        document.body.appendChild(link);
-                        link.click();
-                        link.remove();
-
-                        window.URL.revokeObjectURL(blobUrl); // 메모리 정리
-                        
-                      } catch (error) {
-                        console.error('❌ 다운로드 오류:', error);
-                        alert(error.message);
-                      }
-                    }}
-                    className={`${styles.downloadLink} ${file.file_name.toLowerCase().endsWith('.zip') ? styles.zipFile : ''}`}
-                  >
-                    📥 {file.file_name}
-                  </a>
-                ) : (
-                  <span className={styles.lockedDownload}>🔒 다운로드 권한이 없습니다</span>
-                )}
-                {post.download_permission === 'verified_user' && (
-                  <span className={styles.badge}>인증회원 전용 🔒</span>
-                )}
-                {post.download_permission === 'user' && (
-                  <span className={styles.badge}>일반 유저 이상 🔑</span>
-                )}
-                {post.download_permission === 'guest' && (
-                  <span className={styles.badge}>모두 가능 ✅</span>
-                )}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      <div className={styles.buttonContainer}>
-        <button onClick={handleLike} className={styles.likeButton}>❤️ {likes}</button>
-
-        {(session?.user.id === post.user_id || userRole === 'admin') && (
-          <>
-            <button onClick={() => router.push(`/edit/${id}`)} className={styles.editButton}>수정</button>
-            <button onClick={handleDelete} className={styles.deleteButton}>삭제</button>
-          </>
-        )}
-
-        <button onClick={handleBackToList} className={styles.backButton}>목록으로</button>
-      </div>
-
-      <div className={styles.commentSection}>
-        <h3>댓글</h3>
-        {comments.length > 0 ? (
-          <ul className={styles.commentList}>
-            {comments.map((comment, index) => (
-              <li key={index} className={styles.commentItem}>
-                <div className={styles.commentHeader}>
-                  {comment.user?.profile_picture && (
-                    <img
-                      src={comment.user.profile_picture}
-                      alt="프로필"
-                      className={styles.commentAvatar}
-                    />
-                  )}
-                  <span className={styles.commentAuthor}>
-                    {comment.user?.nickname || "익명"}
-                  </span>
-                  <span className={styles.commentDate}>
-                    {new Date(comment.created_at).toLocaleString('ko-KR')}
-                  </span>
-                </div>
-                <p className={styles.commentContent}>{comment.content}</p>
-
-                {(session?.user.id === comment.user_id || userRole === 'admin') && (
-                  <button
-                    onClick={() => handleDeleteComment(comment.id)}
-                    className={styles.deleteCommentButton}
-                  >
-                    삭제
-                  </button>
-                )}
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className={styles.noComments}>댓글이 없습니다.</p>
-        )}
-
-        {session && (
-          <div className={styles.commentInputContainer}>
-            <input
-              type="text"
-              placeholder="댓글을 입력하세요..."
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              className={styles.commentInput}
-            />
-            <button onClick={handleAddComment} className={styles.commentButton}>댓글 등록</button>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
-export default PostDetail;
+                          headers['Authorization'] = `Bearer ${session.access_token}`

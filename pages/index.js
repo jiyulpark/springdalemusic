@@ -32,14 +32,32 @@ const Home = () => {
 
   // 페이지 변경 시 URL과 localStorage 업데이트
   const handlePageChange = (page) => {
+    console.log('페이지 변경:', page);
     setCurrentPage(page);
     localStorage.setItem('lastViewedPage', page);
+    
+    // 브라우저의 뒤로가기 히스토리에 현재 페이지 추가
+    window.history.pushState({ page }, '');
+    
     router.push({
       pathname: router.pathname,
       query: { ...router.query, page }
     }, undefined, { shallow: true });
     window.scrollTo(0, 0);
   };
+
+  // 브라우저의 뒤로가기 버튼 처리
+  useEffect(() => {
+    const handlePopState = (event) => {
+      const page = event.state?.page || 1;
+      console.log('뒤로가기 감지 - 페이지:', page);
+      setCurrentPage(page);
+      localStorage.setItem('lastViewedPage', page);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
 
   useEffect(() => {
     let mounted = true;
