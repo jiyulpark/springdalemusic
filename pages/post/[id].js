@@ -296,6 +296,11 @@ if (filesData) {
     });
   };
 
+  const handleBackToList = () => {
+    const lastPage = localStorage.getItem('lastViewedPage') || 1;
+    router.push(`/?page=${lastPage}`);
+  };
+
   if (loading) return <p className={styles.loading}>로딩 중...</p>;
   if (!post) return <p className={styles.error}>게시글을 찾을 수 없습니다.</p>;
 
@@ -492,7 +497,7 @@ if (filesData) {
           </>
         )}
 
-        <button onClick={() => router.push('/')} className={styles.backButton}>목록으로</button>
+        <button onClick={handleBackToList} className={styles.backButton}>목록으로</button>
       </div>
 
       <div className={styles.commentSection}>

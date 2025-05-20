@@ -118,6 +118,12 @@ const Home = () => {
     setCurrentPage(1);
   }, [searchQuery, selectedCategories, sortOption, downloadPermissionFilter, posts]);
 
+  useEffect(() => {
+    if (currentPage) {
+      localStorage.setItem('lastViewedPage', currentPage);
+    }
+  }, [currentPage]);
+
   const toggleCategory = (catId) => {
     setSelectedCategories(prev =>
       prev.includes(catId) ? prev.filter(id => id !== catId) : [...prev, catId]
