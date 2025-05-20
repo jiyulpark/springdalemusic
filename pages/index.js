@@ -4,8 +4,10 @@ import { supabase } from '../lib/supabase';
 import Card from '../components/Card';
 import styles from '../styles/index.module.css';
 import { useSession } from '../lib/SessionContext';
+import { useRouter } from 'next/router';
 
 const Home = () => {
+  const router = useRouter();
   const { session, loading: sessionLoading } = useSession();
   const [posts, setPosts] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -18,6 +20,25 @@ const Home = () => {
   const [sortOption, setSortOption] = useState('latest');
   const [downloadPermissionFilter, setDownloadPermissionFilter] = useState('all');
   const postsPerPage = 20;
+
+  // URL 쿼리 파라미터에서 페이지 번호 가져오기
+  useEffect(() => {
+    if (router.isReady) {
+      const page = parseInt(router.query.page) || 1;
+      setCurrentPage(page);
+    }
+  }, [router.isReady, router.query.page]);
+
+  // 페이지 변경 시 URL 업데이트
+  useEffect(() => {
+    if (router.isReady) {
+      const query = { ...router.query, page: currentPage };
+      router.push({
+        pathname: router.pathname,
+        query: query
+      }, undefined, { shallow: true });
+    }
+  }, [currentPage, router.isReady]);
 
   useEffect(() => {
     let mounted = true;

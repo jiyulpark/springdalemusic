@@ -298,7 +298,10 @@ if (filesData) {
 
   const handleBackToList = () => {
     const lastPage = localStorage.getItem('lastViewedPage') || 1;
-    router.push(`/?page=${lastPage}`);
+    router.push({
+      pathname: '/',
+      query: { page: lastPage }
+    });
   };
 
   if (loading) return <p className={styles.loading}>로딩 중...</p>;
