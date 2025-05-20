@@ -311,14 +311,14 @@ if (filesData) {
 
   // 브라우저의 뒤로가기 버튼 처리
   useEffect(() => {
-    const handlePopState = (event) => {
+    const handlePopState = () => {
       const lastPage = parseInt(localStorage.getItem('lastViewedPage')) || 1;
       console.log('뒤로가기 감지 - 저장된 페이지:', lastPage);
       
       router.push({
         pathname: '/',
         query: { page: lastPage }
-      }, undefined, { shallow: true });
+      });
     };
 
     window.addEventListener('popstate', handlePopState);
