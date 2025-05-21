@@ -313,7 +313,7 @@ const AdminPosts = () => {
               <th style={{...styles.th, ...styles.titleColumn}}>제목</th>
               <th style={{...styles.th, width: '70px'}}>작성일</th>
               <th style={{...styles.th, width: '50px'}}>첨부파일</th>
-              <th style={{...styles.th, width: '120px'}}>다운로드 권한</th>
+              <th style={{...styles.th, width: '110px'}}>다운로드 권한</th>
               <th style={{...styles.th, ...styles.iconColumn}}>👁️</th>
               <th style={{...styles.th, ...styles.iconColumn}}>⬇️</th>
               <th style={{...styles.th, ...styles.iconColumn}}>❤️</th>
@@ -346,7 +346,7 @@ const AdminPosts = () => {
                 <td style={{...styles.td, width: '50px'}}>
                   {post.fileCount}개
                 </td>
-                <td style={{...styles.td, width: '120px'}}>
+                <td style={{...styles.td, width: '110px'}}>
                   <div style={styles.radioGroup}>
                     <label style={styles.radioLabel}>
                       <input
@@ -580,14 +580,14 @@ const styles = {
   },
   radioGroup: {
     display: 'flex',
-    gap: '8px',
+    gap: '6px',
     fontSize: '0.9em',
     flexWrap: 'nowrap',
   },
   radioLabel: {
     display: 'flex',
     alignItems: 'center',
-    gap: '3px',
+    gap: '2px',
     cursor: 'pointer',
     fontSize: '0.9em',
     whiteSpace: 'nowrap',
@@ -690,7 +690,7 @@ const styles = {
   },
   count: {
     color: '#666',
-    fontSize: '0.85em',
+    fontSize: '0.9em',
   },
 };
 
