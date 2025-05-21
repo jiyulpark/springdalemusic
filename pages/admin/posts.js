@@ -559,7 +559,7 @@ const styles = {
     textOverflow: 'ellipsis',
   },
   titleColumn: {
-    width: '45%',
+    width: '50%',
     whiteSpace: 'normal',
     wordBreak: 'break-word',
   },
@@ -685,12 +685,12 @@ const styles = {
     },
   },
   iconColumn: {
-    width: '50px',
+    width: '40px',
     textAlign: 'center',
   },
   count: {
     color: '#666',
-    fontSize: '0.9em',
+    fontSize: '0.85em',
   },
 };
 
