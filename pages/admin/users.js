@@ -35,19 +35,25 @@ const AdminUsers = () => {
       try {
         // 각 사용자별로 개별 조회
         const authUsersPromises = data.map(async (dbUser) => {
-          const { data: authUser, error } = await supabase.auth.admin.getUserById(dbUser.id);
-          if (error) {
-            console.error(`사용자 ${dbUser.email} 정보 조회 실패:`, error.message);
+          try {
+            // 일반 사용자 정보 조회 API 사용
+            const { data: { user }, error } = await supabase.auth.getUser(dbUser.id);
+            if (error) {
+              console.error(`사용자 ${dbUser.email} 정보 조회 실패:`, error.message);
+              return null;
+            }
+            return user;
+          } catch (err) {
+            console.error(`사용자 ${dbUser.email} 정보 조회 중 오류:`, err.message);
             return null;
           }
-          return authUser;
         });
 
         const authUsers = await Promise.all(authUsersPromises);
 
         // Auth 사용자 정보와 DB 사용자 정보 병합
         const mergedUsers = data.map((dbUser, index) => {
-          const authUser = authUsers[index]?.user;
+          const authUser = authUsers[index];
           
           // 디버그 로그: 특정 사용자의 메타데이터 확인
           if (authUser) {
