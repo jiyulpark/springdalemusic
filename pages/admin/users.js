@@ -76,20 +76,22 @@ const AdminUsers = () => {
               authUser.user_metadata || authUser.raw_user_meta_data || 'metadata 없음');
           }
           
-          // 닉네임 필드 확인을 위해 nickname 추가
+          // Display name 우선순위 설정
+          const displayName = 
+            authUser?.user_metadata?.name || // Auth의 name 필드
+            authUser?.user_metadata?.full_name || // Auth의 full_name 필드
+            authUser?.raw_user_meta_data?.name || // raw_user_meta_data의 name 필드
+            authUser?.raw_user_meta_data?.full_name || // raw_user_meta_data의 full_name 필드
+            dbUser.nickname || // users 테이블의 nickname 필드
+            '-';
+          
           return {
             ...dbUser,
-            rawAuthUser: authUser, // Auth 사용자 원본 데이터 저장
-            displayName: 
-              dbUser.nickname || // users 테이블의 nickname 필드 확인
-              authUser?.user_metadata?.name || 
-              authUser?.user_metadata?.full_name || 
-              authUser?.raw_user_meta_data?.name ||
-              authUser?.raw_user_meta_data?.full_name || '',
+            rawAuthUser: authUser,
+            displayName,
             avatarUrl: 
               authUser?.user_metadata?.avatar_url || 
               authUser?.raw_user_meta_data?.avatar_url || '',
-            // 가입일 정보 추가 - Auth의 created_at 필드 우선 사용
             createdAt: authUser?.created_at || authUser?.identities?.[0]?.created_at || dbUser.created_at || '-'
           };
         });
@@ -203,16 +205,33 @@ const AdminUsers = () => {
                 {user.email}
               </td>
               <td style={{ borderBottom: '1px solid #ddd', padding: '10px' }}>
-                <span>{user.displayName || user.nickname || '-'}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ 
+                    color: '#333',
+                    fontWeight: user.displayName !== '-' ? '500' : 'normal'
+                  }}>
+                    {user.displayName}
+                  </span>
+                  {user.displayName !== '-' && user.nickname && user.displayName !== user.nickname && (
+                    <span style={{ 
+                      color: '#666',
+                      fontSize: '0.9em',
+                      backgroundColor: '#f5f5f5',
+                      padding: '2px 6px',
+                      borderRadius: '4px'
+                    }}>
+                      {user.nickname}
+                    </span>
+                  )}
+                </div>
               </td>
               <td style={{ borderBottom: '1px solid #ddd', padding: '10px' }}>{user.role}</td>
               <td style={{ borderBottom: '1px solid #ddd', padding: '10px' }}>
-                {user.join_date
-                  ? new Date(user.join_date).toLocaleDateString()
+                {user.createdAt
+                  ? new Date(user.createdAt).toLocaleDateString()
                   : '-'}
               </td>
               <td style={{ borderBottom: '1px solid #ddd', padding: '10px' }}>
-                {/* 관리자 계정이면 select를 숨김 */}
                 {user.role === 'admin' ? (
                   <span style={{ color: '#d32f2f', fontWeight: 600 }}>관리자</span>
                 ) : (
