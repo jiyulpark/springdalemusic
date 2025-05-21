@@ -33,47 +33,29 @@ const AdminUsers = () => {
 
       // Auth API에서 사용자 정보 가져오기
       try {
-        // Admin API 대신 일반 사용자 목록 API를 시도
-        const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
-
-        // Debug: 첫 번째 사용자 정보 구조 확인
-        if (authUsers?.users && authUsers.users.length > 0) {
-          console.log('Auth API 사용자 정보 예시:', authUsers.users[0]);
-          
-          // 메타데이터 구조 확인
-          if (authUsers.users[0].user_metadata) {
-            console.log('사용자 메타데이터 구조:', authUsers.users[0].user_metadata);
-          } else if (authUsers.users[0].raw_user_meta_data) {
-            console.log('사용자 메타데이터 구조 (raw_user_meta_data):', authUsers.users[0].raw_user_meta_data);
+        // 각 사용자별로 개별 조회
+        const authUsersPromises = data.map(async (dbUser) => {
+          const { data: authUser, error } = await supabase.auth.admin.getUserById(dbUser.id);
+          if (error) {
+            console.error(`사용자 ${dbUser.email} 정보 조회 실패:`, error.message);
+            return null;
           }
-          
-          // 가입일 정보 확인
-          console.log('가입일 정보:', {
-            created_at: authUsers.users[0].created_at,
-            formatted: authUsers.users[0].created_at ? new Date(authUsers.users[0].created_at).toLocaleDateString('ko-KR') : 'N/A'
-          });
-        }
-        
-        if (authError) {
-          console.error('❌ Auth 사용자 목록 가져오기 실패:', authError.message);
-          
-          // 일반 사용자 조회로 대체
-          console.log('일반 사용자 정보 가져오기로 전환');
-          const { data: currentUser } = await supabase.auth.getUser();
-          console.log('현재 사용자 정보 구조:', currentUser?.user);
-          
-          setUsers(data);
-          return;
-        }
+          return authUser;
+        });
+
+        const authUsers = await Promise.all(authUsersPromises);
 
         // Auth 사용자 정보와 DB 사용자 정보 병합
-        const mergedUsers = data.map(dbUser => {
-          const authUser = authUsers?.users?.find(au => au.id === dbUser.id);
+        const mergedUsers = data.map((dbUser, index) => {
+          const authUser = authUsers[index]?.user;
           
           // 디버그 로그: 특정 사용자의 메타데이터 확인
           if (authUser) {
-            console.log(`사용자 ${dbUser.email} 메타데이터:`, 
-              authUser.user_metadata || authUser.raw_user_meta_data || 'metadata 없음');
+            console.log(`사용자 ${dbUser.email} 메타데이터:`, {
+              user_metadata: authUser.user_metadata,
+              raw_user_meta_data: authUser.raw_user_meta_data,
+              app_metadata: authUser.app_metadata
+            });
           }
           
           // Display name 우선순위 설정
@@ -82,6 +64,7 @@ const AdminUsers = () => {
             authUser?.user_metadata?.full_name || // Auth의 full_name 필드
             authUser?.raw_user_meta_data?.name || // raw_user_meta_data의 name 필드
             authUser?.raw_user_meta_data?.full_name || // raw_user_meta_data의 full_name 필드
+            authUser?.app_metadata?.name || // app_metadata의 name 필드
             '-';
           
           return {
