@@ -55,28 +55,9 @@ const AdminUsers = () => {
         const mergedUsers = data.map((dbUser, index) => {
           const authUser = authUsers[index];
           
-          // 디버그 로그: 특정 사용자의 메타데이터 확인
-          if (authUser) {
-            console.log(`사용자 ${dbUser.email} 메타데이터:`, {
-              user_metadata: authUser.user_metadata,
-              raw_user_meta_data: authUser.raw_user_meta_data,
-              app_metadata: authUser.app_metadata
-            });
-          }
-          
-          // Display name 우선순위 설정
-          const displayName = 
-            authUser?.user_metadata?.name || // Auth의 name 필드
-            authUser?.user_metadata?.full_name || // Auth의 full_name 필드
-            authUser?.raw_user_meta_data?.name || // raw_user_meta_data의 name 필드
-            authUser?.raw_user_meta_data?.full_name || // raw_user_meta_data의 full_name 필드
-            authUser?.app_metadata?.name || // app_metadata의 name 필드
-            '-';
-          
           return {
             ...dbUser,
             rawAuthUser: authUser,
-            displayName,
             avatarUrl: 
               authUser?.user_metadata?.avatar_url || 
               authUser?.raw_user_meta_data?.avatar_url || '',
@@ -112,7 +93,6 @@ const AdminUsers = () => {
     if (searchEmail) {
       filteredUsers = filteredUsers.filter(user => 
         user.email.toLowerCase().includes(searchEmail.toLowerCase()) ||
-        (user.displayName && user.displayName.toLowerCase().includes(searchEmail.toLowerCase())) ||
         (user.nickname && user.nickname.toLowerCase().includes(searchEmail.toLowerCase()))
       );
     }
@@ -168,7 +148,6 @@ const AdminUsers = () => {
           <tr>
             <th style={{ borderBottom: '2px solid #ddd', padding: '10px' }}>이메일</th>
             <th style={{ borderBottom: '2px solid #ddd', padding: '10px' }}>닉네임</th>
-            <th style={{ borderBottom: '2px solid #ddd', padding: '10px' }}>Display Name</th>
             <th style={{ borderBottom: '2px solid #ddd', padding: '10px' }}>권한</th>
             <th style={{ borderBottom: '2px solid #ddd', padding: '10px' }}>가입일</th>
             <th style={{ borderBottom: '2px solid #ddd', padding: '10px' }}>변경</th>
@@ -199,14 +178,6 @@ const AdminUsers = () => {
                   fontWeight: user.nickname ? '500' : 'normal'
                 }}>
                   {user.nickname || '-'}
-                </span>
-              </td>
-              <td style={{ borderBottom: '1px solid #ddd', padding: '10px' }}>
-                <span style={{ 
-                  color: '#666',
-                  fontSize: '0.95em'
-                }}>
-                  {user.displayName}
                 </span>
               </td>
               <td style={{ borderBottom: '1px solid #ddd', padding: '10px' }}>{user.role}</td>
