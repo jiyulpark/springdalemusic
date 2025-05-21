@@ -302,18 +302,18 @@ const AdminPosts = () => {
         <table style={styles.table}>
           <thead>
             <tr>
-              <th style={{...styles.th, width: '40px'}}>
+              <th style={{...styles.th, width: '30px'}}>
                 <input
                   type="checkbox"
                   checked={selectedPosts.size === posts.length}
                   onChange={(e) => handleSelectAll(e.target.checked)}
                 />
               </th>
-              <th style={{...styles.th, width: '60px'}}>번호</th>
+              <th style={{...styles.th, width: '50px'}}>번호</th>
               <th style={{...styles.th, ...styles.titleColumn}}>제목</th>
-              <th style={{...styles.th, width: '100px'}}>작성일</th>
-              <th style={{...styles.th, width: '80px'}}>첨부파일</th>
-              <th style={{...styles.th, width: '180px'}}>다운로드 권한</th>
+              <th style={{...styles.th, width: '70px'}}>작성일</th>
+              <th style={{...styles.th, width: '50px'}}>첨부파일</th>
+              <th style={{...styles.th, width: '120px'}}>다운로드 권한</th>
               <th style={{...styles.th, ...styles.iconColumn}}>👁️</th>
               <th style={{...styles.th, ...styles.iconColumn}}>⬇️</th>
               <th style={{...styles.th, ...styles.iconColumn}}>❤️</th>
@@ -322,14 +322,14 @@ const AdminPosts = () => {
           <tbody>
             {posts.map((post, index) => (
               <tr key={post.id}>
-                <td style={{...styles.td, width: '40px'}}>
+                <td style={{...styles.td, width: '30px'}}>
                   <input
                     type="checkbox"
                     checked={selectedPosts.has(post.id)}
                     onChange={(e) => handleSelectPost(post.id, e.target.checked)}
                   />
                 </td>
-                <td style={{...styles.td, width: '60px'}}>
+                <td style={{...styles.td, width: '50px'}}>
                   {totalPosts - ((currentPage - 1) * pageSize + index)}
                 </td>
                 <td style={{...styles.td, ...styles.titleColumn}}>
@@ -340,13 +340,13 @@ const AdminPosts = () => {
                     {post.title}
                   </button>
                 </td>
-                <td style={{...styles.td, width: '100px'}}>
+                <td style={{...styles.td, width: '70px'}}>
                   {new Date(post.created_at).toLocaleDateString()}
                 </td>
-                <td style={{...styles.td, width: '80px'}}>
+                <td style={{...styles.td, width: '50px'}}>
                   {post.fileCount}개
                 </td>
-                <td style={{...styles.td, width: '180px'}}>
+                <td style={{...styles.td, width: '120px'}}>
                   <div style={styles.radioGroup}>
                     <label style={styles.radioLabel}>
                       <input
@@ -559,7 +559,7 @@ const styles = {
     textOverflow: 'ellipsis',
   },
   titleColumn: {
-    width: '30%',
+    width: '45%',
     whiteSpace: 'normal',
     wordBreak: 'break-word',
   },
