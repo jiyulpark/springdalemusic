@@ -302,37 +302,37 @@ const AdminPosts = () => {
         <table style={styles.table}>
           <thead>
             <tr>
-              <th style={styles.th}>
+              <th style={{...styles.th, width: '40px'}}>
                 <input
                   type="checkbox"
                   checked={selectedPosts.size === posts.length}
                   onChange={(e) => handleSelectAll(e.target.checked)}
                 />
               </th>
-              <th style={styles.th}>번호</th>
-              <th style={styles.th}>제목</th>
-              <th style={styles.th}>작성일</th>
-              <th style={styles.th}>첨부파일</th>
-              <th style={styles.th}>다운로드 권한</th>
-              <th style={styles.th}>조회수</th>
-              <th style={styles.th}>다운로드</th>
-              <th style={styles.th}>좋아요</th>
+              <th style={{...styles.th, width: '60px'}}>번호</th>
+              <th style={{...styles.th, ...styles.titleColumn}}>제목</th>
+              <th style={{...styles.th, width: '100px'}}>작성일</th>
+              <th style={{...styles.th, width: '80px'}}>첨부파일</th>
+              <th style={{...styles.th, width: '180px'}}>다운로드 권한</th>
+              <th style={{...styles.th, width: '70px'}}>조회수</th>
+              <th style={{...styles.th, width: '70px'}}>다운로드</th>
+              <th style={{...styles.th, width: '70px'}}>좋아요</th>
             </tr>
           </thead>
           <tbody>
             {posts.map((post, index) => (
               <tr key={post.id}>
-                <td style={styles.td}>
+                <td style={{...styles.td, width: '40px'}}>
                   <input
                     type="checkbox"
                     checked={selectedPosts.has(post.id)}
                     onChange={(e) => handleSelectPost(post.id, e.target.checked)}
                   />
                 </td>
-                <td style={styles.td}>
+                <td style={{...styles.td, width: '60px'}}>
                   {totalPosts - ((currentPage - 1) * pageSize + index)}
                 </td>
-                <td style={styles.td}>
+                <td style={{...styles.td, ...styles.titleColumn}}>
                   <button
                     onClick={() => handlePostClick(post.id)}
                     style={styles.linkButton}
@@ -340,13 +340,13 @@ const AdminPosts = () => {
                     {post.title}
                   </button>
                 </td>
-                <td style={styles.td}>
+                <td style={{...styles.td, width: '100px'}}>
                   {new Date(post.created_at).toLocaleDateString()}
                 </td>
-                <td style={styles.td}>
+                <td style={{...styles.td, width: '80px'}}>
                   {post.fileCount}개
                 </td>
-                <td style={styles.td}>
+                <td style={{...styles.td, width: '180px'}}>
                   <div style={styles.radioGroup}>
                     <label style={styles.radioLabel}>
                       <input
@@ -380,13 +380,13 @@ const AdminPosts = () => {
                     </label>
                   </div>
                 </td>
-                <td style={styles.td}>
+                <td style={{...styles.td, width: '70px'}}>
                   {post.view_count || 0}
                 </td>
-                <td style={styles.td}>
+                <td style={{...styles.td, width: '70px'}}>
                   {post.downloads || 0}
                 </td>
-                <td style={styles.td}>
+                <td style={{...styles.td, width: '70px'}}>
                   {post.likes?.length || 0}
                 </td>
               </tr>
@@ -494,19 +494,23 @@ const AdminPosts = () => {
 
 const styles = {
   container: {
-    maxWidth: '1200px',
+    maxWidth: '1600px',
     margin: '40px auto',
     padding: '20px',
+    width: '100%',
   },
   header: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: '20px',
+    flexWrap: 'wrap',
+    gap: '10px',
   },
   controls: {
     display: 'flex',
     gap: '10px',
+    flexWrap: 'wrap',
   },
   searchInput: {
     padding: '8px 12px',
@@ -526,6 +530,7 @@ const styles = {
   },
   tableContainer: {
     marginBottom: '20px',
+    width: '100%',
     overflowX: 'auto',
   },
   table: {
@@ -533,6 +538,7 @@ const styles = {
     borderCollapse: 'collapse',
     backgroundColor: '#fff',
     boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+    tableLayout: 'fixed',
   },
   th: {
     padding: '8px',
@@ -541,12 +547,22 @@ const styles = {
     borderBottom: '2px solid #ddd',
     fontSize: '0.9em',
     whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
   },
   td: {
     padding: '8px',
     borderBottom: '1px solid #ddd',
     fontSize: '0.9em',
     whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+  },
+  titleColumn: {
+    width: '30%',
+  },
+  otherColumn: {
+    width: 'auto',
   },
   linkButton: {
     background: 'none',
@@ -559,8 +575,9 @@ const styles = {
   },
   radioGroup: {
     display: 'flex',
-    gap: '10px',
+    gap: '8px',
     fontSize: '0.9em',
+    flexWrap: 'nowrap',
   },
   radioLabel: {
     display: 'flex',
@@ -568,6 +585,7 @@ const styles = {
     gap: '3px',
     cursor: 'pointer',
     fontSize: '0.9em',
+    whiteSpace: 'nowrap',
   },
   saveButton: {
     padding: '10px 20px',
