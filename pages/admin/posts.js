@@ -77,7 +77,10 @@ const AdminPosts = () => {
       // 페이지네이션된 게시글 조회
       let query = supabase
         .from('posts')
-        .select('*')
+        .select(`
+          *,
+          files:files(count)
+        `)
         .order('created_at', { ascending: false })
         .range((currentPage - 1) * pageSize, currentPage * pageSize - 1);
 
@@ -95,7 +98,8 @@ const AdminPosts = () => {
       // 원본 권한 정보 추가
       setPosts(data.map(post => ({
         ...post,
-        original_permission: post.download_permission
+        original_permission: post.download_permission,
+        fileCount: post.files?.[0]?.count || 0
       })));
     } catch (error) {
       console.error('게시글 불러오기 실패:', error);
@@ -313,7 +317,6 @@ const AdminPosts = () => {
               <th style={styles.th}>조회수</th>
               <th style={styles.th}>다운로드</th>
               <th style={styles.th}>좋아요</th>
-              <th style={styles.th}>관리</th>
             </tr>
           </thead>
           <tbody>
@@ -341,7 +344,7 @@ const AdminPosts = () => {
                   {new Date(post.created_at).toLocaleDateString()}
                 </td>
                 <td style={styles.td}>
-                  {post.files?.length || 0}개
+                  {post.fileCount}개
                 </td>
                 <td style={styles.td}>
                   <div style={styles.radioGroup}>
@@ -353,7 +356,7 @@ const AdminPosts = () => {
                         checked={post.download_permission === 'verified_user'}
                         onChange={() => handlePermissionChange(post.id, 'verified_user')}
                       />
-                      인증회원
+                      인증
                     </label>
                     <label style={styles.radioLabel}>
                       <input
@@ -363,7 +366,7 @@ const AdminPosts = () => {
                         checked={post.download_permission === 'user'}
                         onChange={() => handlePermissionChange(post.id, 'user')}
                       />
-                      일반회원
+                      일반
                     </label>
                     <label style={styles.radioLabel}>
                       <input
@@ -385,14 +388,6 @@ const AdminPosts = () => {
                 </td>
                 <td style={styles.td}>
                   {post.likes?.length || 0}
-                </td>
-                <td style={styles.td}>
-                  <button
-                    onClick={() => handlePostClick(post.id)}
-                    style={styles.linkButton}
-                  >
-                    조회
-                  </button>
                 </td>
               </tr>
             ))}
@@ -540,14 +535,18 @@ const styles = {
     boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
   },
   th: {
-    padding: '12px',
+    padding: '8px',
     textAlign: 'left',
     backgroundColor: '#f5f5f5',
     borderBottom: '2px solid #ddd',
+    fontSize: '0.9em',
+    whiteSpace: 'nowrap',
   },
   td: {
-    padding: '12px',
+    padding: '8px',
     borderBottom: '1px solid #ddd',
+    fontSize: '0.9em',
+    whiteSpace: 'nowrap',
   },
   linkButton: {
     background: 'none',
@@ -560,13 +559,15 @@ const styles = {
   },
   radioGroup: {
     display: 'flex',
-    gap: '15px',
+    gap: '10px',
+    fontSize: '0.9em',
   },
   radioLabel: {
     display: 'flex',
     alignItems: 'center',
-    gap: '5px',
+    gap: '3px',
     cursor: 'pointer',
+    fontSize: '0.9em',
   },
   saveButton: {
     padding: '10px 20px',
