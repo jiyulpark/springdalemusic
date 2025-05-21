@@ -308,7 +308,12 @@ const AdminPosts = () => {
               <th style={styles.th}>번호</th>
               <th style={styles.th}>제목</th>
               <th style={styles.th}>작성일</th>
+              <th style={styles.th}>첨부파일</th>
               <th style={styles.th}>다운로드 권한</th>
+              <th style={styles.th}>조회수</th>
+              <th style={styles.th}>다운로드</th>
+              <th style={styles.th}>좋아요</th>
+              <th style={styles.th}>관리</th>
             </tr>
           </thead>
           <tbody>
@@ -334,6 +339,9 @@ const AdminPosts = () => {
                 </td>
                 <td style={styles.td}>
                   {new Date(post.created_at).toLocaleDateString()}
+                </td>
+                <td style={styles.td}>
+                  {post.files?.length || 0}개
                 </td>
                 <td style={styles.td}>
                   <div style={styles.radioGroup}>
@@ -368,6 +376,23 @@ const AdminPosts = () => {
                       모두
                     </label>
                   </div>
+                </td>
+                <td style={styles.td}>
+                  {post.view_count || 0}
+                </td>
+                <td style={styles.td}>
+                  {post.downloads || 0}
+                </td>
+                <td style={styles.td}>
+                  {post.likes?.length || 0}
+                </td>
+                <td style={styles.td}>
+                  <button
+                    onClick={() => handlePostClick(post.id)}
+                    style={styles.linkButton}
+                  >
+                    조회
+                  </button>
                 </td>
               </tr>
             ))}
