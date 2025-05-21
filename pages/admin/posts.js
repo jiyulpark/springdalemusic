@@ -314,9 +314,9 @@ const AdminPosts = () => {
               <th style={{...styles.th, width: '100px'}}>작성일</th>
               <th style={{...styles.th, width: '80px'}}>첨부파일</th>
               <th style={{...styles.th, width: '180px'}}>다운로드 권한</th>
-              <th style={{...styles.th, width: '70px'}}>조회수</th>
-              <th style={{...styles.th, width: '70px'}}>다운로드</th>
-              <th style={{...styles.th, width: '70px'}}>좋아요</th>
+              <th style={{...styles.th, ...styles.iconColumn}}>👁️</th>
+              <th style={{...styles.th, ...styles.iconColumn}}>⬇️</th>
+              <th style={{...styles.th, ...styles.iconColumn}}>❤️</th>
             </tr>
           </thead>
           <tbody>
@@ -380,14 +380,23 @@ const AdminPosts = () => {
                     </label>
                   </div>
                 </td>
-                <td style={{...styles.td, width: '70px'}}>
-                  {post.view_count || 0}
+                <td style={{...styles.td, ...styles.iconColumn}}>
+                  <div style={styles.iconWrapper}>
+                    <span style={styles.icon}>👁️</span>
+                    <span style={styles.count}>{post.view_count || 0}</span>
+                  </div>
                 </td>
-                <td style={{...styles.td, width: '70px'}}>
-                  {post.downloads || 0}
+                <td style={{...styles.td, ...styles.iconColumn}}>
+                  <div style={styles.iconWrapper}>
+                    <span style={styles.icon}>⬇️</span>
+                    <span style={styles.count}>{post.downloads || 0}</span>
+                  </div>
                 </td>
-                <td style={{...styles.td, width: '70px'}}>
-                  {post.likes?.length || 0}
+                <td style={{...styles.td, ...styles.iconColumn}}>
+                  <div style={styles.iconWrapper}>
+                    <span style={styles.icon}>❤️</span>
+                    <span style={styles.count}>{post.likes?.length || 0}</span>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -678,6 +687,23 @@ const styles = {
       backgroundColor: '#cccccc',
       cursor: 'not-allowed',
     },
+  },
+  iconColumn: {
+    width: '50px',
+    textAlign: 'center',
+  },
+  iconWrapper: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '2px',
+    fontSize: '0.8em',
+  },
+  icon: {
+    fontSize: '1.2em',
+  },
+  count: {
+    color: '#666',
   },
 };
 
