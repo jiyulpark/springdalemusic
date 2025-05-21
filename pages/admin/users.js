@@ -82,7 +82,6 @@ const AdminUsers = () => {
             authUser?.user_metadata?.full_name || // Auth의 full_name 필드
             authUser?.raw_user_meta_data?.name || // raw_user_meta_data의 name 필드
             authUser?.raw_user_meta_data?.full_name || // raw_user_meta_data의 full_name 필드
-            dbUser.nickname || // users 테이블의 nickname 필드
             '-';
           
           return {
@@ -179,7 +178,8 @@ const AdminUsers = () => {
         <thead>
           <tr>
             <th style={{ borderBottom: '2px solid #ddd', padding: '10px' }}>이메일</th>
-            <th style={{ borderBottom: '2px solid #ddd', padding: '10px' }}>이름</th>
+            <th style={{ borderBottom: '2px solid #ddd', padding: '10px' }}>닉네임</th>
+            <th style={{ borderBottom: '2px solid #ddd', padding: '10px' }}>Display Name</th>
             <th style={{ borderBottom: '2px solid #ddd', padding: '10px' }}>권한</th>
             <th style={{ borderBottom: '2px solid #ddd', padding: '10px' }}>가입일</th>
             <th style={{ borderBottom: '2px solid #ddd', padding: '10px' }}>변경</th>
@@ -205,25 +205,20 @@ const AdminUsers = () => {
                 {user.email}
               </td>
               <td style={{ borderBottom: '1px solid #ddd', padding: '10px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ 
-                    color: '#333',
-                    fontWeight: user.displayName !== '-' ? '500' : 'normal'
-                  }}>
-                    {user.displayName}
-                  </span>
-                  {user.displayName !== '-' && user.nickname && user.displayName !== user.nickname && (
-                    <span style={{ 
-                      color: '#666',
-                      fontSize: '0.9em',
-                      backgroundColor: '#f5f5f5',
-                      padding: '2px 6px',
-                      borderRadius: '4px'
-                    }}>
-                      {user.nickname}
-                    </span>
-                  )}
-                </div>
+                <span style={{ 
+                  color: '#333',
+                  fontWeight: user.nickname ? '500' : 'normal'
+                }}>
+                  {user.nickname || '-'}
+                </span>
+              </td>
+              <td style={{ borderBottom: '1px solid #ddd', padding: '10px' }}>
+                <span style={{ 
+                  color: '#666',
+                  fontSize: '0.95em'
+                }}>
+                  {user.displayName}
+                </span>
               </td>
               <td style={{ borderBottom: '1px solid #ddd', padding: '10px' }}>{user.role}</td>
               <td style={{ borderBottom: '1px solid #ddd', padding: '10px' }}>
