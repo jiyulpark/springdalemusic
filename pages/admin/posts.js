@@ -381,22 +381,13 @@ const AdminPosts = () => {
                   </div>
                 </td>
                 <td style={{...styles.td, ...styles.iconColumn}}>
-                  <div style={styles.iconWrapper}>
-                    <span style={styles.icon}>👁️</span>
-                    <span style={styles.count}>{post.view_count || 0}</span>
-                  </div>
+                  <span style={styles.count}>{post.view_count || 0}</span>
                 </td>
                 <td style={{...styles.td, ...styles.iconColumn}}>
-                  <div style={styles.iconWrapper}>
-                    <span style={styles.icon}>⬇️</span>
-                    <span style={styles.count}>{post.downloads || 0}</span>
-                  </div>
+                  <span style={styles.count}>{post.downloads || 0}</span>
                 </td>
                 <td style={{...styles.td, ...styles.iconColumn}}>
-                  <div style={styles.iconWrapper}>
-                    <span style={styles.icon}>❤️</span>
-                    <span style={styles.count}>{post.likes?.length || 0}</span>
-                  </div>
+                  <span style={styles.count}>{post.likes?.length || 0}</span>
                 </td>
               </tr>
             ))}
@@ -569,6 +560,8 @@ const styles = {
   },
   titleColumn: {
     width: '30%',
+    whiteSpace: 'normal',
+    wordBreak: 'break-word',
   },
   otherColumn: {
     width: 'auto',
@@ -581,6 +574,9 @@ const styles = {
     padding: 0,
     fontSize: 'inherit',
     textAlign: 'left',
+    width: '100%',
+    whiteSpace: 'normal',
+    wordBreak: 'break-word',
   },
   radioGroup: {
     display: 'flex',
@@ -692,18 +688,9 @@ const styles = {
     width: '50px',
     textAlign: 'center',
   },
-  iconWrapper: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: '2px',
-    fontSize: '0.8em',
-  },
-  icon: {
-    fontSize: '1.2em',
-  },
   count: {
     color: '#666',
+    fontSize: '0.9em',
   },
 };
 
