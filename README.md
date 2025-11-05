@@ -1,8 +1,35 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/pages/api-reference/create-next-app).
+# Springdale BBS
+
+Next.js 기반 게시판 프로젝트입니다.
+
+## 🎬 쿠팡 상세페이지 유튜브 링크 컨버터
+
+프로젝트에 포함된 **쿠팡 상세페이지용 유튜브 링크 컨버터**는 어떤 형식의 유튜브 링크든 쿠팡 상세페이지에 사용할 수 있는 iframe 형식으로 자동 변환해주는 도구입니다.
+
+### 주요 기능
+
+- ✨ **화려한 그라데이션 디자인** - 아름다운 애니메이션과 현대적인 UI
+- 🔄 **자동 복사** - 변환 즉시 클립보드에 자동 복사
+- 🎯 **다양한 링크 형식 지원**
+  - `https://www.youtube.com/watch?v=VIDEO_ID`
+  - `https://youtu.be/VIDEO_ID`
+  - `https://www.youtube.com/embed/VIDEO_ID`
+  - 비디오 ID만 입력 (예: `crFxVE_yfN4`)
+  - 기존 iframe 태그
+  - HTML 내용에 포함된 유튜브 링크
+- ⌨️ **키보드 단축키** - `Ctrl/Cmd + Enter`로 빠른 변환
+- 📱 **반응형 디자인** - 모바일과 데스크톱 모두 지원
+
+### 사용 방법
+
+1. `/youtube-converter` 페이지로 이동
+2. 유튜브 링크를 입력란에 붙여넣기
+3. "변환하기" 버튼 클릭 또는 `Ctrl/Cmd + Enter`
+4. 자동으로 복사된 iframe 코드를 쿠팡 상세페이지에 붙여넣기
 
 ## Getting Started
 
-First, run the development server:
+개발 서버 실행:
 
 ```bash
 npm run dev
@@ -14,27 +41,55 @@ pnpm dev
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+브라우저에서 [http://localhost:3000](http://localhost:3000)을 열어 결과를 확인하세요.
 
-You can start editing the page by modifying `pages/index.js`. The page auto-updates as you edit the file.
+## 배포하기
 
-[API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.js`.
+### GitHub에 푸시
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) instead of React pages.
+```bash
+# 변경사항 추가
+git add .
 
-This project uses [`next/font`](https://nextjs.org/docs/pages/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# 커밋
+git commit -m "feat: 쿠팡 상세페이지용 유튜브 링크 컨버터 추가"
+
+# GitHub에 푸시
+git push origin main
+```
+
+### Vercel에 배포
+
+1. **Vercel 계정 생성/로그인**
+   - [Vercel](https://vercel.com)에 접속하여 GitHub 계정으로 로그인
+
+2. **프로젝트 가져오기**
+   - "Add New Project" 클릭
+   - GitHub 저장소 선택
+   - 프로젝트 설정 확인
+
+3. **자동 배포**
+   - Vercel이 자동으로 빌드 및 배포
+   - GitHub에 푸시할 때마다 자동으로 재배포
+
+4. **환경 변수 설정** (필요한 경우)
+   - Project Settings > Environment Variables에서 설정
+
+### 배포 후 확인
+
+- 배포된 URL에서 `/youtube-converter` 경로로 접속하여 컨버터 사용 가능
+
+## 기술 스택
+
+- **Framework**: Next.js 15.2.2
+- **React**: 19.0.0
+- **스타일링**: Tailwind CSS 4.0
+- **배포**: Vercel
 
 ## Learn More
 
-To learn more about Next.js, take a look at the following resources:
+Next.js에 대해 더 알아보기:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn-pages-router) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/pages/building-your-application/deploying) for more details.
+- [Next.js Documentation](https://nextjs.org/docs)
+- [Learn Next.js](https://nextjs.org/learn-pages-router)
+- [Next.js GitHub repository](https://github.com/vercel/next.js)
